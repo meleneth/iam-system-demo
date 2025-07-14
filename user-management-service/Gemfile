@@ -57,3 +57,7 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
+
+gem "opentelemetry-sdk", "~> 1.8"
+gem "opentelemetry-instrumentation-all", "~> 0.78.0"
+gem "opentelemetry-exporter-otlp", "~> 0.30.0"
