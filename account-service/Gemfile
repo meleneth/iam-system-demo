@@ -47,3 +47,7 @@ group :development, :test do
 end
 
 gem "rspec-rails", "~> 8.0", groups: [:development, :test]
+
+gem "opentelemetry-sdk", "~> 1.8"
+gem "opentelemetry-instrumentation-all", "~> 0.78.0"
+gem "opentelemetry-exporter-otlp", "~> 0.30.0"
