@@ -1,0 +1,6 @@
+Production:
+HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose --env-file production.env -f production-compose.yml -f production-overrides.yml config
+Development:
+HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose --env-file development.env -f development-compose.yml -f development-overrides.yml config
+Test:
+HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose --env-file test.env -f test-compose.yml -f test-overrides.yml config
