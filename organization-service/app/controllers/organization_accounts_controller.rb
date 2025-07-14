@@ -46,6 +46,6 @@ class OrganizationAccountsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def organization_account_params
-      params.fetch(:organization_account, {})
+      params.require(:organization_account).permit(:organization_id, :account_id)
     end
 end
