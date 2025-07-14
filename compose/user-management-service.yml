@@ -1,0 +1,6 @@
+---
+services:
+  user-management-service:
+    image: parent_account_id/user-management-service
+    build:
+      context: "./user-management-service"

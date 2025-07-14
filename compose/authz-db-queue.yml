@@ -1,0 +1,20 @@
+---
+services:
+  authz-db-queue:
+    image: postgres:17.5-bookworm
+    ports:
+    - "${AUTHZ_DB_QUEUE_POSTGRES_PORT}:5432"
+    environment:
+    - POSTGRES_DB=${AUTHZ_DB_QUEUE_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${AUTHZ_DB_QUEUE_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${AUTHZ_DB_QUEUE_POSTGRES_USER}
+    volumes:
+    - "${AUTHZ_DB_QUEUE_POSTGRES_DATA}:/var/lib/postgresql/data"
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${AUTHZ_DB_QUEUE_POSTGRES_USER} -d ${AUTHZ_DB_QUEUE_POSTGRES_DB}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s

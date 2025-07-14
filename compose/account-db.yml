@@ -1,0 +1,20 @@
+---
+services:
+  account-db:
+    image: postgres:17.5-bookworm
+    ports:
+    - "${ACCOUNT_DB_POSTGRES_PORT}:5432"
+    environment:
+    - POSTGRES_DB=${ACCOUNT_DB_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${ACCOUNT_DB_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${ACCOUNT_DB_POSTGRES_USER}
+    volumes:
+    - "${ACCOUNT_DB_POSTGRES_DATA}:/var/lib/postgresql/data"
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${ACCOUNT_DB_POSTGRES_USER} -d ${ACCOUNT_DB_POSTGRES_DB}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s

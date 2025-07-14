@@ -1,0 +1,17 @@
+---
+services:
+  organization-service:
+    image: parent_account_id/organization-service
+    ports:
+    - "${ORGANIZATION_SERVICE_WEB_PORT}:3000"
+    environment:
+    - DATABASE_URL=${ORGANIZATION_DB_DATABASE_URL}
+    - RAILS_ENV=test
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    build:
+      context: "./organization-service"
+    depends_on:
+      organization-db:
+        condition: service_healthy
+        restart: true

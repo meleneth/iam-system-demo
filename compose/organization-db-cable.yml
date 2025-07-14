@@ -1,0 +1,20 @@
+---
+services:
+  organization-db-cable:
+    image: postgres:17.5-bookworm
+    ports:
+    - "${ORGANIZATION_DB_CABLE_POSTGRES_PORT}:5432"
+    environment:
+    - POSTGRES_DB=${ORGANIZATION_DB_CABLE_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${ORGANIZATION_DB_CABLE_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${ORGANIZATION_DB_CABLE_POSTGRES_USER}
+    volumes:
+    - "${ORGANIZATION_DB_CABLE_POSTGRES_DATA}:/var/lib/postgresql/data"
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${ORGANIZATION_DB_CABLE_POSTGRES_USER} -d ${ORGANIZATION_DB_CABLE_POSTGRES_DB}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s

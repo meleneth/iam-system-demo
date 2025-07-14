@@ -1,0 +1,6 @@
+---
+services:
+  eventstream:
+    image: localstack/localstack:4.6.0
+    ports:
+    - "${EVENTSTREAM_WEB_PORT}:4566"
