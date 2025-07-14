@@ -1,0 +1,107 @@
+---
+services:
+  eventstream:
+    ports:
+    - "${EVENTSTREAM_WEB_PORT}:4566"
+  otel-collector:
+    ports:
+    - "${OTEL_COLLECTOR_COLLECTOR_PORT}:4318"
+  grafana:
+    environment:
+    - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+    - "${GRAFANA_WEB_PORT}:3000"
+  jaeger:
+    ports:
+    - "${JAEGER_WEB_PORT}:16686"
+  prometheus:
+    ports:
+    - "${PROMETHEUS_WEB_PORT}:9090"
+  user-db:
+    environment:
+    - POSTGRES_DB=${USER_DB_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${USER_DB_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${USER_DB_POSTGRES_USER}
+    ports:
+    - "${USER_DB_POSTGRES_PORT}:5432"
+  user-service:
+    environment:
+    - DATABASE_URL=${USER_DB_DATABASE_URL}
+    - RAILS_ENV=test
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    ports:
+    - "${USER_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      user-db:
+        condition: service_healthy
+        restart: true
+    volumes:
+    - "${USER_SERVICE_TEST_SOURCE_PATH}:/rails"
+  account-db:
+    environment:
+    - POSTGRES_DB=${ACCOUNT_DB_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${ACCOUNT_DB_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${ACCOUNT_DB_POSTGRES_USER}
+    ports:
+    - "${ACCOUNT_DB_POSTGRES_PORT}:5432"
+  account-service:
+    environment:
+    - DATABASE_URL=${ACCOUNT_DB_DATABASE_URL}
+    - RAILS_ENV=test
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    ports:
+    - "${ACCOUNT_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      account-db:
+        condition: service_healthy
+        restart: true
+    volumes:
+    - "${ACCOUNT_SERVICE_TEST_SOURCE_PATH}:/rails"
+  authz-db:
+    environment:
+    - POSTGRES_DB=${AUTHZ_DB_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${AUTHZ_DB_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${AUTHZ_DB_POSTGRES_USER}
+    ports:
+    - "${AUTHZ_DB_POSTGRES_PORT}:5432"
+  authorization-service:
+    environment:
+    - DATABASE_URL=${AUTHZ_DB_DATABASE_URL}
+    - RAILS_ENV=test
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    ports:
+    - "${AUTHORIZATION_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      authz-db:
+        condition: service_healthy
+        restart: true
+    volumes:
+    - "${AUTHORIZATION_SERVICE_TEST_SOURCE_PATH}:/rails"
+  organization-db:
+    environment:
+    - POSTGRES_DB=${ORGANIZATION_DB_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${ORGANIZATION_DB_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${ORGANIZATION_DB_POSTGRES_USER}
+    ports:
+    - "${ORGANIZATION_DB_POSTGRES_PORT}:5432"
+  organization-service:
+    environment:
+    - DATABASE_URL=${ORGANIZATION_DB_DATABASE_URL}
+    - RAILS_ENV=test
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    ports:
+    - "${ORGANIZATION_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      organization-db:
+        condition: service_healthy
+        restart: true
+    volumes:
+    - "${ORGANIZATION_SERVICE_TEST_SOURCE_PATH}:/rails"
+  user-management-service:
+    volumes:
+    - "${USER_MANAGEMENT_SERVICE_TEST_SOURCE_PATH}:/rails"
