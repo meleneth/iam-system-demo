@@ -51,3 +51,5 @@ gem "opentelemetry-instrumentation-all", "~> 0.78.0"
 gem "opentelemetry-exporter-otlp", "~> 0.30.0"
 
 gem "graphql", "~> 2.5"
+
+gem "rspec-rails", "~> 8.0"
