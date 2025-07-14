@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -e
+
+ENV_FILE="production.env"
+COMPOSE_FILE="compose/production-compose.yml"
+
+## Load .env only if it exists
+#[ -f "$ENV_FILE" ] && export $(grep -v '^#' "$ENV_FILE" | xargs)
+
+# Inject UID/GID for Unix-like systems
+if [[ "$OSTYPE" != "msys" && "$OSTYPE" != "win32" ]]; then
+	export HOST_UID=$(id -u)
+	export HOST_GID=$(id -g)
+fi
+
+exec docker compose --env-file production.env -f production-compose.yml -f production-overrides.yml "$@"
