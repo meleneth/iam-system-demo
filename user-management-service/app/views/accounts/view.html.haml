@@ -1,8 +1,12 @@
-%h1.block Accounts#view
+%h1 Accounts#view
 %div
   %p Find me in app/views/accounts/view.html.haml
   Hi, I'm an Account and my name is:
   = @account.name
+- if @organization
+  %p
+    and I belong to the
+    = @organization.name
 %table
   %thead.bg-green-700
     %tr

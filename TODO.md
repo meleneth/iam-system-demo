@@ -8,3 +8,5 @@ build the flat account cache layer
 accounts have parent_account_id, which makes for bad times when querying - n+1 in effect
 
 plan - flat account 'view'
+
+gemify organization-service/lib/mel/filterable.rb

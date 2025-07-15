@@ -1,11 +1,19 @@
 class OrganizationAccountsController < ApplicationController
   before_action :set_organization_account, only: %i[ show update destroy ]
+  before_action :require_filters, only: [ :index ]
+
+  def require_filters
+    if params.slice(*OrganizationAccount.allowed_filters).blank?
+      render json: { error: "Filter required" }, status: 400
+    end
+  end
 
   # GET /organization_accounts
   def index
-    @organization_accounts = OrganizationAccount.all
-
-    render json: @organization_accounts
+    filters = params.slice(*OrganizationAccount.allowed_filters).permit!
+    raise BadFilterError unless filters.present?
+    results = OrganizationAccount.where(*filters)
+    render json: results
   end
 
   # GET /organization_accounts/1

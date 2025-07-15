@@ -12,4 +12,7 @@ class OrganizationAccount < ActiveResource::Base
   self.collection_name = "organization_accounts"
 
   # Optional: handle nested resources, errors, etc.
+  def organization
+    Organization.find(self.organization_id)
+  end
 end
