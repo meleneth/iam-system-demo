@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
+  get 'accounts/:id', to: 'accounts#view', as: 'account_view'
   get "frontdoor/index"
+
   if Rails.env.development?
     mount GraphiQL::Rails::Engine, at: "/graphiql", graphql_path: "/graphql"
   end

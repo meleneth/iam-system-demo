@@ -1,0 +1,18 @@
+%h1.block Accounts#view
+%div
+  %p Find me in app/views/accounts/view.html.haml
+  Hi, I'm an Account and my name is:
+  = @account.name
+%table
+  %thead.bg-green-700
+    %tr
+      %td account_id
+      %td name
+      %td parent_account_id
+  %tbody
+    - @accounts.each do |account|
+      %tr
+        %td= account.id
+        %td= account.name
+        %td= account.parent_account_id
+
