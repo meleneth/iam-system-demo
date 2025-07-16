@@ -1,4 +1,8 @@
+require 'async'
+
 class AccountsController < ApplicationController
+  TRACER = OpenTelemetry.tracer_provider.tracer('accounts-controller', '1.0.0')
+
   def view
     @account = Account.find(params[:id])
     @accounts = []
@@ -11,5 +15,27 @@ class AccountsController < ApplicationController
     end
     org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
     @organization = org_account.organization if org_account
+
+		org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
+		# @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
+		#@organization_accounts = Account.where(id: org_accounts.map(&:account_id))
+
+		@organization_accounts = fetch_accounts_async(org_accounts.map(&:account_id))
   end
+
+  def fetch_accounts_async(account_ids)
+    parent_ctx = OpenTelemetry::Context.current
+
+    @organization_accounts = Async do |task|
+      account_ids.each_slice(5).map do |group|
+        task.async do
+          OpenTelemetry::Context.with_current(parent_ctx) do
+            TRACER.in_span("Account.fetch_group[#{group.first}-#{group.last}]") do
+              Account.where(id: group).to_a
+            end
+          end
+        end
+      end.flat_map(&:wait)
+    end.wait
+	end
 end

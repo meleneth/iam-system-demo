@@ -3,9 +3,10 @@ class AccountsController < ApplicationController
 
   # GET /accounts
   def index
-    @accounts = Account.all
-
-    render json: @accounts
+    filters = params.slice(*Account.allowed_filters).permit!
+    raise BadFilterError unless filters.present?
+    results = Account.where(*filters)
+    render json: results
   end
 
   # GET /accounts/1
