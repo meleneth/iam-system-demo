@@ -3,12 +3,13 @@ services:
   account-service:
     image: parent_account_id/account-service
     ports:
-    - "${ACCOUNT_SERVICE_WEB_PORT}:3000"
+      - "${ACCOUNT_SERVICE_WEB_PORT}:3000"
     environment:
-    - DATABASE_URL=${ACCOUNT_DB_DATABASE_URL}
-    - RAILS_ENV=test
-    - RAILS_MAX_THREADS=5
-    - RAILS_MIN_THREADS=5
+      - DATABASE_URL=${ACCOUNT_DB_DATABASE_URL}
+      - RAILS_ENV=test
+      - RAILS_MAX_THREADS=5
+      - RAILS_MIN_THREADS=5
+      - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
     build:
       context: "./account-service"
     depends_on:

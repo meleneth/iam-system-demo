@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
   get 'accounts/:id', to: 'accounts#view', as: 'account_view'
+  get 'slow_accounts/:id', to: 'accounts#slow_view', as: 'slow_account_view'
+  get 'slowest_accounts/:id', to: 'accounts#slowest_view', as: 'slowest_account_view'
   get "frontdoor/index"
 
   if Rails.env.development?

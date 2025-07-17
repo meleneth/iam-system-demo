@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   resources :accounts
+  get "/account_with_parents/:account_id", to: "accounts#account_with_parents"
   post "/graphql", to: "graphql#execute"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
