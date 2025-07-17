@@ -9,6 +9,20 @@
     = @organization.name
 %br
 %br
+This account has the following users:
+%table
+  %thead.bg-green-700
+    %tr
+      %td user_id
+      %td email
+  %tbody
+    - @users.each do |user|
+      %tr
+        %td= user.id
+        %td= user.email
+
+%br
+%br
 %table
   %thead.bg-green-700
     %tr

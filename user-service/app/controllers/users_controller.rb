@@ -3,9 +3,10 @@ class UsersController < ApplicationController
 
   # GET /users
   def index
-    @users = User.all
-
-    render json: @users
+    filters = params.slice(*User.allowed_filters).permit!
+    raise BadFilterError unless filters.present?
+    results = User.where(*filters)
+    render json: results
   end
 
   # GET /users/1

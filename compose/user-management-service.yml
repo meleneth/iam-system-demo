@@ -10,3 +10,4 @@ services:
       USER_SERVICE_API_BASE_URL: http://user-service:80
       ACCOUNT_SERVICE_API_BASE_URL: http://account-service:80
       ORGANIZATION_SERVICE_API_BASE_URL: http://organization-service:80
+      AUTHORIZATION_SERVICE_API_BASE_URL: http://authorization-service:80

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_14_003611) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_17_220955) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,5 +22,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_003611) do
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_capabilities_on_account_id"
     t.index ["subject_id"], name: "index_capabilities_on_subject_id"
+  end
+
+  create_table "capability_grants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.string "permission", null: false
+    t.string "scope_type", null: false
+    t.uuid "scope_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "permission", "scope_type", "scope_id"], name: "index_capability_grants_on_user_perm_scope", unique: true
   end
 end

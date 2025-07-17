@@ -28,4 +28,6 @@ full_sql = <<~SQL
   FROM account_hierarchy
 SQL
 
-ap ActiveRecord::Base.connection.execute(full_sql).map { |row| row }
+results =  ActiveRecord::Base.connection.execute(full_sql).map { |row| row }
+ap results.last(10)
+

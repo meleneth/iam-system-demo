@@ -12,6 +12,7 @@ class AccountsController < ApplicationController
     org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
 
     @organization_accounts = fetch_accounts_async(org_accounts.map(&:account_id))
+    @users = User.find(:all, params: { account_id: @account.id})
   end
 
   def slow_view
@@ -29,6 +30,7 @@ class AccountsController < ApplicationController
 
     org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
     @organization_accounts = Account.where(id: org_accounts.map(&:account_id))
+    @users = User.find(:all, params: { account_id: @account.id})
     render :view
   end
 
@@ -47,6 +49,7 @@ class AccountsController < ApplicationController
 
     org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
     @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
+    @users = User.find(:all, params: { account_id: @account.id})
     render :view
   end
 
