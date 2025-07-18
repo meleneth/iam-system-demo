@@ -21,8 +21,11 @@ class AccountsController < ApplicationController
     end
 
     account = Account.find(account_id)
-    org_account = OrganizationAccount.find(:first, params: { account_id: account.id })
-    org_accounts = OrganizationAccount.find(:all, params: { organization_id: org_account.organization_id })
+    org_accounts = false
+    OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
+      org_account = OrganizationAccount.find(:first, params: { account_id: account.id })
+      org_accounts = OrganizationAccount.find(:all, params: { organization_id: org_account.organization_id })
+    end
     seed_ids = org_accounts.map(&:account_id)
 
     accounts = Arel::Table.new(:accounts)

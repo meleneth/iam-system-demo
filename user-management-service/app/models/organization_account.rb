@@ -15,4 +15,13 @@ class OrganizationAccount < ActiveResource::Base
   def organization
     Organization.find(self.organization_id)
   end
+
+  def self.with_headers(temp_headers)
+    old_headers = headers.dup
+    self.headers.merge!(temp_headers)
+    yield
+  ensure
+    self.headers.replace(old_headers)
+  end
+
 end

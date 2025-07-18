@@ -13,10 +13,14 @@ class AccountsController < ApplicationController
     end
 
     @account = @accounts[-1]
-    org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
-    @organization = org_account.organization if org_account
-
-    org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
+    org_accounts = nil
+    OrganizationAccount.with_headers('pad-user-id' => @as_user_id) do
+      org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
+      Organization.with_headers('pad-user-id' => @as_user_id) do
+        @organization = org_account.organization if org_account
+      end
+      org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
+    end
 
     @organization_accounts = fetch_accounts_async(org_accounts.map(&:account_id))
     @users = User.find(:all, params: { account_id: @account.id})
@@ -84,7 +88,9 @@ class AccountsController < ApplicationController
         task.async do
           OpenTelemetry::Context.with_current(parent_ctx) do
             TRACER.in_span("Account.fetch_group[#{group.first}-#{group.last}]") do
-              Account.where(id: group).to_a
+              Account.with_headers('pad-user-id' => @as_user_id) do
+                Account.where(id: group).to_a
+              end
             end
           end
         end

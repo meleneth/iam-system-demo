@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   resources :capability_grants
 
-  get "can/:scope_type/:permission/:scope_id", to: "can#index", constraints: { permission: /[^\/]+/ }
+  get "can/:scope_type/:permission", to: "can#index", format: false, constraints: { permission: /[^\/]+/ }
 
   post "/graphql", to: "graphql#execute"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

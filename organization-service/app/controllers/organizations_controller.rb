@@ -10,6 +10,16 @@ class OrganizationsController < ApplicationController
 
   # GET /organizations/1
   def show
+    permitted = params.permit(:id)
+    organization_id = permitted[:id]
+    pad_user_id = request.headers["HTTP_PAD_USER_ID"]
+    raise "no pad-user-id header sent" unless pad_user_id
+    if pad_user_id != "IAM_SYSTEM"
+      user = User.find(pad_user_id)
+      unless user.can("Organization", "organization.read",  organization_id)
+        raise "no authorization for #{pad_user_id} organization.accounts.read #{organization_id}"
+      end
+    end
     render json: @organization
   end
 

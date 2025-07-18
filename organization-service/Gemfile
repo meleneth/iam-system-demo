@@ -53,3 +53,7 @@ gem "opentelemetry-exporter-otlp", "~> 0.30.0"
 gem "graphql", "~> 2.5"
 
 gem "rspec-rails", "~> 8.0"
+
+gem "activeresource", "~> 6.1"
+
+gem "faraday", "~> 2.13"

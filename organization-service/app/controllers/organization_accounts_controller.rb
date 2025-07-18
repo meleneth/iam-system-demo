@@ -12,7 +12,25 @@ class OrganizationAccountsController < ApplicationController
   def index
     filters = params.slice(*OrganizationAccount.allowed_filters).permit!
     raise BadFilterError unless filters.present?
+
+    pad_user_id = request.headers["HTTP_PAD_USER_ID"]
+    raise "no pad-user-id header sent" unless pad_user_id
+
+    if pad_user_id != "IAM_SYSTEM"
+      user = User.find(pad_user_id)
+      if filters[:organization_id]
+        unless user.can("Organization", "organization.accounts.read",  filters[:organization_id])
+          raise "no authorization for #{pad_user_id} organization.accounts.read #{filters[:organization_id]}"
+        end
+      end
+      if filters[:account_id]
+        unless user.can("Account", "account.read",  filters[:account_id])
+          raise "no authorization for #{pad_user_id} account.read #{filters[:account_id]}"
+        end
+      end
+    end
     results = OrganizationAccount.where(*filters)
+
     render json: results
   end
 
