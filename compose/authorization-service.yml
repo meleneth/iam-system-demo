@@ -3,12 +3,13 @@ services:
   authorization-service:
     image: parent_account_id/authorization-service
     ports:
-    - "${AUTHORIZATION_SERVICE_WEB_PORT}:3000"
+      - "${AUTHORIZATION_SERVICE_WEB_PORT}:3000"
     environment:
-    - DATABASE_URL=${AUTHZ_DB_DATABASE_URL}
-    - RAILS_ENV=test
-    - RAILS_MAX_THREADS=5
-    - RAILS_MIN_THREADS=5
+      - DATABASE_URL=${AUTHZ_DB_DATABASE_URL}
+      - RAILS_ENV=test
+      - RAILS_MAX_THREADS=5
+      - RAILS_MIN_THREADS=5
+      - ACCOUNT_SERVICE_API_BASE_URL=http://account-service:80
     build:
       context: "./authorization-service"
     depends_on:
