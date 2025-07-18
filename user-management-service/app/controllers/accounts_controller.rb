@@ -4,7 +4,14 @@ class AccountsController < ApplicationController
   TRACER = OpenTelemetry.tracer_provider.tracer('accounts-controller', '1.0.0')
 
   def view
-    @accounts = Account.with_parents(params[:id])
+    permitted = params.permit(:as, :id)
+    @as_user_id = permitted[:as]
+    account_id = permitted[:id]
+
+    Account.with_headers('pad-user-id' => @as_user_id) do
+      @accounts = Account.with_parents(account_id)
+    end
+
     @account = @accounts[-1]
     org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
     @organization = org_account.organization if org_account

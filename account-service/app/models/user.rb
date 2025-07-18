@@ -1,0 +1,24 @@
+# frozen_string_literal: true
+
+# app/models/user.rb
+class User < ActiveResource::Base
+  attr_accessor :authorization_service
+  self.site = ENV.fetch("USER_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
+  self.format = :json
+
+  # Optional: if the resource uses UUIDs instead of integers
+  self.primary_key = "id"
+
+  # Optional: if user-service uses a different collection path
+  self.collection_name = "users"
+
+  # Optional: handle nested resources, errors, etc.
+  def can(scope_type, permission, scope_id)
+    response = Faraday.get("#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/can/#{scope_type}/#{permission}/#{scope_id}") do |req|
+      req.headers["pad-user-id"] = id
+    end
+
+    response.status == 200
+  end
+
+end

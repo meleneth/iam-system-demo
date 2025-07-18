@@ -12,6 +12,13 @@ class AccountsController < ApplicationController
   # GET /with_parent_accounts/1
   def account_with_parents
     account_id = params.permit(:account_id)[:account_id]
+    pad_user_id = request.headers['HTTP_PAD_USER_ID']
+    raise "no pad-user-id header sent" unless pad_user_id
+
+    if pad_user_id != "IAM_SYSTEM"
+      user = User.find(pad_user_id)
+      raise "no authorization for #{pad_user_id} account.read #{account_id}" unless user.can("Account", "account.read",  account_id)
+    end
 
     account = Account.find(account_id)
     org_account = OrganizationAccount.find(:first, params: { account_id: account.id })

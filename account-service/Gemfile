@@ -57,3 +57,5 @@ gem "graphql", "~> 2.5"
 gem "awesome_print", "~> 1.9"
 
 gem "activeresource", "~> 6.1"
+
+gem "faraday", "~> 2.13"

@@ -9,7 +9,10 @@ services:
       - RAILS_ENV=test
       - RAILS_MAX_THREADS=5
       - RAILS_MIN_THREADS=5
+      - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
       - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
+      - USER_SERVICE_API_BASE_URL=http://user-service:80
+      - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
     build:
       context: "./account-service"
     depends_on:
