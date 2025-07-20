@@ -23,44 +23,47 @@ provider "aws" {
   }
 }
 
-resource "aws_sns_topic" "capability-changes" {
-  name = "capability-changes"
+resource "aws_sns_topic" "user_seed" {
+  name = "user_seed"
 }
 
-resource "aws_sqs_queue" "capability-changes" {
-  name = "capability-changes"
+resource "aws_sqs_queue" "organization_create" {
+  name = "organization_create"
 }
 
-resource "aws_sns_topic_subscription" "capability-changes-capability-changes" {
-  topic_arn = aws_sns_topic.capability-changes.arn
+resource "aws_sqs_queue" "account_create" {
+  name = "account_create"
+}
+
+resource "aws_sqs_queue" "user_create" {
+  name = "user_create"
+}
+
+resource "aws_sqs_queue" "grants_create" {
+  name = "grants_create"
+}
+
+resource "aws_sns_topic_subscription" "organization_create" {
+  topic_arn = aws_sns_topic.user_seed.arn
   protocol = "sqs"
-  endpoint = aws_sqs_queue.capability-changes.arn
+  endpoint = aws_sqs_queue.organization_create.arn
 }
 
-resource "aws_sns_topic" "group-membership-changes" {
-  name = "group-membership-changes"
-}
-
-resource "aws_sqs_queue" "group-membership-changes" {
-  name = "group-membership-changes"
-}
-
-resource "aws_sns_topic_subscription" "group-membership-changes-group-membership-changes" {
-  topic_arn = aws_sns_topic.group-membership-changes.arn
+resource "aws_sns_topic_subscription" "account_create" {
+  topic_arn = aws_sns_topic.user_seed.arn
   protocol = "sqs"
-  endpoint = aws_sqs_queue.group-membership-changes.arn
+  endpoint = aws_sqs_queue.account_create.arn
 }
 
-resource "aws_sns_topic" "account-structure-changes" {
-  name = "account-structure-changes"
-}
-
-resource "aws_sqs_queue" "account-structure-changes" {
-  name = "account-structure-changes"
-}
-
-resource "aws_sns_topic_subscription" "account-structure-changes-account-structure-changes" {
-  topic_arn = aws_sns_topic.account-structure-changes.arn
+resource "aws_sns_topic_subscription" "user_create" {
+  topic_arn = aws_sns_topic.user_seed.arn
   protocol = "sqs"
-  endpoint = aws_sqs_queue.account-structure-changes.arn
+  endpoint = aws_sqs_queue.user_create.arn
 }
+
+resource "aws_sns_topic_subscription" "grants_create" {
+  topic_arn = aws_sns_topic.user_seed.arn
+  protocol = "sqs"
+  endpoint = aws_sqs_queue.grants_create.arn
+}
+
