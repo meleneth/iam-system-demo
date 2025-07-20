@@ -10,17 +10,19 @@ class CapabilityGranter
   end
 
   def grant!
-    CapabilityGrant.create!(user_id: @user_id, permission: "organization.read", scope_type: "Organization", scope_id: @org_id)
-    CapabilityGrant.create!(user_id: @user_id, permission: "organization.accounts.read", scope_type: "Organization", scope_id: @org_id)
+    CapabilityGrant.with_headers("pad-user-id" => "IAM_SYSTEM") do
+      CapabilityGrant.create!(user_id: @user_id, permission: "organization.read", scope_type: "Organization", scope_id: @org_id)
+      CapabilityGrant.create!(user_id: @user_id, permission: "organization.accounts.read", scope_type: "Organization", scope_id: @org_id)
 
-    if @is_admin
-      CapabilityGrant.create!(user_id: @user_id, permission: "organization.accounts.create", scope_type: "Organization", scope_id: @org_id)
-      CapabilityGrant.create!(user_id: @user_id, permission: "account.read", scope_type: "Account", scope_id: @account_id)
-      CapabilityGrant.create!(user_id: @user_id, permission: "account.users.read", scope_type: "Account", scope_id: @account_id)
-      CapabilityGrant.create!(user_id: @user_id, permission: "account.users.create", scope_type: "Account", scope_id: @account_id)
-    else
-      CapabilityGrant.create!(user_id: @user_id, permission: "account.read", scope_type: "Account", scope_id: @account_id)
-      CapabilityGrant.create!(user_id: @user_id, permission: "account.users.read", scope_type: "Account", scope_id: @account_id)
+      if @is_admin
+        CapabilityGrant.create!(user_id: @user_id, permission: "organization.accounts.create", scope_type: "Organization", scope_id: @org_id)
+        CapabilityGrant.create!(user_id: @user_id, permission: "account.read", scope_type: "Account", scope_id: @account_id)
+        CapabilityGrant.create!(user_id: @user_id, permission: "account.users.read", scope_type: "Account", scope_id: @account_id)
+        CapabilityGrant.create!(user_id: @user_id, permission: "account.users.create", scope_type: "Account", scope_id: @account_id)
+      else
+        CapabilityGrant.create!(user_id: @user_id, permission: "account.read", scope_type: "Account", scope_id: @account_id)
+        CapabilityGrant.create!(user_id: @user_id, permission: "account.users.read", scope_type: "Account", scope_id: @account_id)
+      end
     end
   end
 end
@@ -57,14 +59,24 @@ class DemoUserSeeder
       if create_child_account?
         parent = @existing_accounts.sample
         org_id = @account_org_map[parent.id]
-        account = Account.create!(parent_account_id: parent.id)
-        OrganizationAccount.create!(organization_id: org_id, account_id: account.id)
+        Account.with_headers("pad-user-id" => "IAM_SYSTEM") do
+          account = Account.create!(parent_account_id: parent.id)
+          OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
+            OrganizationAccount.create!(organization_id: org_id, account_id: account.id)
+          end
+        end
         is_account_admin = false
       else
-        organization = Organization.create!
-        account = Account.create!
-        OrganizationAccount.create!(organization_id: organization.id, account_id: account.id)
-        org_id = organization.id
+        Organization.with_headers("pad-user-id" => "IAM_SYSTEM") do
+          organization = Organization.create!
+        end
+        Account.with_headers("pad-user-id" => "IAM_SYSTEM") do
+          account = Account.create!
+          OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
+            OrganizationAccount.create!(organization_id: organization.id, account_id: account.id)
+            org_id = organization.id
+          end
+        end
         is_account_admin = true
       end
 
@@ -72,12 +84,13 @@ class DemoUserSeeder
       @account_org_map[account.id] = org_id
     end
 
-    user = User.create!(
-      email: "user#{SecureRandom.hex(4)}@example.com",
-      account_id: account.id
-    )
-
-    CapabilityGranter.new(user, account.id, org_id, is_account_admin).grant!
+    User.with_headers("pad-user-id" => "IAM_SYSTEM") do
+      user = User.create!(
+        email: "user#{SecureRandom.hex(4)}@example.com",
+        account_id: account.id
+      )
+      CapabilityGranter.new(user, account.id, org_id, is_account_admin).grant!
+    end
   end
 
   def reuse_existing_account?
@@ -89,4 +102,4 @@ class DemoUserSeeder
   end
 end
 
-DemoUserSeeder.new(count: 1000).seed!
+DemoUserSeeder.new(count: 1_000_000).seed!

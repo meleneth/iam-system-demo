@@ -10,6 +10,7 @@ services:
       - RAILS_MAX_THREADS=5
       - RAILS_MIN_THREADS=5
       - ACCOUNT_SERVICE_API_BASE_URL=http://account-service:80
+      - RAILS_SECRET_KEY_BASE=${AUTHORIZATION_RAILS_SECRET_KEY_BASE}
     build:
       context: "./authorization-service"
     depends_on:

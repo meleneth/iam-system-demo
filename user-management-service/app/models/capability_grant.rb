@@ -22,4 +22,11 @@ class CapabilityGrant < ActiveResource::Base
   self.collection_name = "capability_grants"
 
   # Optional: handle nested resources, errors, etc.
+  def self.with_headers(temp_headers)
+    old_headers = headers.dup
+    self.headers.merge!(temp_headers)
+    yield
+  ensure
+    self.headers.replace(old_headers)
+  end
 end

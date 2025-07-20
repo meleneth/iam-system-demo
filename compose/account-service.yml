@@ -13,6 +13,7 @@ services:
       - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
       - USER_SERVICE_API_BASE_URL=http://user-service:80
       - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
+      - RAILS_SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
     build:
       context: "./account-service"
     depends_on:
