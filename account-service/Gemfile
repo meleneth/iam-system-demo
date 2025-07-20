@@ -59,3 +59,5 @@ gem "awesome_print", "~> 1.9"
 gem "activeresource", "~> 6.1"
 
 gem "faraday", "~> 2.13"
+
+gem "aws-sdk-sqs", "~> 1.96"

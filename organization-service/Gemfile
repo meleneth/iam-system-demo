@@ -57,3 +57,5 @@ gem "rspec-rails", "~> 8.0"
 gem "activeresource", "~> 6.1"
 
 gem "faraday", "~> 2.13"
+
+gem "aws-sdk-sqs", "~> 1.96"

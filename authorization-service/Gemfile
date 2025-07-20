@@ -55,3 +55,5 @@ gem "opentelemetry-exporter-otlp", "~> 0.30.0"
 gem "graphql", "~> 2.5"
 
 gem "activeresource", "~> 6.1"
+
+gem "aws-sdk-sqs", "~> 1.96"
