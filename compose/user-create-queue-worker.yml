@@ -1,0 +1,28 @@
+services:
+  user-create-service-worker: &user-create-service-worker
+    image: parent_account_id/user-service
+    command: ["./bin/rails", "runner", "UserCreateQueueWorker.new.run"]
+    environment:
+      - USER_SEED_QUEUE_URL=http://eventstream:4566/000000000000/user_create
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+      - AWS_REGION=us-east-1
+      - DATABASE_URL=${USER_DB_DATABASE_URL}
+      - RAILS_ENV=test
+      - RAILS_MAX_THREADS=5
+      - RAILS_MIN_THREADS=5
+      - RAILS_SECRET_KEY_BASE=${USER_RAILS_SECRET_KEY_BASE}
+    depends_on:
+      - eventstream
+      - user-service
+  user-create-service-worker-1:
+    <<: *user-create-service-worker
+  user-create-service-worker-2:
+    <<: *user-create-service-worker
+  user-create-service-worker-3:
+    <<: *user-create-service-worker
+  user-create-service-worker-4:
+    <<: *user-create-service-worker
+  user-create-service-worker-5:
+    <<: *user-create-service-worker
+

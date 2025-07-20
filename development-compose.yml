@@ -46,3 +46,6 @@ include:
 - path: "./compose/user-management-service.yml"
   project_directory: "./"
   env_file: "./development.env"
+- path: "./compose/user-create-queue-worker.yml"
+  project_directory: "./"
+  env_file: "./development.env"
