@@ -38,14 +38,7 @@ class AccountCreateQueueWorker
   end
 
   def process(msg)
-    raw = JSON.parse(msg.body)
-    body = false
-
-    if raw["Type"] == "Notification" && raw["Message"]
-      body = JSON.parse(raw["Message"])
-    else
-      body = raw
-    end
+    body = AwsMessage.unwrap(msg)
 
     unless body["type"] == "demo.user.create"
       puts "[account-create-queue-worker] unknown type: #{body["type"]}"
@@ -56,21 +49,22 @@ class AccountCreateQueueWorker
     account_id = account_data["id"]
     parent_account_id = account_data["parent_account_id"]
 
-    account = account.find_by(id: account_id)
+    account = Account.find_by(id: account_id)
     if account
-      puts "[account-create-queue-worker] already exists: #{email}"
+      puts "[account-create-queue-worker] already exists: #{account_id}"
     else
-      account = account.create!(
+      account = Account.create!(
         id: account_id,
-        parent_account_id: parent_account_id
+        parent_account_id: parent_account_id || nil
       )
-      puts "[account-create-queue-worker] created: #{email} (account_id=#{account.id})"
+      puts "[account-create-queue-worker] created: account_id=#{account.id}"
     end
 
     delete(msg)
   rescue => e
     puts "[account-create-queue-worker] error processing message: #{e.class}: #{e.message}"
     puts e.backtrace.join("\n")
+    ap body
     # Optionally send to DLQ or log error
   end
 
@@ -81,3 +75,15 @@ class AccountCreateQueueWorker
     )
   end
 end
+
+class AwsMessage
+  def self.unwrap(sqs_message)
+    outer = JSON.parse(sqs_message.body)
+    if outer.is_a?(Hash) && outer['Type'] == 'Notification' && outer['Message']
+      JSON.parse(outer['Message'])
+    else
+      outer
+    end
+  end
+end
+

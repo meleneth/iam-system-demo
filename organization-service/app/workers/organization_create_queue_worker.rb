@@ -38,14 +38,7 @@ class OrganizationCreateQueueWorker
   end
 
   def process(msg)
-    raw = JSON.parse(msg.body)
-    body = false
-
-    if raw["Type"] == "Notification" && raw["Message"]
-      body = JSON.parse(raw["Message"])
-    else
-      body = raw
-    end
+    body = AwsMessage.unwrap(msg)
 
     unless body["type"] == "demo.user.create"
       puts "[organization-create-queue-worker] unknown type: #{body["type"]}"
@@ -60,7 +53,7 @@ class OrganizationCreateQueueWorker
     if organization
       puts "[organization-create-queue-worker] already exists: #{organization_id}"
     else
-      organization = organization.create!(id: organization_id)
+      organization = Organization.create!(id: organization_id)
       puts "[organization-create-queue-worker] created: organization_id=#{organization.id}"
     end
 
@@ -89,3 +82,15 @@ class OrganizationCreateQueueWorker
     )
   end
 end
+
+class AwsMessage
+  def self.unwrap(sqs_message)
+    outer = JSON.parse(sqs_message.body)
+    if outer.is_a?(Hash) && outer['Type'] == 'Notification' && outer['Message']
+      JSON.parse(outer['Message'])
+    else
+      outer
+    end
+  end
+end
+

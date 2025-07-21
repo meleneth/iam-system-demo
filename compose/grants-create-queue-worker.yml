@@ -15,14 +15,24 @@ services:
     depends_on:
       - eventstream
       - authorization-service
-  grants-create-service-worker-1:
+  grants-create-service-worker-01:
     <<: *grants-create-service-worker
-  grants-create-service-worker-2:
+  grants-create-service-worker-02:
     <<: *grants-create-service-worker
-  grants-create-service-worker-3:
+  grants-create-service-worker-03:
     <<: *grants-create-service-worker
-  grants-create-service-worker-4:
+  grants-create-service-worker-04:
     <<: *grants-create-service-worker
-  grants-create-service-worker-5:
+  grants-create-service-worker-05:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-06:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-07:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-08:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-09:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-10:
     <<: *grants-create-service-worker
 

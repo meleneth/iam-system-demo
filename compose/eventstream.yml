@@ -1,6 +1,10 @@
 ---
 services:
   eventstream:
-    image: localstack/localstack:4.6.0
+    image: admiralpiett/goaws:v0.5.3
     ports:
     - "${EVENTSTREAM_WEB_PORT}:4566"
+    volumes:
+      - ./eventstream/goaws.yaml:/app/conf/goaws.yaml:ro
+    command: ["Local", "-debug", "-config", "/app/conf/goaws.yaml"]
+

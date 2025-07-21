@@ -57,3 +57,5 @@ gem "graphql", "~> 2.5"
 gem "activeresource", "~> 6.1"
 
 gem "aws-sdk-sqs", "~> 1.96"
+
+gem "awesome_print", "~> 1.9"
