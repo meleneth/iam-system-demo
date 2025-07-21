@@ -1,0 +1,28 @@
+services:
+  grants-create-service-worker: &grants-create-service-worker
+    image: parent_account_id/authorization-service
+    command: ["./bin/rails", "runner", "GrantsCreateQueueWorker.new.run"]
+    environment:
+      - GRANTS_SEED_QUEUE_URL=http://eventstream:4566/000000000000/grants_create
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+      - AWS_REGION=us-east-1
+      - DATABASE_URL=${AUTHZ_DB_DATABASE_URL}
+      - RAILS_ENV=test
+      - RAILS_MAX_THREADS=5
+      - RAILS_MIN_THREADS=5
+      - RAILS_SECRET_KEY_BASE=${AUTHORIZATION_RAILS_SECRET_KEY_BASE}
+    depends_on:
+      - eventstream
+      - authorization-service
+  grants-create-service-worker-1:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-2:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-3:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-4:
+    <<: *grants-create-service-worker
+  grants-create-service-worker-5:
+    <<: *grants-create-service-worker
+

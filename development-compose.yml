@@ -1,5 +1,5 @@
 ---
-name: generate-development
+name: gd
 include:
 - path: "./compose/authcache.yml"
   project_directory: "./"
@@ -46,6 +46,15 @@ include:
 - path: "./compose/user-management-service.yml"
   project_directory: "./"
   env_file: "./development.env"
+- path: "./compose/organization-create-queue-worker.yml"
+  project_directory: "./"
+  env_file: "./development.env"
+- path: "./compose/account-create-queue-worker.yml"
+  project_directory: "./"
+  env_file: "./development.env"
 - path: "./compose/user-create-queue-worker.yml"
+  project_directory: "./"
+  env_file: "./development.env"
+- path: "./compose/grants-create-queue-worker.yml"
   project_directory: "./"
   env_file: "./development.env"

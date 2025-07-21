@@ -1,5 +1,5 @@
 ---
-name: generate-test
+name: gt
 include:
 - path: "./compose/authcache.yml"
   project_directory: "./"

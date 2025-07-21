@@ -3,11 +3,11 @@
 require 'aws-sdk-sqs'
 require 'json'
 
-class UserCreateQueueWorker
+class AccountCreateQueueWorker
   POLL_INTERVAL = 1 # seconds
   MAX_MESSAGES = 10
 
-  def initialize(queue_url: "http://eventstream:4566/000000000000/user_create")
+  def initialize(queue_url: "http://eventstream:4566/000000000000/account_create")
     @sqs = Aws::SQS::Client.new(
       region: 'us-east-1',
       endpoint: 'http://eventstream:4566',
@@ -18,7 +18,7 @@ class UserCreateQueueWorker
   end
 
   def run
-    puts "[user-queue-worker] starting loop on #{@queue_url}"
+    puts "[account-create-queue-worker] starting loop on #{@queue_url}"
     loop do
       resp = @sqs.receive_message(
         queue_url: @queue_url,
@@ -47,32 +47,29 @@ class UserCreateQueueWorker
       body = raw
     end
 
-
     unless body["type"] == "demo.user.create"
-      puts "[user-queue-worker] unknown type: #{body["type"]}"
+      puts "[account-create-queue-worker] unknown type: #{body["type"]}"
       return delete(msg)
     end
 
-    user_data = body["user"]
-    email     = user_data["email"]
-    account_id = user_data["account_id"]
-    user_id = user_data["id"]
+    account_data = body["account"]
+    account_id = account_data["id"]
+    parent_account_id = account_data["parent_account_id"]
 
-    user = User.find_by(id: user_id)
-    if user
-      puts "[user-queue-worker] already exists: #{email}"
+    account = account.find_by(id: account_id)
+    if account
+      puts "[account-create-queue-worker] already exists: #{email}"
     else
-      user = User.create!(
-        id: user_id,
-        email: email,
-        account_id: account_id
+      account = account.create!(
+        id: account_id,
+        parent_account_id: parent_account_id
       )
-      puts "[user-queue-worker] created: #{email} (user_id=#{user.id})"
+      puts "[account-create-queue-worker] created: #{email} (account_id=#{account.id})"
     end
 
     delete(msg)
   rescue => e
-    puts "[user-queue-worker] error processing message: #{e.class}: #{e.message}"
+    puts "[account-create-queue-worker] error processing message: #{e.class}: #{e.message}"
     puts e.backtrace.join("\n")
     # Optionally send to DLQ or log error
   end

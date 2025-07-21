@@ -1,0 +1,33 @@
+services:
+  account-create-service-worker: &account-create-service-worker
+    image: parent_account_id/account-service
+    command: ["./bin/rails", "runner", "AccountCreateQueueWorker.new.run"]
+    environment:
+      - ACCOUNT_SEED_QUEUE_URL=http://eventstream:4566/000000000000/account_create
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+      - AWS_REGION=us-east-1
+      - DATABASE_URL=${ACCOUNT_DB_DATABASE_URL}
+      - RAILS_ENV=test
+      - RAILS_MAX_THREADS=5
+      - RAILS_MIN_THREADS=5
+      - RAILS_SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
+      - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
+      - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
+      - USER_SERVICE_API_BASE_URL=http://user-service:80
+      - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
+      - RAILS_SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
+    depends_on:
+      - eventstream
+      - account-service
+  account-create-service-worker-1:
+    <<: *account-create-service-worker
+  account-create-service-worker-2:
+    <<: *account-create-service-worker
+  account-create-service-worker-3:
+    <<: *account-create-service-worker
+  account-create-service-worker-4:
+    <<: *account-create-service-worker
+  account-create-service-worker-5:
+    <<: *account-create-service-worker
+

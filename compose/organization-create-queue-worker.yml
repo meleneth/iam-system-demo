@@ -1,0 +1,30 @@
+services:
+  organization-create-service-worker: &organization-create-service-worker
+    image: parent_account_id/organization-service
+    command: ["./bin/rails", "runner", "OrganizationCreateQueueWorker.new.run"]
+    environment:
+      - ORGANIZATION_SEED_QUEUE_URL=http://eventstream:4566/000000000000/organization_create
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+      - AWS_REGION=us-east-1
+      - DATABASE_URL=${ORGANIZATION_DB_DATABASE_URL}
+      - RAILS_ENV=test
+      - RAILS_MAX_THREADS=5
+      - RAILS_MIN_THREADS=5
+      - RAILS_SECRET_KEY_BASE=${ORGANIZATION_RAILS_SECRET_KEY_BASE}
+      - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
+      - USER_SERVICE_API_BASE_URL=http://user-service:80
+    depends_on:
+      - eventstream
+      - organization-service
+  organization-create-service-worker-1:
+    <<: *organization-create-service-worker
+  organization-create-service-worker-2:
+    <<: *organization-create-service-worker
+  organization-create-service-worker-3:
+    <<: *organization-create-service-worker
+  organization-create-service-worker-4:
+    <<: *organization-create-service-worker
+  organization-create-service-worker-5:
+    <<: *organization-create-service-worker
+
