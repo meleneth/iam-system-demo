@@ -89,6 +89,7 @@ class DemoUserSeeder
       if create_child_account?
         parent = @existing_accounts.values.sample
         @account = { id: SecureRandom.uuid, parent_account_id: parent[:id] }
+        @existing_accounts[@account[:id]] = @account
       else
         @is_account_admin = true
         @account = { id: SecureRandom.uuid }
