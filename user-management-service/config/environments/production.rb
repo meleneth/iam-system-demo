@@ -90,5 +90,5 @@ Rails.application.configure do
   config.require_master_key = false
   config.hosts << "user-management-service"
   config.hosts << "thinktank.sectorfour"
-  config.hosts << "moxie.secitorfour"
+  config.hosts << "moxie.sectorfour"
 end

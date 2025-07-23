@@ -11,36 +11,47 @@ Every account will have an Organization.
 
 ./dc_test, ./dc_dev, and ./dc_prod are docker compose helpers
 
-./dc_test build
-./dc_test up -d
-# makes 1 million users, 3 hours on my box
-./dc_test run user-management-service bin/rails runner scripts/demo_user_seeder.rb
-./dc_test run account-service bin/rails runner scripts/account_cte_query.rb
+    ./dc_test build
+
+    ./dc_test up -d
+
+makes 1 million users, 3 hours on my box
+
+    ./dc_test run user-management-service bin/rails runner scripts/demo_user_seeder.rb
+
+    ./dc_test run account-service bin/rails runner scripts/account_cte_query.rb
 
 Service / Database layout:
+
 numbers after service names are the ports for test, dev, and production respectively
 
 user-management-service: 11090, 11230,
+
 the UI that users have access to.
+
 /accounts/#{account_id}?as=IAM_SYSTEM will show 'the information' for that account with no auth checks.  if as has a user_id, that user's permission will be checked.
 
 organization-service: , 11250
+
 Organization id, name
+
 OrganizationAccount id, organization_id, account_id
 
 account-service: 11100, 11230, 
+
 Account: id, name, parent_account_id
+
 scripts/account_cte_query.rb
 
 user-service: 11090, 11220,
+
 User: id, email, account_id, a lot of other fields (all nil)
 
 authorization-service: 11110, 11240
 
 jaeger: 11030, 11160
+
 this shows the spans that the system generates via OpenTelemetry as things happen
-
-
 
 Implementation notes, for me:
 <http://thinktank.sectorfour:8500/accounts/21881390-6912-401b-b33d-0cd74b3d08be?as=d918855f-4a53-4866-a8af-058a40876170>
