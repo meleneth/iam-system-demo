@@ -28,6 +28,10 @@ full_sql = <<~SQL
   FROM account_hierarchy
 SQL
 
+puts "--- Full Query SQL ---"
+puts full_sql
+puts "--- End Full Query SQL ---"
+
 results =  ActiveRecord::Base.connection.execute(full_sql).map { |row| row }
 ap results.last(10)
 
@@ -41,14 +45,14 @@ OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
   org_id = org_account.organization_id
 end
 
-puts "Fetching CapabilityGrant"
-CapabilityGrant.with_headers("pad-user-id" => "IAM_SYSTEM") do
-  grant = CapabilityGrant.find(:first, params: {
-      permission: "organization.accounts.create",
-      scope_type: "Organization",
-      scope_id: org_id
-  })
-  puts "User id for org account admin is #{grant.user_id}"
-  puts "http://moxie.sectorfour:7500/accounts/#{last_result["id"]}?as=#{grant.user_id}"
-end
+puts "not Fetching CapabilityGrant, it would take down the service"
+#CapabilityGrant.with_headers("pad-user-id" => "IAM_SYSTEM") do
+#  grant = CapabilityGrant.find(:first, params: {
+#      permission: "organization.accounts.create",
+#      scope_type: "Organization",
+#      scope_id: org_id
+#  })
+#  puts "User id for org account admin is #{grant.user_id}"
+#  puts "http://moxie.sectorfour:7500/accounts/#{last_result["id"]}?as=#{grant.user_id}"
+#end
 
