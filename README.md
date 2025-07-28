@@ -24,6 +24,7 @@ makes 1 million users, 3 hours on my box
     ./dc_test run account-service bin/rails runner scripts/account_cte_query.rb
 
 User seeder SQS message format:
+
     {
       type: "demo.user.create",
       index: integer, # unused
