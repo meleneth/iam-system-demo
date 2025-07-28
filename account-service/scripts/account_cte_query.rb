@@ -43,16 +43,36 @@ org_id = nil
 OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
   org_account = OrganizationAccount.find(:first, params: {account_id: last_result["id"]})
   org_id = org_account.organization_id
+  puts "Looked up #{org_account.account_id} got #{org_account.organization_id}"
 end
 
-puts "not Fetching CapabilityGrant, it would take down the service"
-#CapabilityGrant.with_headers("pad-user-id" => "IAM_SYSTEM") do
-#  grant = CapabilityGrant.find(:first, params: {
-#      permission: "organization.accounts.create",
-#      scope_type: "Organization",
-#      scope_id: org_id
-#  })
-#  puts "User id for org account admin is #{grant.user_id}"
-#  puts "http://moxie.sectorfour:7500/accounts/#{last_result["id"]}?as=#{grant.user_id}"
-#end
+organization = nil
+Organization.with_headers("pad-user-id" => "IAM_SYSTEM") do
+  organization = Organization.find(org_id)
+end
 
+puts "Found Organization #{organization.id}"
+
+accounts = []
+Organization.with_headers("pad-user-id" => "IAM_SYSTEM") do
+  OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
+    accounts = organization.accounts
+  end
+end
+
+toplevel_accounts = accounts.filter { |account| account.parent_account_id == nil}
+
+def find_admin_user(organization, toplevel_accounts)
+  User.with_headers("pad-user-id" => "IAM_SYSTEM") do
+    toplevel_accounts.each do |account|
+      puts "Checking account #{account.id}"
+      account.users.each do |user|
+        return user if user.can( "Organization", "organization.accounts.create", organization.id)
+      end
+    end
+  end
+end
+
+admin_user = find_admin_user(organization, toplevel_accounts)
+puts "Admin user is #{admin_user.id}"
+puts "go to /accounts/#{last_result["id"]}?as=#{admin_user.id}"

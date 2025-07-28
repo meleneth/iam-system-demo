@@ -9,6 +9,10 @@ class Account < ApplicationRecord
   before_validation :assign_default_name, on: :create
   filterable_fields :id
 
+  def users
+    User.where(account_id: id)
+  end
+
   private
 
   def assign_default_name

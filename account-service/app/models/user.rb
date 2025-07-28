@@ -13,6 +13,15 @@ class User < ActiveResource::Base
   self.collection_name = "users"
 
   # Optional: handle nested resources, errors, etc.
+  #
+  def self.with_headers(temp_headers)
+    old_headers = headers.dup
+    self.headers.merge!(temp_headers)
+    yield
+  ensure
+    self.headers.replace(old_headers)
+  end
+
   def can(scope_type, permission, scope_id)
     scope_ids = Array(scope_id)
     query_string = URI.encode_www_form(scope_ids.map { |id| ["scope_id[]", id] })
