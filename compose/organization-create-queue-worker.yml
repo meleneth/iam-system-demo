@@ -23,8 +23,4 @@ services:
     <<: *organization-create-service-worker
   organization-create-service-worker-3:
     <<: *organization-create-service-worker
-  organization-create-service-worker-4:
-    <<: *organization-create-service-worker
-  organization-create-service-worker-5:
-    <<: *organization-create-service-worker
 

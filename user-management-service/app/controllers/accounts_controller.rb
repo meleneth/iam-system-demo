@@ -22,7 +22,10 @@ class AccountsController < ApplicationController
       org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
     end
 
-    @organization_accounts = fetch_accounts_async(org_accounts.map(&:account_id))
+    #@organization_accounts = fetch_accounts_async(org_accounts.map(&:account_id))
+    Account.with_headers('pad-user-id' => @as_user_id) do
+      @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
+    end
     @users = User.find(:all, params: { account_id: @account.id})
   end
 

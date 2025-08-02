@@ -6,6 +6,17 @@ class AccountsController < ApplicationController
     filters = params.slice(*Account.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = Account.where(*filters)
+
+    pad_user_id = request.headers['HTTP_PAD_USER_ID']
+    if pad_user_id == "IAM_SYSTEM"
+      OpenTelemetry::Trace.current_span.add_event("Skipping auth for system user")
+    else
+      OpenTelemetry::Trace.current_span.add_event("Checking auth for user #{pad_user_id}")
+      results.each do |account|
+        raise "no authorization for #{pad_user_id} account.read #{account.id}" unless User.user_can(pad_user_id, "Account", "account.read",  account.id)
+      end
+    end
+
     render json: results
   end
 
@@ -20,11 +31,22 @@ class AccountsController < ApplicationController
       raise "no authorization for #{pad_user_id} account.read #{account_id}" unless user.can("Account", "account.read",  account_id)
     end
 
+    cache_key = "account_with_parents:#{account_id}"
+
+    if cached = ACCOUNT_CACHE.get(cache_key)
+      OpenTelemetry::Trace.current_span.add_event("Fetching cached account_with_parents SUCCESS!")
+      return render json: JSON.parse(cached)
+    end
+
+    OpenTelemetry::Trace.current_span.add_event("Fetching account_with_parents failed, doing it the slow way")
+
     account = Account.find(account_id)
     org_accounts = false
+    org_key_set = ""
     OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
       org_account = OrganizationAccount.find(:first, params: { account_id: account.id })
       org_accounts = OrganizationAccount.find(:all, params: { organization_id: org_account.organization_id })
+      org_key_set = "dev:org_cachekeys:#{org_account.organization_id}"
     end
     seed_ids = org_accounts.map(&:account_id)
 
@@ -64,11 +86,23 @@ class AccountsController < ApplicationController
     results =  ActiveRecord::Base.connection.execute(final_sql).to_a
     results << account
 
+    ACCOUNT_CACHE.set(cache_key, results.to_json, ex: 300) # optional TTL
+    # Register this cache key for the org so we can later bulk delete
+    ACCOUNT_CACHE.sadd(org_key_set, cache_key)
+
     render json: results
   end
 
   # GET /accounts/1
   def show
+    pad_user_id = request.headers['HTTP_PAD_USER_ID']
+    raise "Must pass a pad-user-id header" unless pad_user_id
+    if pad_user_id == "IAM_SYSTEM"
+      OpenTelemetry::Trace.current_span.add_event("Skipping auth for system user")
+    else
+      OpenTelemetry::Trace.current_span.add_event("Checking auth for user #{pad_user_id}")
+      raise "no authorization for #{pad_user_id} account.read #{@account.id}" unless User.user_can(pad_user_id, "Account", "account.read",  @account.id)
+    end
     render json: @account
   end
 

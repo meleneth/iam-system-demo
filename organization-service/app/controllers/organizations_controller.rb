@@ -1,9 +1,13 @@
 class OrganizationsController < ApplicationController
   before_action :set_organization, only: %i[ show update destroy ]
+  before_action :require_filters, only: [ :index ]
 
   # GET /organizations
   def index
-    @organizations = Organization.all
+    filters = params.slice(*Organization.allowed_filters).permit!
+    raise BadFilterError unless filters.present?
+
+    results = Organization.where(*filters)
 
     render json: @organizations
   end
@@ -58,4 +62,11 @@ class OrganizationsController < ApplicationController
     def organization_params
       params.fetch(:organization, {})
     end
+
+  def require_filters
+    if params.slice(*Organization.allowed_filters).blank?
+      render json: { error: "Filter required" }, status: 400
+    end
+  end
+
 end

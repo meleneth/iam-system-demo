@@ -4,6 +4,9 @@
 
 class Organization < ApplicationRecord
   before_validation :assign_default_name, on: :create
+  include Mel::Filterable
+
+  filterable_fields :id
 
   private
 
