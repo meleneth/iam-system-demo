@@ -1,6 +1,6 @@
 ---
 services:
-  account-service:
+  account-service: &account-service-template
     image: parent_account_id/account-service
     ports:
       - "${ACCOUNT_SERVICE_WEB_PORT}:3000"
@@ -19,3 +19,8 @@ services:
       account-db:
         condition: service_healthy
         restart: true
+  account-auth-service:
+    <<: *account-service-template
+    ports:
+      - "${ACCOUNT_AUTH_SERVICE_WEB_PORT}:3000"
+
