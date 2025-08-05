@@ -34,5 +34,20 @@ class Account < ActiveResource::Base
     data.map { |attrs| new(attrs) }
   end
 
+  def self.with_parents_batch(account_ids)
+    query_string = URI.encode_www_form(account_ids.map { |id| ['account_ids[]', id] })
+    path = "/accounts_with_parents.json?#{query_string}"
+
+    raw = connection.get(path, headers)
+
+    data = ActiveSupport::JSON.decode(raw.body)
+
+    # Expecting: [[account1_attrs, parent1_attrs...], [...], ...]
+    data.map do |account_group|
+      account_group.map { |attrs| new(attrs) }
+    end
+  end
+
+
   # Optional: handle nested resources, errors, etc.
 end

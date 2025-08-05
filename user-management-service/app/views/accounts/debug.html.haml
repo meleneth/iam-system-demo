@@ -1,0 +1,11 @@
+Lets see multiple account hierarchies!
+= @accounts_to_load
+%ul
+  - @hierarchies[0].each do |account|
+    %li= account.id
+
+%hr
+
+%ul
+  - @hierarchies[1].each do |account|
+    %li= account.id

@@ -8,30 +8,26 @@ class CanController < ApplicationController
     user_id = request.headers["HTTP_PAD_USER_ID"]
 
     if user_id == "IAM_SYSTEM"
-      # System user bypasses all checks
       return head :ok
     end
     authorized = false
 
     case scope_type
     when "Account"
-      accounts_to_check = Array(scope_id)
-      user_grants_key = cached_user_grants(user_id, permission)
-
-      all_accounts_authorized = accounts_to_check.all? do |account_to_check|
-        authorized = false
-        Account.with_headers("pad-user-id" => "IAM_SYSTEM") do
-          Account.with_parents(account_to_check).each do |account|
-            if AUTHORIZATION_CACHE.sismember(user_grants_key, account.id)
-              authorized = true
-              break
-            end
-          end
-        end
-        authorized
+      hierarchies = nil
+      Account.with_headers("pad-user-id" => "IAM_SYSTEM") do
+        hierarchies = Account.with_parents_batch(scope_id) # returns [[Account, Account...], ...]
       end
 
-      return head :ok if all_accounts_authorized
+      checker = Authorization::AccountGrantChecker.new(
+        user_id: user_id,
+        permission: permission,
+        redis: AUTHORIZATION_CACHE
+      )
+
+      if checker.authorized_for_all?(hierarchies)
+        authorized = true
+      end
     when "Organization"
       # No hierarchy, just one org
       authorized = CapabilityGrant.exists?(
@@ -58,20 +54,3 @@ class CanController < ApplicationController
     end
   end
 end
-
-private
-
-def cached_user_grants(user_id, permission)
-  key = "user_grants:#{user_id}:#{permission}"
-  unless AUTHORIZATION_CACHE.exists?(key)
-    scope_ids = CapabilityGrant.where(
-      user_id: user_id,
-      permission: permission,
-      scope_type: "Account"
-    ).pluck(:scope_id)
-    AUTHORIZATION_CACHE.sadd(key, scope_ids) unless scope_ids.empty?
-    AUTHORIZATION_CACHE.expire(key, 300)
-  end
-  key
-end
-
