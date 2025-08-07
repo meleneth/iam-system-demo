@@ -17,14 +17,13 @@ class OrganizationAccountsController < ApplicationController
     raise "no pad-user-id header sent" unless pad_user_id
 
     if pad_user_id != "IAM_SYSTEM"
-      user = User.find(pad_user_id)
       if filters[:organization_id]
-        unless user.can("Organization", "organization.accounts.read",  filters[:organization_id])
+        unless User.user_can(pad_user_id, "Organization", "organization.accounts.read",  filters[:organization_id])
           raise "no authorization for #{pad_user_id} organization.accounts.read #{filters[:organization_id]}"
         end
       end
       if filters[:account_id]
-        unless user.can("Account", "account.read",  filters[:account_id])
+        unless User.user_can(pad_user_id, "Account", "account.read",  filters[:account_id])
           raise "no authorization for #{pad_user_id} account.read #{filters[:account_id]}"
         end
       end

@@ -26,8 +26,7 @@ class AccountsController < ApplicationController
 
     pad_user_id = request.headers['HTTP_PAD_USER_ID']
     if pad_user_id != "IAM_SYSTEM"
-      user = User.find(pad_user_id)
-      raise "no authorization for #{pad_user_id} account.read #{account_id}" unless user.can("Account", "account.read",  account_id)
+      raise "no authorization for #{pad_user_id} account.read #{account_id}" unless User.user_can(pad_user_id, "Account", "account.read",  account_id)
     end
 
     render json: results
