@@ -28,7 +28,45 @@ class OrganizationAccountsController < ApplicationController
         end
       end
     end
+    results = OrganizationAccount.where(filters)
+
+    render json: results
+  end
+
+  def for_account
+    filters = params.slice(:account_id).permit!
+
+    pad_user_id = request.headers["HTTP_PAD_USER_ID"]
+    raise "no pad-user-id header sent" unless pad_user_id
+
+    if pad_user_id != "IAM_SYSTEM"
+      if filters[:account_id]
+        unless User.user_can(pad_user_id, "Account", "account.read",  filters[:account_id])
+          raise "no authorization for #{pad_user_id} account.read #{filters[:account_id]}"
+        end
+      end
+    end
+
     results = OrganizationAccount.where(*filters)
+
+    organization_id = results[0].organization_id
+
+    raise "Cannot load multiple organizations in the same request" if results.any? {|r| r.organization_id != organization_id}
+
+    filters = {organization_id: organization_id}
+
+    cache_key = "accounts_by_organization:#{organization_id}"
+    if cached = ORGANIZATION_CACHE.get(cache_key)
+      results = JSON.parse(cached)
+    else
+      results = OrganizationAccount.where(filters)
+      ORGANIZATION_CACHE.set(cache_key, results.to_json, ex: 300) # optional TTL
+    end
+
+    results = {
+      organization_id: organization_id,
+      accounts: results
+    }
 
     render json: results
   end

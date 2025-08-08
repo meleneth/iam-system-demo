@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
+  get "organization_accounts/for", to: "organization_accounts#for_account"
+
   resources :organization_accounts
   resources :organizations
+
   post "/graphql", to: "graphql#execute"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
