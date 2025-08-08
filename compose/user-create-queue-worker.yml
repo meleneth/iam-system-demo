@@ -11,7 +11,7 @@ services:
       - RAILS_ENV=test
       - RAILS_MAX_THREADS=5
       - RAILS_MIN_THREADS=5
-      - RAILS_SECRET_KEY_BASE=${USER_RAILS_SECRET_KEY_BASE}
+      - SECRET_KEY_BASE=${USER_RAILS_SECRET_KEY_BASE}
     depends_on:
       - eventstream
       - user-service

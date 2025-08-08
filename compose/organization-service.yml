@@ -11,7 +11,7 @@ services:
       - RAILS_MIN_THREADS=5
       - USER_SERVICE_API_BASE_URL=http://user-service:80
       - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
-      - RAILS_SECRET_KEY_BASE=${ORGANIZATION_RAILS_SECRET_KEY_BASE}
+      - SECRET_KEY_BASE=${ORGANIZATION_RAILS_SECRET_KEY_BASE}
     build:
       context: "./organization-service"
     depends_on:
