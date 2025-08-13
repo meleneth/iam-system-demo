@@ -2,7 +2,7 @@
 
 # app/models/organization.rb
 class OrganizationAccount < ActiveResource::Base
-  self.site = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
+  self.site = Env::ORGANIZATION_SERVICE_API_BASE_URL # e.g., http://user-service:3000/
   self.format = :json
 
   # Optional: if the resource uses UUIDs instead of integers
@@ -22,6 +22,23 @@ class OrganizationAccount < ActiveResource::Base
     yield
   ensure
     self.headers.replace(old_headers)
+  end
+
+  def self.account_ids_for_organization_by_account_id(account_id)
+    raise "One account_id only please" if account_id.is_a? Array
+    # TODO FIXME SECURITY - account_id is passed to us as a url param, SANITIZE IT
+    url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_id/#{account_id}"
+
+    pad_user_id = headers["pad-user-id"]
+    response = Faraday.get(url) do |req|
+      req.headers["pad-user-id"] = pad_user_id
+    end
+
+    raise "Failed to get org accounts for account_id #{account_id}" unless response.status == 200
+
+    data = JSON.parse(response.body, symbolize_names: true)
+    data[:organization] = Organization.new(data[:organization])
+    return data
   end
 
 end

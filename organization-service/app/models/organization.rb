@@ -8,6 +8,10 @@ class Organization < ApplicationRecord
 
   filterable_fields :id
 
+  def accounts
+    OrganizationAccount.where(organization_id: id)
+  end
+
   private
 
   def assign_default_name

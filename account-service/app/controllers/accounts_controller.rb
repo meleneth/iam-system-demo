@@ -106,12 +106,13 @@ class AccountsController < ApplicationController
       org_accounts = false
       org_key_set = ""
 
+      seed_ids = []
       OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
-        organization_id, org_accounts = OrganizationAccount.for_account(account_id)
-        org_key_set = "org_cachekeys:#{organization_id}"
+        response = OrganizationAccount.account_ids_for_organization_by_account_id(account.id)
+        organization = response[:organization]
+        seed_ids = response[:account_ids]
+        org_key_set = "org_cachekeys:#{organization.id}"
       end
-
-      seed_ids = org_accounts.map(&:account_id)
 
       accounts = Arel::Table.new(:accounts)
 

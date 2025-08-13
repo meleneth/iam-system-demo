@@ -134,6 +134,12 @@ GEM
     erubis (2.7.0)
     et-orbi (1.2.11)
       tzinfo
+    faraday (2.13.4)
+      faraday-net_http (>= 2.0, < 3.5)
+      json
+      logger
+    faraday-net_http (3.4.1)
+      net-http (>= 0.5.0)
     fiber-annotation (0.2.0)
     fiber-local (1.1.0)
       fiber-storage
@@ -224,6 +230,8 @@ GEM
     mini_mime (1.1.5)
     minitest (5.25.5)
     msgpack (1.8.0)
+    net-http (0.6.0)
+      uri
     net-imap (0.5.9)
       date
       net-protocol
@@ -655,6 +663,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   debug
+  faraday (~> 2.13)
   graphiql-rails
   graphql (~> 2.5)
   haml-rails (~> 2.1)

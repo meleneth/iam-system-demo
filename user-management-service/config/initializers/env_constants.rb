@@ -1,0 +1,7 @@
+# config/initializers/env_constants.rb
+
+module Env
+#  AUTHORIZATION_SERVICE_API_BASE_URL = ENV.fetch("AUTHORIZATION_SERVICE_API_BASE_URL")
+  ORGANIZATION_SERVICE_API_BASE_URL = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL", "http://organization-service:80")
+end
+

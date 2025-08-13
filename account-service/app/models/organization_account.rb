@@ -24,23 +24,21 @@ class OrganizationAccount < ActiveResource::Base
     self.headers.replace(old_headers)
   end
 
-  def self.for_account(account_id)
-    account_ids = Array(account_id)
-    query_string = URI.encode_www_form(account_ids.map { |id| ["account_id[]", id] })
+  def self.account_ids_for_organization_by_account_id(account_id)
+    raise "One account_id only please" if account_id.is_a? Array
+    # TODO FIXME SECURITY - account_id is passed to us as a url param, SANITIZE IT
+    url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_id/#{account_id}"
 
-    url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_accounts/for?#{query_string}"
-
+    pad_user_id = headers["pad-user-id"]
     response = Faraday.get(url) do |req|
-      req.headers.update(headers)
+      req.headers["pad-user-id"] = pad_user_id
     end
 
-    unless response.success?
-      raise "Organization service returned #{response.status}: #{response.body}"
-    end
+    raise "Failed to get org accounts for account_id #{account_id}" unless response.status == 200
 
     data = JSON.parse(response.body, symbolize_names: true)
-
-    return data[:organization_id], data[:accounts].map { |attrs| new(attrs) }
+    data[:organization] = Organization.new(data[:organization])
+    return data
   end
 
 end

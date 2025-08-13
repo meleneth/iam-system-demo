@@ -53,19 +53,19 @@ class OrganizationAccountsController < ApplicationController
 
     raise "Cannot load multiple organizations in the same request" if results.any? {|r| r.organization_id != organization_id}
 
-    filters = {organization_id: organization_id}
+    organization = Organization.find(organization_id)
 
-    cache_key = "accounts_by_organization:#{organization_id}"
+    cache_key = "account_ids_by_organization:#{organization_id}"
     if cached = ORGANIZATION_CACHE.get(cache_key)
       results = JSON.parse(cached)
     else
-      results = OrganizationAccount.where(filters)
+      results = organization.accounts.map(&:account_id)
       ORGANIZATION_CACHE.set(cache_key, results.to_json, ex: 300) # optional TTL
     end
 
     results = {
-      organization_id: organization_id,
-      accounts: results
+      organization: organization,
+      account_ids: results
     }
 
     render json: results

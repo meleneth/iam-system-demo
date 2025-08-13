@@ -15,30 +15,39 @@ class AccountsController < ApplicationController
     @as_user_id = permitted[:as]
     account_id = permitted[:id]
 
-    Account.with_headers('pad-user-id' => @as_user_id) do
-      @accounts = Account.with_parents(account_id)
+    TRACER.in_span("Account.with_parents(#{account_id})") do
+      Account.with_headers('pad-user-id' => @as_user_id) do
+        @accounts = Account.with_parents(account_id)
+      end
     end
 
     @account = @accounts[-1]
     org_accounts = nil
-    OrganizationAccount.with_headers('pad-user-id' => @as_user_id) do
-      org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
-      Organization.with_headers('pad-user-id' => @as_user_id) do
-        @organization = org_account.organization if org_account
-      end
-      org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
-    end
 
-    do_fetch_accounts_async = true
-    if do_fetch_accounts_async then
-      @organization_accounts = fetch_accounts_async(org_accounts.map(&:account_id))
-    else
-      Account.with_headers('pad-user-id' => @as_user_id) do
-        @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
+    TRACER.in_span("OrganizationAccount.account_ids_for_organization_by_account_id()") do
+      OrganizationAccount.with_headers('pad-user-id' => @as_user_id) do
+        # mixed response: Organization object since organization-service service owns Organization
+        # account_ids because organization-service does not own Acccounts
+        response = OrganizationAccount.account_ids_for_organization_by_account_id(@account.id)
+        @org_account_ids = response[:account_ids]
+        @organization = response[:organization]
       end
     end
 
-    @users = User.find(:all, params: { account_id: @account.id})
+    TRACER.in_span("fetch_accounts_async") do
+      do_fetch_accounts_async = true
+      if do_fetch_accounts_async then
+        @organization_accounts = fetch_accounts_async(@org_account_ids)
+      else
+        Account.with_headers('pad-user-id' => @as_user_id) do
+          @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
+        end
+      end
+    end
+
+    TRACER.in_span("User.find") do
+      @users = User.find(:all, params: { account_id: @account.id})
+    end
   end
 
   def slow_view

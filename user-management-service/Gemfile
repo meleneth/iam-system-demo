@@ -78,3 +78,5 @@ gem "async", "~> 2.26"
 gem "aws-sdk-sqs", "~> 1.96"
 
 gem "aws-sdk-sns", "~> 1.100"
+
+gem "faraday", "~> 2.13"
