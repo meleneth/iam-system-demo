@@ -45,9 +45,23 @@ class AccountsController < ApplicationController
       end
     end
 
+    all_account_ids = @accounts.map(&:id)
+
     TRACER.in_span("User.find") do
-      @users = User.find(:all, params: { account_id: @account.id})
+      @users = User.find(:all, params: { account_id: all_account_ids})
     end
+
+    @users_by_account_id = {}
+    @users.each do |user|
+      @users_by_account_id[user.account_id] ||= []
+      @users_by_account_id[user.account_id] << user
+    end
+
+    all_user_ids = @users.map(&:id)
+    @user_groups = UserGroup.find(:all, params: { user_id: all_user_ids})
+
+    all_group_ids = @user_groups.map(&:group_id).uniq
+    @groups = Group.find(:all, params: {group_id: all_group_ids})
   end
 
   def slow_view

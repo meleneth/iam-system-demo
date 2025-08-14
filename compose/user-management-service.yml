@@ -8,6 +8,7 @@ services:
       context: "./user-management-service"
     environment:
       USER_SERVICE_API_BASE_URL: http://user-service:80
+      GROUP_SERVICE_API_BASE_URL: http://group-service:80
       ACCOUNT_SERVICE_API_BASE_URL: http://account-service:80
       ORGANIZATION_SERVICE_API_BASE_URL: http://organization-service:80
       SECRET_KEY_BASE: "${USER_MANAGEMENT_RAILS_SECRET_KEY_BASE}"

@@ -174,5 +174,5 @@ end
 
 if $PROGRAM_NAME == __FILE__
   queue_url = ENV.fetch('USER_SEED_QUEUE_URL', 'http://eventstream:4566/000000000000/user-seed')
-  DemoUserSeeder.new(count: ENV.fetch('USER_COUNT', 10_000).to_i, queue_url: queue_url).seed!
+  DemoUserSeeder.new(count: ENV.fetch('USER_COUNT', 50_000).to_i, queue_url: queue_url).seed!
 end
