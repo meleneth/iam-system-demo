@@ -15,6 +15,7 @@ class DemoUserSeeder
     # all others inherit their org from their parent account (tracing all the way up)
     @account_organization = {}
     @existing_accounts = {}
+    @account_groups = {}
     @sns = Aws::SNS::Client.new(
       region: 'us-east-1',
       endpoint: 'http://eventstream:4566',
@@ -76,7 +77,8 @@ class DemoUserSeeder
       index: index,
       user: user,
       account: account,
-      organization: organization
+      organization: organization,
+      groups: groups
     }
   end
 
@@ -86,12 +88,12 @@ class DemoUserSeeder
     if reuse_existing_account?
       @account = @existing_accounts.values.sample
     else
+      @is_account_admin = true
       if create_child_account?
         parent = @existing_accounts.values.sample
         @account = { id: SecureRandom.uuid, parent_account_id: parent[:id] }
         @existing_accounts[@account[:id]] = @account
       else
-        @is_account_admin = true
         @account = { id: SecureRandom.uuid }
         @organization = { id: SecureRandom.uuid }
         @account_organization[@account[:id]] = @organization[:id]
@@ -100,6 +102,35 @@ class DemoUserSeeder
     end
 
     @account
+  end
+
+  def groups
+    return @groups if @groups
+    account
+    return @groups = [@account_groups[account[:id]["Users"]]] unless @is_account_admin
+    @groups = []
+    @groups << user_group
+    @groups << admin_group
+    @groups.each do |new_group|
+      @account_groups[account[:id]] ||= {}
+      @account_groups[account[:id]][new_group[:name]] = new_group
+    end
+    @groups
+  end
+
+  def user_group
+
+    return {
+      id: SecureRandom.uuid,
+      name: "Users"
+    }
+  end
+
+  def admin_group
+    return {
+      id: SecureRandom.uuid,
+      name: "Admins"
+    }
   end
 
   def user
@@ -142,5 +173,5 @@ end
 
 if $PROGRAM_NAME == __FILE__
   queue_url = ENV.fetch('USER_SEED_QUEUE_URL', 'http://eventstream:4566/000000000000/user-seed')
-  DemoUserSeeder.new(count: ENV.fetch('USER_COUNT', 1_000_000).to_i, queue_url: queue_url).seed!
+  DemoUserSeeder.new(count: ENV.fetch('USER_COUNT', 10_000).to_i, queue_url: queue_url).seed!
 end

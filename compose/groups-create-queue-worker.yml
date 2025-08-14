@@ -1,0 +1,23 @@
+services:
+  groups-create-service-worker: &groups-create-service-worker
+    image: parent_account_id/group-service
+    command: ["./bin/rails", "runner", "GroupsCreateQueueWorker.new.run"]
+    environment:
+      - GROUPS_SEED_QUEUE_URL=http://eventstream:4566/000000000000/groups_create
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+      - AWS_REGION=us-east-1
+      - DATABASE_URL=${GROUP_DB_DATABASE_URL}
+      - RAILS_ENV=test
+      - RAILS_MAX_THREADS=5
+      - RAILS_MIN_THREADS=5
+      - SECRET_KEY_BASE="${GROUP_RAILS_SECRET_KEY_BASE}"
+    depends_on:
+      - eventstream
+      - authorization-service
+  groups-create-service-worker-01:
+    <<: *groups-create-service-worker
+  groups-create-service-worker-02:
+    <<: *groups-create-service-worker
+  groups-create-service-worker-03:
+    <<: *groups-create-service-worker

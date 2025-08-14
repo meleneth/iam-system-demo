@@ -14,6 +14,7 @@ Local:
     - Name: account_create
     - Name: user_create
     - Name: grants_create
+    - Name: group_create
   Topics:
     - Name: user_seed
       Subscriptions:
@@ -24,4 +25,6 @@ Local:
         - QueueName: user_create
           Raw: false
         - QueueName: grants_create
+          Raw: false
+        - QueueName: group_create
           Raw: false

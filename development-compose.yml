@@ -73,3 +73,6 @@ include:
 - path: "./compose/groupcache.yml"
   project_directory: "./"
   env_file: "./development.env"
+- path: "./compose/groups-create-queue-worker.yml"
+  project_directory: "./"
+  env_file: "./development.env"
