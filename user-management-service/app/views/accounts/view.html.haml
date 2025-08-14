@@ -40,6 +40,27 @@ This account has the following users:
         %td= account.parent_account_id
 
 %br
+%h1 Accounts with Users
+%br
+%table
+  %thead.bg-green-700
+    %tr
+      %td account_id
+      %td name
+      %td email
+      %td groups
+      %td parent_account_id
+  %tbody
+    - @accounts.each do |account|
+      - @users_by_account_id[account.id].each do |user|
+        %tr
+          %td= account.id
+          %td= account.name
+          %td= user.email
+          %td= @group_names_by_user_id[user.id].join(", ")
+          %td= account.parent_account_id
+
+%br
 %br
 The 
 = @organization.name

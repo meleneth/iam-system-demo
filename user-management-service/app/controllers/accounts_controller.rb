@@ -58,10 +58,19 @@ class AccountsController < ApplicationController
     end
 
     all_user_ids = @users.map(&:id)
-    @user_groups = UserGroup.find(:all, params: { user_id: all_user_ids})
+    @group_users = GroupUser.find(:all, params: { user_id: all_user_ids})
 
-    all_group_ids = @user_groups.map(&:group_id).uniq
-    @groups = Group.find(:all, params: {group_id: all_group_ids})
+    all_group_ids = @group_users.map(&:group_id).uniq
+    @groups = Group.find(:all, params: {id: all_group_ids})
+    @group_name_by_group_id = {}
+    @groups.each do |group|
+      @group_name_by_group_id[group.id] = group.name
+    end
+    @group_names_by_user_id = {}
+    @group_users.each do |group_user|
+      @group_names_by_user_id[group_user.user_id] ||= []
+      @group_names_by_user_id[group_user.user_id] << @group_name_by_group_id[group_user.group_id]
+    end
   end
 
   def slow_view

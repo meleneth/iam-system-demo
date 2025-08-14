@@ -53,25 +53,25 @@ class GrantsCreateQueueWorker
     user_id = user_data["id"]
     groups = body["groups"]
 
-    CapabilityGrant.create!(user_id: user_id, permission: "organization.read", scope_type: "Organization", scope_id: org_id)
-    CapabilityGrant.create!(user_id: user_id, permission: "organization.accounts.read", scope_type: "Organization", scope_id: org_id)
+    CapabilityGrant.find_or_create_by(user_id: user_id, permission: "organization.read", scope_type: "Organization", scope_id: org_id)
+    CapabilityGrant.find_or_create_by(user_id: user_id, permission: "organization.accounts.read", scope_type: "Organization", scope_id: org_id)
 
     if is_admin
-      CapabilityGrant.create!(user_id: user_id, permission: "organization.accounts.create", scope_type: "Organization", scope_id: org_id)
-      CapabilityGrant.create!(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: account_id)
-      CapabilityGrant.create!(user_id: user_id, permission: "account.users.read", scope_type: "Account", scope_id: account_id)
-      CapabilityGrant.create!(user_id: user_id, permission: "account.users.create", scope_type: "Account", scope_id: account_id)
+      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "organization.accounts.create", scope_type: "Organization", scope_id: org_id)
+      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: account_id)
+      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.users.read", scope_type: "Account", scope_id: account_id)
+      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.users.create", scope_type: "Account", scope_id: account_id)
       groups.each do |group|
-        CapabilityGrant.create!(user_id: user_id, permission: "group.modify", scope_type: "Group", scope_id: group["id"])
+        CapabilityGrant.find_or_create_by(user_id: user_id, permission: "group.modify", scope_type: "Group", scope_id: group["id"])
       end
-      CapabilityGrant.create!(user_id: user_id, permission: "group.create", scope_type: "Account", scope_id: account_id)
+      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "group.create", scope_type: "Account", scope_id: account_id)
     else
-      CapabilityGrant.create!(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: account_id)
-      CapabilityGrant.create!(user_id: user_id, permission: "account.users.read", scope_type: "Account", scope_id: account_id)
+      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: account_id)
+      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.users.read", scope_type: "Account", scope_id: account_id)
     end
 
     groups.each do |group|
-      CapabilityGrant.create!(user_id: user_id, permission: "group.read", scope_type: "Group", scope_id: group["id"])
+      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "group.read", scope_type: "Group", scope_id: group["id"])
     end
 
     delete(msg)

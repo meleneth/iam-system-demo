@@ -108,7 +108,11 @@ class DemoUserSeeder
   def groups
     return @groups if @groups
     account
-    return @groups = [@account_groups[account[:id]["Users"]]] unless @is_account_admin
+    if !@is_account_admin
+      @groups = []
+      @groups << @account_groups[account[:id]]["Users"]
+      return @groups
+    end
     @groups = []
     @groups << user_group
     @groups << admin_group
@@ -120,7 +124,6 @@ class DemoUserSeeder
   end
 
   def user_group
-
     return {
       id: SecureRandom.uuid,
       name: "Users"

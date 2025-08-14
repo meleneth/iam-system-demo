@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# app/models/user.rb
-class User < ActiveResource::Base
+# app/models/group_user.rb
+class GroupUser < ActiveResource::Base
   self.site = ENV.fetch("GROUP_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
   self.format = :json
 
