@@ -71,6 +71,7 @@ class DemoUserSeeder
     @organization = nil
     @user = nil
     @is_account_admin = false
+    @groups = nil
 
     {
       type: "demo.user.create",
