@@ -230,3 +230,56 @@ services:
     - POSTGRES_USER=${ORGANIZATION_DB_QUEUE_POSTGRES_USER}
     ports:
     - "${ORGANIZATION_DB_QUEUE_POSTGRES_PORT}:5432"
+  group-db:
+    environment:
+    - POSTGRES_DB=${GROUP_DB_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${GROUP_DB_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${GROUP_DB_POSTGRES_USER}
+    ports:
+    - "${GROUP_DB_POSTGRES_PORT}:5432"
+  group-service:
+    environment:
+    - CABLE_DATABASE_URL=${GROUP_DB_CABLE_DATABASE_URL}
+    - CACHE_DATABASE_URL=${GROUP_DB_CACHE_DATABASE_URL}
+    - DATABASE_URL=${GROUP_DB_DATABASE_URL}
+    - QUEUE_DATABASE_URL=${GROUP_DB_QUEUE_DATABASE_URL}
+    - RAILS_ENV=production
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    ports:
+    - "${GROUP_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      group-db:
+        condition: service_healthy
+        restart: true
+      group-db-cache:
+        condition: service_healthy
+        restart: true
+      group-db-cable:
+        condition: service_healthy
+        restart: true
+      group-db-queue:
+        condition: service_healthy
+        restart: true
+  group-db-cache:
+    environment:
+    - POSTGRES_DB=${GROUP_DB_CACHE_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${GROUP_DB_CACHE_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${GROUP_DB_CACHE_POSTGRES_USER}
+    ports:
+    - "${GROUP_DB_CACHE_POSTGRES_PORT}:5432"
+  group-db-cable:
+    environment:
+    - POSTGRES_DB=${GROUP_DB_CABLE_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${GROUP_DB_CABLE_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${GROUP_DB_CABLE_POSTGRES_USER}
+    ports:
+    - "${GROUP_DB_CABLE_POSTGRES_PORT}:5432"
+  group-db-queue:
+    environment:
+    - POSTGRES_DB=${GROUP_DB_QUEUE_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${GROUP_DB_QUEUE_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${GROUP_DB_QUEUE_POSTGRES_USER}
+    ports:
+    - "${GROUP_DB_QUEUE_POSTGRES_PORT}:5432"
+

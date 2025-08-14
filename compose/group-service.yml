@@ -1,0 +1,17 @@
+---
+services:
+  group-service:
+    image: parent_account_id/group-service
+    ports:
+    - "${GROUP_SERVICE_WEB_PORT}:3000"
+    environment:
+    - DATABASE_URL=${GROUP_DB_DATABASE_URL}
+    - RAILS_ENV=test
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    build:
+      context: "./group-service"
+    depends_on:
+      group-db:
+        condition: service_healthy
+        restart: true

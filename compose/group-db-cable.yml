@@ -1,0 +1,20 @@
+---
+services:
+  group-db-cable:
+    image: postgres:17.5-bookworm
+    ports:
+    - "${GROUP_DB_CABLE_POSTGRES_PORT}:5432"
+    environment:
+    - POSTGRES_DB=${GROUP_DB_CABLE_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${GROUP_DB_CABLE_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${GROUP_DB_CABLE_POSTGRES_USER}
+    volumes:
+    - "${GROUP_DB_CABLE_POSTGRES_DATA}:/var/lib/postgresql/data"
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${GROUP_DB_CABLE_POSTGRES_USER} -d ${GROUP_DB_CABLE_POSTGRES_DB}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s

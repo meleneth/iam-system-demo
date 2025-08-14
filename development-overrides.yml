@@ -94,3 +94,22 @@ services:
       organization-db:
         condition: service_healthy
         restart: true
+  group-db:
+    environment:
+    - POSTGRES_DB=${GROUP_DB_POSTGRES_DB}
+    - POSTGRES_PASSWORD=${GROUP_DB_POSTGRES_PASSWORD}
+    - POSTGRES_USER=${GROUP_DB_POSTGRES_USER}
+    ports:
+    - "${GROUP_DB_POSTGRES_PORT}:5432"
+  group-service:
+    environment:
+    - DATABASE_URL=${GROUP_DB_DATABASE_URL}
+    - RAILS_ENV=development
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    ports:
+    - "${GROUP_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      group-db:
+        condition: service_healthy
+        restart: true
