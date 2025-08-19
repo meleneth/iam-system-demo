@@ -1,0 +1,7 @@
+env,service,internal,external,foreman
+dev,account,3000,11230,13230
+dev,accountcache,6379,11232
+dev,orgcache,6379,11251
+dev,authcache,6379,11201
+dev,groupcache,6379,11116
+dev,account_auth_service,3000,11231

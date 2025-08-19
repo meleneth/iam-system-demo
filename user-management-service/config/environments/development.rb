@@ -71,6 +71,5 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
   #
   config.hosts << "thinktank.sectorfour:8500"
-
-
+  config.hosts << "moxie.sectorfour:8500"
 end

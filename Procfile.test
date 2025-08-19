@@ -1,0 +1,6 @@
+account: cd account-service && foreman run --env ../.env.test.account bundle exec rails server -p 13100 -b 0.0.0.0
+authorization: cd authorization-service && foreman run --env ../.env.test.authorization bundle exec rails server -p 13110 -b 0.0.0.0
+user: cd user-service && foreman run --env ../.env.test.user bundle exec rails server -p 13090 -b 0.0.0.0
+organization: cd organization-service && foreman run --env ../.env.test.organization bundle exec rails server -p 13120 -b 0.0.0.0
+user_mgmt: cd user-management-service && foreman run --env ../.env.test.user_mgmt bundle exec rails server -p 8500 -b 0.0.0.0
+group: cd user-management-service && foreman run --env ../.env.test.group bundle exec rails server -p 13115 -b 0.0.0.0

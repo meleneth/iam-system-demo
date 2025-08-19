@@ -1,12 +1,20 @@
----
 services:
   accountcache:
     image: redis:8.0.2-bookworm
     healthcheck:
       test:
-      - CMD-SHELL
-      - redis-cli ping
+        - CMD-SHELL
+        - redis-cli ping
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 5s
+    ports:
+      - mode: ingress
+        target: 6379
+        published: "${ACCOUNTCACHE_REDIS_PORT}"
+        protocol: tcp
+      - mode: ingress
+        target: 6379
+        published: "${ACCOUNTCACHE_REDIS_PORT}"
+        protocol: udp

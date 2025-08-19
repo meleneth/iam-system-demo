@@ -10,3 +10,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+    ports:
+      - mode: ingress
+        target: 6379
+        published: "${AUTHCACHE_REDIS_PORT}"
+        protocol: tcp
+      - mode: ingress
+        target: 6379
+        published: "${AUTHCACHE_REDIS_PORT}"
+        protocol: udp

@@ -5,9 +5,8 @@ Rails.application.routes.draw do
   get 'slowest_accounts/:id', to: 'accounts#slowest_view', as: 'slowest_account_view'
   get "frontdoor/index"
 
-  if Rails.env.development?
-    mount GraphiQL::Rails::Engine, at: "/graphiql", graphql_path: "/graphql"
-  end
+  mount GraphiQL::Rails::Engine, at: "/graphiql", graphql_path: "/graphql"
+
   post "/graphql", to: "graphql#execute"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
