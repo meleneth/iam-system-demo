@@ -8,6 +8,9 @@ module Types
       argument :as, ID, required: true # user id to authorize-as
     end
 
+    field :account_with_parents, resolver: Resolvers::AccountWithParentsResolver
+    field :account_hierarchies, resolver: Resolvers::AccountHierarchiesResolver
+
     def account(id:, as:)
       # Pass caller identity to downstream via header you already use
       Account.with_headers("pad-user-id" => as) do
