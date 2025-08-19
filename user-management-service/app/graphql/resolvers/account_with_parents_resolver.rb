@@ -7,22 +7,22 @@ module Resolvers
     argument :as, ID, required: true
 
     def resolve(id:, as:)
-      # OTEL breadcrumbs if you’re using it
-      OpenTelemetry::Trace.current_span.add_event("graphql.account_with_parents", attributes: { id: id, as: as }) rescue nil
+      context[:as] = as
 
-      records = []
+      accounts = []
       Account.with_headers('pad-user-id' => as) do
-        records = Account.with_parents(id)
+        accounts = Account.with_parents(id)
       end
 
-      # Ensure it’s an array of AR objects in the expected order.
-      # If your REST returns [self, parent, grandparent], you’re done.
-      # If it’s reversed, flip here:
-      # records = records.reverse
+      # Preload users in one call
+      account_ids = accounts.map(&:id).uniq
+      users = []
+      Account.with_headers('pad-user-id' => as) do
+        users = User.find(:all, params: { account_id: account_ids })
+      end
+      context[:users_by_account_id] = users.group_by(&:account_id)
 
-      records
-    rescue ActiveResource::ResourceNotFound
-      []  # or raise GraphQL::ExecutionError.new("Account not found")
+      accounts
     end
   end
 end
