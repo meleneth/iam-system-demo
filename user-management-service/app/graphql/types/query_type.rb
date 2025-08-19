@@ -1,31 +1,33 @@
 # frozen_string_literal: true
-
+# app/graphql/types/query_type.rb
 module Types
-  class QueryType < Types::BaseObject
-    field :node, Types::NodeType, null: true, description: "Fetches an object given its ID." do
-      argument :id, ID, required: true, description: "ID of the object."
+  class QueryType < BaseObject
+    field :account, Types::AccountType, null: true do
+      description "Fetch a single account by UUID, authorized as the given user UUID"
+      argument :id, ID, required: true
+      argument :as, ID, required: true # user id to authorize-as
     end
 
-    def node(id:)
-      context.schema.object_from_id(id, context)
-    end
+    def account(id:, as:)
+      # Pass caller identity to downstream via header you already use
+      Account.with_headers("pad-user-id" => as) do
+        # You likely already have Account.find(id) on ActiveResource
+        # If your service expects ?id= or a path, adjust accordingly.
+        record = Account.find(id)
 
-    field :nodes, [Types::NodeType, null: true], null: true, description: "Fetches a list of objects given a list of IDs." do
-      argument :ids, [ID], required: true, description: "IDs of the objects."
-    end
+        # If you prefer to double-check permissions locally, do it here.
+        # For now we rely on the downstream service to 403/404 as needed.
+        OpenTelemetry::Trace.current_span&.add_event(
+          "GraphQL Query: account",
+          attributes: { "account.id" => id, "as.user_id" => as }
+        )
 
-    def nodes(ids:)
-      ids.map { |id| context.schema.object_from_id(id, context) }
-    end
-
-    # Add root-level fields here.
-    # They will be entry points for queries on your schema.
-
-    # TODO: remove me
-    field :test_field, String, null: false,
-      description: "An example field added by the generator"
-    def test_field
-      "Hello World!"
+        record
+      end
+    rescue ActiveResource::ForbiddenAccess
+      # Option A (quiet): return nil
+      nil
+      # Option B (loud): raise GraphQL::ExecutionError, "Not authorized"
     end
   end
 end

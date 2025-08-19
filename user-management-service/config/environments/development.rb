@@ -72,4 +72,5 @@ Rails.application.configure do
   #
   config.hosts << "thinktank.sectorfour:8500"
   config.hosts << "moxie.sectorfour:8500"
+  config.web_console.permissions = '172.16.0.0/12'
 end
