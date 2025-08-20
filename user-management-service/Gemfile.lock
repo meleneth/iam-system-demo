@@ -673,6 +673,8 @@ DEPENDENCIES
   kamal
   opentelemetry-exporter-otlp (~> 0.30.0)
   opentelemetry-instrumentation-all (~> 0.78.0)
+  opentelemetry-instrumentation-faraday (~> 0.27.0)
+  opentelemetry-instrumentation-graphql (~> 0.29.0)
   opentelemetry-sdk (~> 1.8)
   propshaft
   puma (>= 5.0)

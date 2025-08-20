@@ -1,5 +1,11 @@
 README still under construction, more detail coming!
 
+PLEASE NOTE:
+Many bits of this codebase are NOT PRODUCTION READY.
+It exists to explore some SPECIFIC ideas around dataloader and multi-object fetching, and SHOULD NOT be used as an example of good coding standards.
+
+Key deficiencies: Lack of unit tests, duplicate models amongst services, all credentials in the repository, race conditions in headers, and a complete lack of authentication.  There has also been a bit of drift from the generated service layout, and care was NOT taken to make sure that everything still works in all environments.
+
 This codebase is to simulate (and optimize) the authorization explosion when loading a user management interface in a large distributed system
 centered around IAM.
 
@@ -9,7 +15,7 @@ All primary keys are UUID's.
 
 Accounts have parent_account_id, which may by nil if this is the 'top level' account.  For extra fun, grants are inherited from your parent account.
 
-Every account will have an Organization.  Organization-service has a OrganizationAccounts table that as an entry per Account saying which Organization it belongs to.  The first user created for an Organization will be the Admin user, which has additional grants.
+Every account will belong to an Organization.  Organization-service has a OrganizationAccounts table that as an entry per Account saying which Organization it belongs to.  The first user created for an Organization will be the Admin user, which has additional grants.
 
 ./dc_test, ./dc_dev, and ./dc_prod are docker compose helpers
 
@@ -40,6 +46,10 @@ User seeder SQS message format:
       },
       organization: {
         id: uuid
+      },
+      groups: {
+        id: uuid,
+        name: string
       }
     }
 
@@ -107,12 +117,39 @@ This will return rows like
 
 As we can see, this an account 13 levels deep in an account hierarchy.  This query in particular unravels the account hierarchy for the entire table, but we can also unravel just one organization's worth at a time if we supply all the account id's.  Organization / Account mapping is stored remotely, so we can't just use the database to find that membership.
 
+## REST API: Organization Acount ID's
+organization-service has an api for returning account_ids for an organization.
+Because we don't know the organization usually, but we always know our account_id because we know our user,
+this API accepts an account_id and will internally look up the organization.
+
+    organization_account_ids/for_account_id/:account_id
+
+This will return 
+
+    {
+      organization: {
+        {id: "1b486568-4214-49e5-bafb-5a381d4cdf1d", name: "Some Amazing Organization"}
+      },
+      account_ids: [
+        "e006c8ed-eb76-4d54-8d41-81b84d882092",
+        "ed4399a9-c0e6-4c24-b3f6-442dfae35fc9"
+      ]
+    }
+
+This is a huge win because the naive approach requires a request to find the organization_id from this account id, and then another request to load the organization (to get the name), and then a THIRD request to get the account_id's that belong to the organization.  This is the root of all evil for latency.
+
+## Cache Design
+All caches expire in 5 minutes.  Keep-alive is not implemented, invalidation is not implemented.
+Thought has been given to being able to invalidate, and extra keys are populated so that things could be invalidated - i.e. and organization level key will be populated with all the keys that are in that organization, such that all those keys could be deleted if the organization becomes modified.
+
 ## Redis cache: Organization Accounts
-Not implemented yet, likely coming soon
+This is implemented.  This will return all of the account_id's that are in an organization.
+Since this is organization keyed, this is trivial to delete when an Organization has changes to it's account structure. (Not implemented, since we never actually change these)
+
+## Redis cache: Account Cache
+This is implemented.  Getting an account with parents is constantly called for auth requests, so the redis cache keeps track of all parent accounts for each given account.  There is a secondary key that tracks all the keys for the organization that are loaded, for invalidation purposes (invalidation is not implemented)
 
 ## Redis cache: per-grant Authorization cache
-Not implemented yet, next to be implemented
-
 This is on the Authorization redis cache.  We will need 2 sets per authorization.  The first set is the per-account redis keys that include information about this account, so that at invalidation time those sets can be deleted.
 
 The other is the per-user authorization cache, that is also per-capability.
@@ -125,49 +162,7 @@ On account / user modifications that can change the cached capabilities, we can 
 
 I think we can set the redis cache to delete the sets after 5 minutes, we can either just let the delete happen or update the invalidation time.  Needs research.
 
+## ActiveResource filtering:
+By default out of the box, between Rails and ActiveResource filtering is 'not great'.  The controller returns the entire table, and filtering is done locally service side.
 
-# Implementation notes, for me:
-<http://thinktank.sectorfour:8500/accounts/21881390-6912-401b-b33d-0cd74b3d08be?as=d918855f-4a53-4866-a8af-058a40876170>
-
-./bin/rails generate rspec:install
-
-This will add the API controller.
-
-./bin/rails g scaffold_controller Users
-
-in user-service/app/controllers/users_controller.rb
-
-    def user_params
-      params.require(:user).permit(
-        :account_id, :email, :username, :first_name, :last_name, :middle_name,
-        :phone_number, :alt_phone, :slack_id, :avatar_url, :linkedin, :github,
-        :twitter, :tshirt_size, :pronouns, :timezone, :account_id
-      )
-    end
-
-in user-service/app/models/user.rb
-
-    class User < ApplicationRecord
-      validates :account_id, presence: true
-    end
-
-in compose/user-management-service.yml
-
-    USER_SERVICE_API_BASE_URL: http://user-service:80
-    ACCOUNT_SERVICE_API_BASE_URL: http://account-service:80
-    ORGANIZATION_SERVICE_API_BASE_URL: http://organization-service:80
-
-in user-management-service/app/models
-
-    class User < ActiveResource::Base
-      self.site = ENV.fetch("USER_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
-      self.format = :json
-
-      # Optional: if the resource uses UUIDs instead of integers
-      self.primary_key = "id"
-
-      # Optional: if user-service uses a different collection path
-      self.collection_name = "users"
-
-      # Optional: handle nested resources, errors, etc.
-    end
+Not great.  I added a Mel::Filterable mixin, marked the filterable fields in the models, and modified the controller to use that functionality to require filters to be passed.  This unlocked the ability to request multiple records per request via passing arrays of id's, and between that and being able to filter on secondary keys was 'key' to getting this whole thing working.
