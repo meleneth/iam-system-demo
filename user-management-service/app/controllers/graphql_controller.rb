@@ -8,10 +8,12 @@ class GraphqlController < ApplicationController
   skip_before_action :verify_authenticity_token
 
   def execute
+    otel_ctx = OpenTelemetry::Context.current
     variables = prepare_variables(params[:variables])
     query = params[:query]
     operation_name = params[:operationName]
     context = {
+      otel_ctx: otel_ctx
       # Query context goes here, for example:
       # current_user: current_user,
     }

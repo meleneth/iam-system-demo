@@ -9,27 +9,30 @@ module Sources
     CHUNK_SIZE      = 2     # “few hundred at a time”
     MAX_CONCURRENCY = 4       # 1 = sequential; increase cautiously
 
-    def initialize(as:)
+    def initialize(as:, otel_ctx:)
       @as = as
+      @otel_ctx = otel_ctx
     end
 
     def fetch(keys)
-      TRACER.in_span("AccountById.fetch") do |span|
-        wanted_ids = keys.map(&:to_s)
-        uniq_ids   = wanted_ids.uniq
-        span.set_attribute("account.requested", wanted_ids.size)
-        span.set_attribute("account.unique", uniq_ids.size)
+      OpenTelemetry::Context.with_current(@otel_ctx) do |span|
+        TRACER.in_span("AccountById.fetch") do |span|
+          wanted_ids = keys.map(&:to_s)
+          uniq_ids   = wanted_ids.uniq
+          span.set_attribute("account.requested", wanted_ids.size)
+          span.set_attribute("account.unique", uniq_ids.size)
 
-        chunks = uniq_ids.each_slice(CHUNK_SIZE).to_a
-        span.set_attribute("account.chunks", chunks.size)
+          chunks = uniq_ids.each_slice(CHUNK_SIZE).to_a
+          span.set_attribute("account.chunks", chunks.size)
 
-        # Collect Account objects from all chunks
-        parent_ctx = OpenTelemetry::Context.current
+          # Collect Account objects from all chunks
+          parent_ctx = OpenTelemetry::Context.current
 
-        records = fetch_chunks(chunks, parent_ctx)
+          records = fetch_chunks(chunks, parent_ctx)
 
-        by_id = Array(records).index_by { |acc| acc.id.to_s }
-        wanted_ids.map { |id| by_id[id] } # align to original order (nils OK)
+          by_id = Array(records).index_by { |acc| acc.id.to_s }
+          wanted_ids.map { |id| by_id[id] } # align to original order (nils OK)
+        end
       end
     rescue => e
       OpenTelemetry.logger&.warn("AccountById.fetch error: #{e.class}: #{e.message}")

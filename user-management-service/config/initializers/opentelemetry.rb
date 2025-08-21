@@ -8,7 +8,7 @@ OpenTelemetry::SDK.configure do |c|
     "OpenTelemetry::Instrumentation::GraphQL" => {
       enable_platform_field: false,       # per-field/resolver spans
       enable_platform_authorized: false,  # (optional)
-      enable_platform_resolve_type: true # (optional)
+      enable_platform_resolve_type: false # (optional)
     }
   })
   c.add_span_processor(
