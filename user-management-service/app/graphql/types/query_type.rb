@@ -13,6 +13,13 @@ module Types
     field :account_with_parents, resolver: Resolvers::AccountWithParentsResolver
     field :account_hierarchies, resolver: Resolvers::AccountHierarchiesResolver
 
+    field :accounts, [Types::AccountType], null: false do
+      description "Fetch many accounts by UUID, authorized as the given user UUID"
+      argument :ids, [ID], required: true
+      argument :as,  ID,   required: true
+    end
+
+
     field :organization, Types::OrganizationType, null: true do
       argument :id, ID, required: true
       argument :as, ID, required: true
@@ -47,6 +54,13 @@ module Types
       # Option A (quiet): return nil
       nil
       # Option B (loud): raise GraphQL::ExecutionError, "Not authorized"
+    end
+
+    def accounts(ids:, as:)
+      context[:as] = as
+      dataloader.with(Sources::AccountById, as: as)
+        .load_all(ids)
+        .then { |records| records.compact }
     end
   end
 end
