@@ -2,6 +2,8 @@
 # app/graphql/types/query_type.rb
 module Types
   class QueryType < BaseObject
+    TRACER = OpenTelemetry.tracer_provider.tracer('GraphQL::Query', '1.0.0')
+
     field :account, Types::AccountType, null: true do
       description "Fetch a single account by UUID, authorized as the given user UUID"
       argument :id, ID, required: true
@@ -11,7 +13,21 @@ module Types
     field :account_with_parents, resolver: Resolvers::AccountWithParentsResolver
     field :account_hierarchies, resolver: Resolvers::AccountHierarchiesResolver
 
+    field :organization, Types::OrganizationType, null: true do
+      argument :id, ID, required: true
+      argument :as, ID, required: true
+    end
+
+    def organization(id:, as:)
+      context[:as] = as
+      context[:tracer] = TRACER
+      Organization.with_headers("pad-user-id" => as) do
+        Organization.find(id)
+      end
+    end
+
     def account(id:, as:)
+      context[:tracer] = TRACER
       # Pass caller identity to downstream via header you already use
       Account.with_headers("pad-user-id" => as) do
         # You likely already have Account.find(id) on ActiveResource

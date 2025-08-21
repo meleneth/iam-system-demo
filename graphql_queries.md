@@ -60,3 +60,44 @@ account_with_parents, including users per account and groups:
     }
   }
 }
+
+{
+  organization(
+    id: "a7f2fa09-a480-4974-ab4b-f6c20e1f8a72"
+    as: "ad6b8ead-f107-40a8-904f-7c203d71bc70"
+  ) {
+    id
+    name
+    accounts {
+      name
+      users {
+        id
+        email
+        accountId
+        groups {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+
+{
+  account(
+    id: "b130226a-1177-41af-a7e4-519546fd4b36"
+    as: "ad6b8ead-f107-40a8-904f-7c203d71bc70"
+  ) {
+    name
+    users {
+
+      id
+      email
+      accountId
+      groups {
+        id
+        name
+      }
+    }
+  }
+}
