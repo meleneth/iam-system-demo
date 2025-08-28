@@ -46,7 +46,7 @@ class Account < ActiveResource::Base
   end
 
   def self.with_parents_batch_async(account_ids)
-    qs   = URI.encode_www_form(account_ids.map { |id| ["account_ids[]", id] })
+    qs   = URI.encode_www_form(account_ids.map { |id| ["id[]", id] })
     url  = URI.join(site.to_s, "/accounts_with_parents.json?#{qs}").to_s
 
     resp = INTERNET.get(url, current_headers)
