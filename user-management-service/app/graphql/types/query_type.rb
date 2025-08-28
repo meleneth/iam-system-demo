@@ -58,6 +58,7 @@ module Types
 
     def accounts(ids:, as:)
       context[:as] = as
+      context[:tracer] = TRACER
       otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
       dataloader.with(Sources::AccountById, as: as, otel_ctx: otel_ctx)
         .load_all(ids)

@@ -82,77 +82,78 @@ class AccountsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_account
-      @account = Account.find(params.expect(:id))
+
+  # Use callbacks to share common setup or constraints between actions.
+  def set_account
+    @account = Account.find(params.expect(:id))
+  end
+
+  # Only allow a list of trusted parameters through.
+  def account_params
+    params.permit(:parent_account_id)
+  end
+
+  def fetch_account_with_parents(account_id)
+    cache_key = "account_with_parents:#{account_id}"
+
+    if (cached = ACCOUNT_CACHE.get(cache_key))
+      OpenTelemetry::Trace.current_span.add_event("Fetching cached account_with_parents SUCCESS!")
+      return JSON.parse(cached)
     end
 
-    # Only allow a list of trusted parameters through.
-    def account_params
-      params.permit(:parent_account_id)
+    OpenTelemetry::Trace.current_span.add_event("Fetching account_with_parents failed, doing it the slow way")
+
+    account = Account.find(account_id)
+
+    org_key_set = ""
+    seed_ids = []
+    OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
+      response     = OrganizationAccount.account_ids_for_organization_by_account_id(account.id)
+      organization = response[:organization]
+      seed_ids     = response[:account_ids]
+      org_key_set  = "org_cachekeys:#{organization.id}"
     end
 
-    def fetch_account_with_parents(account_id)
-      cache_key = "account_with_parents:#{account_id}"
+    # CTE with bind params: $1::uuid for root account, $2::uuid[] for seed ids
+    sql = <<~SQL
+      WITH RECURSIVE account_ancestry(id, parent_account_id, name, level) AS (
+        SELECT a.id, a.parent_account_id, a.name, 0 AS level
+        FROM accounts a
+        WHERE a.id = $1::uuid
 
-      if cached = ACCOUNT_CACHE.get(cache_key)
-        OpenTelemetry::Trace.current_span.add_event("Fetching cached account_with_parents SUCCESS!")
-        return JSON.parse(cached)
-      end
+        UNION ALL
 
-      OpenTelemetry::Trace.current_span.add_event("Fetching account_with_parents failed, doing it the slow way")
-
-      account = Account.find(account_id)
-      org_accounts = false
-      org_key_set = ""
-
-      seed_ids = []
-      OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
-        response = OrganizationAccount.account_ids_for_organization_by_account_id(account.id)
-        organization = response[:organization]
-        seed_ids = response[:account_ids]
-        org_key_set = "org_cachekeys:#{organization.id}"
-      end
-
-      accounts = Arel::Table.new(:accounts)
-
-      base_query = accounts
-        .project(
-          accounts[:id],
-          accounts[:parent_account_id],
-          accounts[:name],
-          Arel.sql("0 AS level")
-        )
-        .where(accounts[:id].eq(account.id))
-
-      # Interpolate safe UUID strings
-      seed_id_list = seed_ids.map { |id| ActiveRecord::Base.connection.quote(id) }.join(", ")
-
-      recursive_sql = <<~SQL
         SELECT a.id, a.parent_account_id, a.name, t.level + 1
         FROM accounts a
         INNER JOIN account_ancestry t ON t.parent_account_id = a.id
-        WHERE a.id IN (#{seed_id_list})
-      SQL
+        WHERE a.id = ANY($2::uuid[])
+      )
+      SELECT *
+      FROM account_ancestry
+      WHERE id <> $1::uuid
+      ORDER BY level DESC
+    SQL
 
-      final_sql = <<~SQL
-        WITH RECURSIVE account_ancestry(id, parent_account_id, name, level) AS (
-          #{base_query.to_sql}
-          UNION ALL
-          #{recursive_sql}
-        )
-        SELECT *
-        FROM account_ancestry
-        WHERE id != #{ActiveRecord::Base.connection.quote(account.id)}
-        ORDER BY level DESC
-      SQL
+    # ---- Rails type-safe binds ----
+    # Rails 7/8: ActiveRecord::Type.lookup works for PG + arrays.
+    uuid_type       = ActiveRecord::Type.lookup(:uuid)
+    uuid_array_type = ActiveRecord::Type.lookup(:uuid, array: true)
 
-      results =  ActiveRecord::Base.connection.execute(final_sql).to_a
-      results << account
+    binds = [
+      ActiveRecord::Relation::QueryAttribute.new("account_id", account.id, uuid_type),
+      ActiveRecord::Relation::QueryAttribute.new("seed_ids",   seed_ids,   uuid_array_type)
+    ]
 
-      ACCOUNT_CACHE.set(cache_key, results.to_json, ex: 300) # optional TTL
-      # Register this cache key for the org so we can later bulk delete
-      ACCOUNT_CACHE.sadd(org_key_set, cache_key)
-      results
-    end
+    OpenTelemetry::Trace.current_span.add_event("AccountWithParentsCTE")
+
+    results = ActiveRecord::Base.connection.exec_query(sql, "AccountWithParentsCTE", binds).to_a
+
+    # include the root account (to match your prior behavior)
+    results << account
+
+    ACCOUNT_CACHE.set(cache_key, results.to_json, ex: 300)
+    ACCOUNT_CACHE.sadd(org_key_set, cache_key)
+
+    results
+  end
 end
