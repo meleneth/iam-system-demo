@@ -41,36 +41,33 @@ module Sources
 
     private
 
-    # Fetch all chunks with bounded parallelism
     def fetch_chunks(chunks, parent_ctx)
       return chunks.flat_map { |slice| fetch_one_chunk(slice, parent_ctx) } if MAX_CONCURRENCY <= 1
+      return [] if chunks.empty?
 
-      # Simple worker pool using Async or threads; prefer threads to avoid clashing with AR connection state
-      # Threads are fine here because we isolate per-request headers and do not mutate global state.
-      queue   = Queue.new
-      chunks.each { |c| queue << c }
-      workers = [chunks.size, MAX_CONCURRENCY].min
-      mutex   = Mutex.new
-      results = []
+      limit = [chunks.size, MAX_CONCURRENCY].min
 
-      threads = Array.new(workers) do |i|
-        Thread.new do
-          OpenTelemetry::Context.with_current(parent_ctx) do
-            while (slice = queue.pop(true) rescue nil)
-              begin
-                recs = fetch_one_chunk(slice, parent_ctx)
-                mutex.synchronize { results.concat(recs) }
-              rescue => e
-                OpenTelemetry.logger&.warn("chunk failed: #{e.class}: #{e.message}")
-                # continue; failed chunk contributes no records
-              end
+      run_in_reactor = -> {
+        sem = Async::Semaphore.new(limit)
+        tasks = chunks.map do |slice|
+          sem.async do
+            OpenTelemetry::Context.with_current(parent_ctx) do
+              fetch_one_chunk(slice, parent_ctx)
+            rescue => e
+              OpenTelemetry.logger&.warn("chunk failed: #{e.class}: #{e.message}")
+              [] # failed chunk contributes no records
             end
           end
         end
-      end
+        tasks.flat_map { |t| t.wait }
+      }
 
-      threads.each(&:join)
-      results
+      # If we're already inside an Async reactor, reuse it; otherwise, start one.
+      if (current = Async::Task.current?)
+        current.with_timeout(nil) { run_in_reactor.call }
+      else
+        Async { run_in_reactor.call }.wait
+      end
     end
 
     # Fetch a single chunk via the batch endpoint; fall back to where(id: [...])
@@ -82,7 +79,7 @@ module Sources
           headers_override = {"pad-user-id" => @as}
           OpenTelemetry.propagation.inject(headers_override)
           Account.with_headers(headers_override) do
-            Array(Account.where(id: slice_ids).to_a)
+            Array(Account.where_async(id: slice_ids).to_a)
           end
         end
       end
