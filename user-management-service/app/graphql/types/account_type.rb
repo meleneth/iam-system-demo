@@ -9,8 +9,10 @@ module Types
 
     def users
       ctx = context
+      otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
+      context[:otel_ctx] = otel_ctx
       ctx.dataloader
-         .with(Sources::UsersByAccountId, as: ctx[:as], tracer: ctx[:tracer])
+         .with(Sources::UsersByAccountId, as: ctx[:as], tracer: ctx[:tracer], otel_ctx: ctx[:otel_ctx])
          .load(object.id)
     end
   end

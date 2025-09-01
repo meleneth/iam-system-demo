@@ -28,6 +28,8 @@ module Types
     def organization(id:, as:)
       context[:as] = as
       context[:tracer] = TRACER
+      otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
+      context[:otel_ctx] = otel_ctx
       Organization.with_headers("pad-user-id" => as) do
         Organization.find(id)
       end
@@ -60,6 +62,7 @@ module Types
       context[:as] = as
       context[:tracer] = TRACER
       otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
+      context[:otel_ctx] = otel_ctx
       dataloader.with(Sources::AccountById, as: as, otel_ctx: otel_ctx)
         .load_all(ids)
         .then { |records| records.compact }

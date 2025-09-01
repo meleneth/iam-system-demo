@@ -9,8 +9,10 @@ module Types
 
     def groups
       ctx = context
+      otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
+      context[:otel_ctx] = otel_ctx
       ctx.dataloader
-         .with(Sources::GroupsByUserId, as: ctx[:as], tracer: ctx[:tracer])
+         .with(Sources::GroupsByUserId, as: ctx[:as], tracer: ctx[:tracer], otel_ctx: otel_ctx)
          .load(object.id)
     end
   end
