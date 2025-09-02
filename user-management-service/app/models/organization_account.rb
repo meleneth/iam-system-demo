@@ -41,4 +41,20 @@ class OrganizationAccount < ActiveResource::Base
     return data
   end
 
+  def self.accounts_counts(org_id)
+    if org_id.is_a? Array
+      raise "One organization_id only please" unless org_id.count == 1 
+      org_id = org_id[0]
+    end
+    pad_user_id = headers["pad-user-id"]
+    url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organizations/accounts/counts/#{org_id}"
+
+    pad_user_id = headers["pad-user-id"]
+    response = Faraday.get(url) do |req|
+      req.headers["pad-user-id"] = pad_user_id
+    end
+
+    data = JSON.parse(response.body, symbolize_names: true)
+    return data
+  end
 end

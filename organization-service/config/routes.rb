@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
   get "organization_account_ids/for_account_id/:account_id", to: "organization_accounts#for_account"
 
+  get "/organizations/accounts/counts/:organization_id",
+      to: "organizations/accounts_count#index",
+      as: :organizations_account_counts
+
   resources :organization_accounts
   resources :organizations
 

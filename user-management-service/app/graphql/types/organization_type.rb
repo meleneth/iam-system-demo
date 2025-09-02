@@ -4,6 +4,13 @@ module Types
     field :id, ID, null: false
     field :name, String, null: false
     field :accounts, [Types::AccountType], null: false
+    field :accounts_count, Integer, null: false
+
+    def accounts_count
+      dataloader
+        .with(Sources::OrgAccountsCount, as: context[:as])
+        .load(object.id)
+    end
 
     def accounts
       # We want to load all accounts for this org
