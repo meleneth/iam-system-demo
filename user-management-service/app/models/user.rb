@@ -33,4 +33,17 @@ class User < ActiveResource::Base
 
     response.status == 200
   end
+
+  def self.users_count(account_ids)
+    account_ids = Array(account_ids)
+    query_string = URI.encode_www_form(account_ids.map { |id| ["account_id[]", id] })
+
+    url = "#{Env::USER_SERVICE_API_BASE_URL}/accounts/users/counts?#{query_string}"
+
+    response = Faraday.get(url)
+
+    raise "Error getting Account's User counts" unless response.status == 200
+    data = JSON.parse(response.body, symbolize_names: true)
+    data
+  end
 end

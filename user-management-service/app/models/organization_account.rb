@@ -54,7 +54,8 @@ class OrganizationAccount < ActiveResource::Base
       req.headers["pad-user-id"] = pad_user_id
     end
 
-    data = JSON.parse(response.body, symbolize_names: true)
-    return data
+    raise "Error getting Organization's Account counts" unless response.status == 200
+
+    JSON.parse(response.body, symbolize_names: true)
   end
 end

@@ -121,3 +121,21 @@ and variables:
       ],
       "as": "ad6b8ead-f107-40a8-904f-7c203d71bc70"
     }
+
+# organization with account counts, accounts, and users and group counts per account
+{
+  organization(
+    id: "a7f2fa09-a480-4974-ab4b-f6c20e1f8a72"
+    as: "ad6b8ead-f107-40a8-904f-7c203d71bc70"
+  ) {
+    id
+    name
+    accountsCount
+    accounts {
+      id
+      name
+      usersCount
+      groupsCount
+    }
+  }
+}

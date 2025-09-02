@@ -1,5 +1,10 @@
 Rails.application.routes.draw do
   resources :users
+
+  get "/accounts/users/counts",
+    to: "users_counts#index",
+    as: :users_counts
+
   post "/graphql", to: "graphql#execute"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
