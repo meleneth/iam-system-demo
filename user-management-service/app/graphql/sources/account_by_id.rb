@@ -6,7 +6,7 @@ module Sources
     TRACER = OpenTelemetry.tracer_provider.tracer("sources.account_by_id", "1.0.0")
 
     # tune these per backend limits
-    CHUNK_SIZE      = 2     # “few hundred at a time”
+    CHUNK_SIZE      = 200
     MAX_CONCURRENCY = 4       # 1 = sequential; increase cautiously
 
     def initialize(as:, otel_ctx:)

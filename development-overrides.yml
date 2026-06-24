@@ -94,6 +94,13 @@ services:
       organization-db:
         condition: service_healthy
         restart: true
+  user-management-service:
+    environment:
+    - RAILS_ENV=development
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    volumes:
+    - "${USER_MANAGEMENT_DEMO_FIXTURE_OUTPUT_PATH}:/rails/tmp/demo-fixtures"
   group-db:
     environment:
     - POSTGRES_DB=${GROUP_DB_POSTGRES_DB}

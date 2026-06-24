@@ -16,7 +16,9 @@ class User < ActiveResource::Base
   #
   def self.with_headers(temp_headers)
     old_headers = headers.dup
-    self.headers.merge!(temp_headers)
+    propagated_headers = temp_headers.dup
+    OpenTelemetry.propagation.inject(propagated_headers)
+    self.headers.merge!(propagated_headers)
     yield
   ensure
     self.headers.replace(old_headers)
@@ -24,12 +26,15 @@ class User < ActiveResource::Base
 
   def can(scope_type, permission, scope_id)
     scope_ids = Array(scope_id)
-    query_string = URI.encode_www_form(scope_ids.map { |id| ["scope_id[]", id] })
+    url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/can/#{scope_type}/#{permission}"
 
-    url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/can/#{scope_type}/#{permission}?#{query_string}"
+    outgoing_headers = { "pad-user-id" => id }
+    OpenTelemetry.propagation.inject(outgoing_headers)
 
-    response = Faraday.get(url) do |req|
-      req.headers["pad-user-id"] = id
+    response = Faraday.post(url) do |req|
+      outgoing_headers.each { |key, value| req.headers[key] = value }
+      req.headers["Content-Type"] = "application/json"
+      req.body = { scope_id: scope_ids }.to_json
     end
 
     response.status == 200
@@ -37,12 +42,15 @@ class User < ActiveResource::Base
 
   def self.user_can(user_id, scope_type, permission, scope_id)
     scope_ids = Array(scope_id)
-    query_string = URI.encode_www_form(scope_ids.map { |id| ["scope_id[]", id] })
+    url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/can/#{scope_type}/#{permission}"
 
-    url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/can/#{scope_type}/#{permission}?#{query_string}"
+    outgoing_headers = { "pad-user-id" => user_id }
+    OpenTelemetry.propagation.inject(outgoing_headers)
 
-    response = Faraday.get(url) do |req|
-      req.headers["pad-user-id"] = user_id
+    response = Faraday.post(url) do |req|
+      outgoing_headers.each { |key, value| req.headers[key] = value }
+      req.headers["Content-Type"] = "application/json"
+      req.body = { scope_id: scope_ids }.to_json
     end
 
     response.status == 200

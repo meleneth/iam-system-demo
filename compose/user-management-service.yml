@@ -3,7 +3,7 @@ services:
   user-management-service:
     image: parent_account_id/user-management-service
     ports:
-      - "${USER_MANAGEMENT_WEB_PORT}:3000"
+      - "${USER_MANAGEMENT_WEB_PORT}:80"
     build:
       context: "./user-management-service"
     environment:

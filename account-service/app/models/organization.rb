@@ -15,7 +15,9 @@ class Organization < ActiveResource::Base
  
   def self.with_headers(temp_headers)
     old_headers = headers.dup
-    self.headers.merge!(temp_headers)
+    propagated_headers = temp_headers.dup
+    OpenTelemetry.propagation.inject(propagated_headers)
+    self.headers.merge!(propagated_headers)
     yield
   ensure
     self.headers.replace(old_headers)

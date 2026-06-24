@@ -2,7 +2,7 @@
 
 # app/models/account.rb
 class Account < ActiveResource::Base
-  self.site = ENV.fetch("ACCOUNT_SERVICE_API_BASE_URL") # e.g., http://account-service:80/
+  self.site = ENV.fetch("ACCOUNT_SERVICE_API_BASE_URL", "http://account-service:80")
   self.format = :json
 
   self.include_format_in_path = false
@@ -15,7 +15,9 @@ class Account < ActiveResource::Base
 
   def self.with_headers(temp_headers)
     old_headers = headers.dup
-    self.headers.merge!(temp_headers)
+    propagated_headers = temp_headers.dup
+    OpenTelemetry.propagation.inject(propagated_headers)
+    self.headers.merge!(propagated_headers)
     yield
   ensure
     self.headers.replace(old_headers)

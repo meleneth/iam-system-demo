@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= @demo_query[:title] %> - GraphiQL</title>
+    <% if defined?(Propshaft) %>
+      <%= stylesheet_link_tag("graphiql/rails/graphiql-3.8.3") %>
+      <%= stylesheet_link_tag("graphiql/rails/application") %>
+      <%= javascript_include_tag("graphiql/rails/application", nonce: true) %>
+    <% elsif defined?(Sprockets) %>
+      <%= stylesheet_link_tag("graphiql/rails/application") %>
+      <%= javascript_include_tag("graphiql/rails/application", nonce: true) %>
+    <% else %>
+      <%= stylesheet_link_tag("/graphiql-rails/stylesheets/graphiql-3.8.3.css") %>
+      <%= stylesheet_link_tag("/graphiql-rails/stylesheets/application.css?v=#{GraphiQL::Rails::VERSION}") %>
+      <%= javascript_include_tag("/graphiql-rails/javascripts/application.js?v=#{GraphiQL::Rails::VERSION}", nonce: true) %>
+    <% end %>
+  </head>
+  <body>
+    <%= content_tag :div, 'Loading...', id: 'graphiql-container', data: {
+      graphql_endpoint_path: '/graphql',
+      initial_query: @demo_query[:query],
+      logo: GraphiQL::Rails.config.logo,
+      headers: GraphiQL::Rails.config.resolve_headers(self),
+      query_params: true,
+      header_editor_enabled: GraphiQL::Rails.config.header_editor_enabled,
+      input_value_deprecation: GraphiQL::Rails.config.input_value_deprecation,
+      should_persist_headers: GraphiQL::Rails.config.should_persist_headers
+    } %>
+    <script nonce="<%= content_security_policy_nonce %>">
+      (() => {
+        const container = document.getElementById('graphiql-container');
+        const query = container?.dataset.initialQuery;
+        if (!query) return;
+
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState(null, '', `${cleanUrl}?query=${encodeURIComponent(query)}`);
+
+        window.addEventListener('load', () => {
+          window.history.replaceState(null, '', cleanUrl);
+        }, { once: true });
+      })();
+    </script>
+  </body>
+</html>

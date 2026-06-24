@@ -12,10 +12,12 @@ module Resolvers
       # Stash auth + tracer in context so field resolvers can reuse
       context[:as]     = as
       context[:tracer] = TRACER
+      otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
+      context[:otel_ctx] = otel_ctx
 
       # One logical loader: returns [account, parent, grandparent, ...] for the given id
       context.dataloader
-             .with(Sources::AccountsWithParentsById, as: as, tracer: TRACER)
+             .with(Sources::AccountsWithParentsById, as: as, tracer: TRACER, otel_ctx: otel_ctx)
              .load(id)
     end
   end

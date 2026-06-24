@@ -15,7 +15,9 @@ class Account < ActiveResource::Base
 
   def self.with_headers(temp_headers)
     old_headers = headers.dup
-    self.headers.merge!(temp_headers)
+    propagated_headers = temp_headers.dup
+    OpenTelemetry.propagation.inject(propagated_headers)
+    self.headers.merge!(propagated_headers)
     yield
   ensure
     self.headers.replace(old_headers)
@@ -35,10 +37,11 @@ class Account < ActiveResource::Base
   end
 
   def self.with_parents_batch(account_ids)
-    query_string = URI.encode_www_form(account_ids.map { |id| ['account_ids[]', id] })
-    path = "/accounts_with_parents.json?#{query_string}"
-
-    raw = connection.get(path, headers)
+    raw = connection.post(
+      "/accounts_with_parents",
+      { account_ids: Array(account_ids) }.to_json,
+      headers.merge("Accept" => "application/json", "Content-Type" => "application/json")
+    )
 
     data = ActiveSupport::JSON.decode(raw.body)
 

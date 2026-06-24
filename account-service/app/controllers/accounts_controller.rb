@@ -39,7 +39,7 @@ class AccountsController < ApplicationController
 
     account_ids = params.permit(account_ids: [])[:account_ids]
     raise ActionController::BadRequest, "account_ids must be an array" unless account_ids.is_a?(Array)
-    results = account_ids.map { |id| fetch_account_with_parents(id) }
+    results = fetch_accounts_with_parents(account_ids)
     render json: results
   end
 
@@ -94,13 +94,55 @@ class AccountsController < ApplicationController
   end
 
   def fetch_account_with_parents(account_id)
-    cache_key = "account_with_parents:#{account_id}"
+    fetch_accounts_with_parents([account_id]).first
+  end
 
-    if (cached = ACCOUNT_CACHE.get(cache_key))
-      OpenTelemetry::Trace.current_span.add_event("Fetching cached account_with_parents SUCCESS!")
-      return JSON.parse(cached)
+  def fetch_accounts_with_parents(account_ids)
+    ids = Array(account_ids).map(&:to_s)
+    cache_keys = ids.map { |id| account_with_parents_cache_key(id) }
+
+    cached_values = ACCOUNT_CACHE.pipelined do |pipe|
+      cache_keys.each { |cache_key| pipe.get(cache_key) }
     end
 
+    by_id = {}
+    misses = []
+
+    ids.each_with_index do |id, index|
+      cached = cached_values[index]
+      if cached
+        OpenTelemetry::Trace.current_span.add_event("Fetching cached account_with_parents SUCCESS!")
+        by_id[id] = JSON.parse(cached)
+      else
+        misses << id
+      end
+    end
+
+    if misses.any?
+      OpenTelemetry::Trace.current_span.add_event("Fetching #{misses.size} account_with_parents misses")
+      computed = misses.to_h do |id|
+        results, org_key_set = compute_account_with_parents(id)
+        by_id[id] = results
+        [id, [results, org_key_set]]
+      end
+
+      ACCOUNT_CACHE.pipelined do |pipe|
+        computed.each do |id, (results, org_key_set)|
+          cache_key = account_with_parents_cache_key(id)
+          pipe.set(cache_key, results.to_json, ex: 300)
+          pipe.sadd(org_key_set, cache_key) if org_key_set.present?
+        end
+      end
+    end
+
+    ids.map { |id| by_id[id] }
+  end
+
+  def account_with_parents_cache_key(account_id)
+    "account_with_parents:#{account_id}"
+  end
+
+  def compute_account_with_parents(account_id)
     OpenTelemetry::Trace.current_span.add_event("Fetching account_with_parents failed, doing it the slow way")
 
     account = Account.find(account_id)
@@ -151,9 +193,6 @@ class AccountsController < ApplicationController
     # include the root account (to match your prior behavior)
     results << account
 
-    ACCOUNT_CACHE.set(cache_key, results.to_json, ex: 300)
-    ACCOUNT_CACHE.sadd(org_key_set, cache_key)
-
-    results
+    [results, org_key_set]
   end
 end

@@ -2,7 +2,7 @@
 
 # app/models/group_user.rb
 class GroupUser < ActiveResource::Base
-  self.site = ENV.fetch("GROUP_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
+  self.site = ENV.fetch("GROUP_SERVICE_API_BASE_URL", "http://group-service:80")
   self.format = :json
 
   # Optional: if the resource uses UUIDs instead of integers
@@ -15,7 +15,9 @@ class GroupUser < ActiveResource::Base
  
   def self.with_headers(temp_headers)
     old_headers = headers.dup
-    self.headers.merge!(temp_headers)
+    propagated_headers = temp_headers.dup
+    OpenTelemetry.propagation.inject(propagated_headers)
+    self.headers.merge!(propagated_headers)
     yield
   ensure
     self.headers.replace(old_headers)

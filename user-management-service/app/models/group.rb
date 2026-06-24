@@ -2,7 +2,7 @@
 
 # app/models/user.rb
 class Group < ActiveResource::Base
-  self.site = ENV.fetch("GROUP_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
+  self.site = ENV.fetch("GROUP_SERVICE_API_BASE_URL", "http://group-service:80")
   self.format = :json
 
   # Optional: if the resource uses UUIDs instead of integers
@@ -15,7 +15,9 @@ class Group < ActiveResource::Base
  
   def self.with_headers(temp_headers)
     old_headers = headers.dup
-    self.headers.merge!(temp_headers)
+    propagated_headers = temp_headers.dup
+    OpenTelemetry.propagation.inject(propagated_headers)
+    self.headers.merge!(propagated_headers)
     yield
   ensure
     self.headers.replace(old_headers)
@@ -27,7 +29,12 @@ class Group < ActiveResource::Base
 
     url = "#{Env::GROUP_SERVICE_API_BASE_URL}/accounts/groups/counts?#{query_string}"
 
-    response = Faraday.get(url)
+    outgoing_headers = {}
+    OpenTelemetry.propagation.inject(outgoing_headers)
+
+    response = Faraday.get(url) do |req|
+      outgoing_headers.each { |key, value| req.headers[key] = value }
+    end
 
     raise "Error getting Account's Group counts" unless response.status == 200
     data = JSON.parse(response.body, symbolize_names: true)

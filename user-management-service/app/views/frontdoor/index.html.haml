@@ -1,8 +1,38 @@
-%h1 Frontdoor#index
-%p Find me in app/views/frontdoor/index.html.haml
+.space-y-10
+  %section
+    %p.text-sm.font-semibold.uppercase.tracking-wide.text-sky-700.dark:text-sky-300 User Management Service
+    %h1.mt-2.text-3xl.font-bold Demo Links
+    %p.mt-3.max-w-3xl.text-gray-700.dark:text-gray-300
+      Stable fixture queries for timing runs, cache checks, and Jaeger trace inspection. These links use host-facing development ports.
 
-%a(href="http://thinktank.sectorfour:11030/") Jaeger
+  %section
+    %h2.text-xl.font-semibold Demo Queries
+    .mt-4.grid.gap-4.md:grid-cols-2
+      - @query_links.each do |link|
+        %a.block.rounded.border.border-gray-200.p-4.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: demo_query_path(link[:id]) }
+          %span.block.font-semibold= link[:title]
+          %span.mt-1.block.text-sm.text-gray-600.dark:text-gray-300= link[:detail]
 
-%p
-  Accounts to look at:
-  %a(href="accounts/c4113a02-a42a-4c73-b836-2c22fb281cbe") c4113a02-a42a-4c73-b836-2c22fb281cbe
+  %section
+    %h2.text-xl.font-semibold Jaeger
+    .mt-4.grid.gap-3.md:grid-cols-2
+      - @jaeger_links.each do |title, href|
+        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: href }
+          = title
+
+  %section
+    %h2.text-xl.font-semibold Local Tools
+    .mt-4.grid.gap-3.md:grid-cols-2
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: '/graphiql' } GraphiQL
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: '/up' } Health Check
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: 'http://localhost:11150/' } Grafana
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: 'http://localhost:11170/' } Prometheus
+
+  %section
+    %h2.text-xl.font-semibold Experimental Account Pages
+    %p.mt-2.text-sm.text-gray-600.dark:text-gray-300
+      These exercise the heavier page expansion path and are useful when debugging downstream limits.
+    .mt-4.grid.gap-3.md:grid-cols-2
+      - @experimental_links.each do |title, href|
+        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: href }
+          = title

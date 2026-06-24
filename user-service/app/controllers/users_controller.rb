@@ -9,6 +9,14 @@ class UsersController < ApplicationController
     render json: results
   end
 
+  # POST /users/search
+  def search
+    filters = params.permit(account_id: [], id: [])
+    raise BadFilterError unless filters.present?
+
+    render json: User.where(*filters)
+  end
+
   # GET /users/1
   def show
     render json: @user

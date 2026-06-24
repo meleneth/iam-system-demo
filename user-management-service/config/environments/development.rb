@@ -72,5 +72,7 @@ Rails.application.configure do
   #
   config.hosts << "thinktank.sectorfour:8500"
   config.hosts << "moxie.sectorfour:8500"
-  config.web_console.permissions = '172.16.0.0/12'
+  config.hosts << "localhost:7500"
+  config.hosts << "127.0.0.1:7500"
+  config.web_console.permissions = '172.16.0.0/12' if config.respond_to?(:web_console)
 end

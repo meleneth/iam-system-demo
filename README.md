@@ -4,7 +4,7 @@ PLEASE NOTE:
 Many bits of this codebase are NOT PRODUCTION READY.
 It exists to explore some SPECIFIC ideas around dataloader and multi-object fetching, and SHOULD NOT be used as an example of good coding standards.
 
-Key deficiencies: Lack of unit tests, duplicate models amongst services, all credentials in the repository, race conditions in headers, and a complete lack of authentication.  There has also been a bit of drift from the generated service layout, and care was NOT taken to make sure that everything still works in all environments.
+Key deficiencies: Lack of unit tests, duplicate models amongst services, all credentials in the repository, race conditions in headers, and a complete lack of end-user authentication.  There has also been a bit of drift from the generated service layout, and care was NOT taken to make sure that everything still works in all environments.
 
 This codebase is to simulate (and optimize) the authorization explosion when loading a user management interface in a large distributed system
 centered around IAM.
@@ -13,11 +13,11 @@ Note that in a live system, service to service requests should not be trusted un
 
 All primary keys are UUID's.
 
-Accounts have parent_account_id, which may by nil if this is the 'top level' account.  For extra fun, grants are inherited from your parent account.
+Accounts have parent_account_id, which may be nil if this is the 'top level' account.  For extra fun, grants are inherited from your parent account.
 
 Every account will belong to an Organization.  Organization-service has a OrganizationAccounts table that as an entry per Account saying which Organization it belongs to.  The first user created for an Organization will be the Admin user, which has additional grants.
 
-./dc_test, ./dc_dev, and ./dc_prod are docker compose helpers
+[`./dc_test`](https://github.com/meleneth/iam-system-demo/blob/main/dc_test), [`./dc_dev`](https://github.com/meleneth/iam-system-demo/blob/main/dc_dev), and [`./dc_prod`](https://github.com/meleneth/iam-system-demo/blob/main/dc_prod) are docker compose helpers
 
     ./dc_test build
 
@@ -59,33 +59,39 @@ Service / Database layout:
 
 numbers after service names are the ports for test, dev, and production respectively
 
-user-management-service: 11090, 11230,
+user-management-service: 7499, 7500, 7501
 
 the UI that users have access to.
 
 /accounts/#{account_id}?as=IAM_SYSTEM will show 'the information' for that account with no auth checks.  if as has a user_id, that user's permission will be checked.
 
-organization-service: , 11250
+organization-service: 11120, 11250, 11380
 
 Organization id, name
 
 OrganizationAccount id, organization_id, account_id
 
-account-service: 11100, 11230, 
+account-service: 11100, 11230, 11360
 
 Account: id, name, parent_account_id
 
-scripts/account_cte_query.rb
+[`account-service/scripts/account_cte_query.rb`](https://github.com/meleneth/iam-system-demo/blob/main/account-service/scripts/account_cte_query.rb)
 
-user-service: 11090, 11220,
+[`account-service/scripts/single_account_cte_parent_query.rb`](https://github.com/meleneth/iam-system-demo/blob/main/account-service/scripts/single_account_cte_parent_query.rb)
+
+user-service: 11090, 11220, 11350
 
 User: id, email, account_id, a lot of other fields (all nil)
 
-authorization-service: 11110, 11240
+authorization-service: 11110, 11240, 11370
 
-jaeger: 11030, 11160
+group-service: 11053, 11115, 11177
+
+jaeger: 11030, 11160, 11290
 
 this shows the spans that the system generates via OpenTelemetry as things happen
+
+The current implementation does have header-based authorization, and `IAM_SYSTEM` is a system bypass used by internal requests and scripts. See [`authorization-service/app/controllers/can_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/authorization-service/app/controllers/can_controller.rb), [`organization-service/app/controllers/organization_accounts_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/organization-service/app/controllers/organization_accounts_controller.rb), and [`account-service/app/controllers/accounts_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/account-service/app/controllers/accounts_controller.rb).
 
 # Solution Space
 
@@ -124,7 +130,7 @@ this API accepts an account_id and will internally look up the organization.
 
     organization_account_ids/for_account_id/:account_id
 
-This will return 
+This will return
 
     {
       organization: {
@@ -163,6 +169,6 @@ On account / user modifications that can change the cached capabilities, we can 
 I think we can set the redis cache to delete the sets after 5 minutes, we can either just let the delete happen or update the invalidation time.  Needs research.
 
 ## ActiveResource filtering:
-By default out of the box, between Rails and ActiveResource filtering is 'not great'.  The controller returns the entire table, and filtering is done locally service side.
+By default out of the box, between Rails and ActiveResource filtering is 'not great'.  The controller returns the entire table, and filtering is done locally service side.  The filtering helper lives in [`account-service/lib/mel/filterable.rb`](https://github.com/meleneth/iam-system-demo/blob/main/account-service/lib/mel/filterable.rb) and [`user-service/lib/mel/filterable.rb`](https://github.com/meleneth/iam-system-demo/blob/main/user-service/lib/mel/filterable.rb).
 
 Not great.  I added a Mel::Filterable mixin, marked the filterable fields in the models, and modified the controller to use that functionality to require filters to be passed.  This unlocked the ability to request multiple records per request via passing arrays of id's, and between that and being able to filter on secondary keys was 'key' to getting this whole thing working.

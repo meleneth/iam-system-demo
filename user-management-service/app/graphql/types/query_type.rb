@@ -36,7 +36,11 @@ module Types
     end
 
     def account(id:, as:)
+      context[:as] = as
       context[:tracer] = TRACER
+      otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
+      context[:otel_ctx] = otel_ctx
+
       # Pass caller identity to downstream via header you already use
       Account.with_headers("pad-user-id" => as) do
         # You likely already have Account.find(id) on ActiveResource
