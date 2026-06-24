@@ -24,7 +24,7 @@ class AccountsController < ApplicationController
     @account = @accounts[-1]
     org_accounts = nil
 
-    TRACER.in_span("OrganizationAccount.account_ids_for_organization_by_account_id()") do
+    TRACER.in_span("OrganizationAccount.account_ids_for_organizations_by_account_ids()") do
       OrganizationAccount.with_headers('pad-user-id' => @as_user_id) do
         # mixed response: Organization object since organization-service service owns Organization
         # account_ids because organization-service does not own Acccounts
@@ -47,8 +47,8 @@ class AccountsController < ApplicationController
 
     all_account_ids = @accounts.map(&:id)
 
-    TRACER.in_span("User.find") do
-      @users = User.find(:all, params: { account_id: all_account_ids})
+    TRACER.in_span("User.search") do
+      @users = User.search(account_id: all_account_ids)
     end
 
     @users_by_account_id = {}
@@ -58,10 +58,10 @@ class AccountsController < ApplicationController
     end
 
     all_user_ids = @users.map(&:id)
-    @group_users = GroupUser.find(:all, params: { user_id: all_user_ids})
+    @group_users = GroupUser.search(user_id: all_user_ids)
 
     all_group_ids = @group_users.map(&:group_id).uniq
-    @groups = Group.find(:all, params: {id: all_group_ids})
+    @groups = Group.search(id: all_group_ids)
     @group_name_by_group_id = {}
     @groups.each do |group|
       @group_name_by_group_id[group.id] = group.name

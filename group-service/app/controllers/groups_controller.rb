@@ -9,6 +9,14 @@ class GroupsController < ApplicationController
     render json: results
   end
 
+  # POST /groups/search
+  def search
+    filters = params.permit(account_id: [], id: [], name: [])
+    raise BadFilterError unless filters.present?
+
+    render json: Group.where(*filters)
+  end
+
   # GET /groups/1
   def show
     render json: @group

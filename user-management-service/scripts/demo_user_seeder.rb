@@ -748,11 +748,30 @@ class DemoFixtureArtifacts
         curl -sS -o /tmp/iam-demo-response.json -w "time_total=%{time_total}\\n" "$@"
       }
 
+      post_account_parents() {
+        local account_id="$1"
+        curl_time \\
+          -H 'pad-user-id: IAM_SYSTEM' \\
+          -H 'Content-Type: application/json' \\
+          --data "{\\"account_ids\\":[\\"${account_id}\\"]}" \\
+          "$ACCOUNT_SERVICE/accounts_with_parents.json"
+      }
+
+      post_org_account_ids() {
+        local pad_user_id="$1"
+        local account_id="$2"
+        curl_time \\
+          -H "pad-user-id: ${pad_user_id}" \\
+          -H 'Content-Type: application/json' \\
+          --data "{\\"account_ids\\":[\\"${account_id}\\"]}" \\
+          "$ORGANIZATION_SERVICE/organization_account_ids/for_account_ids"
+      }
+
       # Deep ancestry CTE and account cache pressure.
-      curl_time -H 'pad-user-id: IAM_SYSTEM' "$ACCOUNT_SERVICE/accounts_with_parents.json?account_ids[]=#{deep.fetch(:targets).fetch(:leaf_account_id)}"
+      post_account_parents "#{deep.fetch(:targets).fetch(:leaf_account_id)}"
 
       # Wide organization account-id fan-out.
-      curl_time -H 'pad-user-id: #{top_level_admin_user_id(wide)}' "$ORGANIZATION_SERVICE/organization_account_ids/for_account_id/#{wide.fetch(:targets).fetch(:root_account_id)}"
+      post_org_account_ids "#{top_level_admin_user_id(wide)}" "#{wide.fetch(:targets).fetch(:root_account_id)}"
 
       # Dense user and group counts for a single account.
       curl_time "$USER_SERVICE/accounts/users/counts?account_id[]=#{dense.fetch(:targets).fetch(:account_id)}"
@@ -762,12 +781,12 @@ class DemoFixtureArtifacts
       curl_time -H 'pad-user-id: #{top_level_admin_user_id(branching)}' "$AUTHORIZATION_SERVICE/can/Account/account.read?scope_id[]=#{branching.fetch(:targets).fetch(:leaf_account_id)}"
 
       # Sparse enterprise org fan-out.
-      curl_time -H 'pad-user-id: #{top_level_admin_user_id(sparse)}' "$ORGANIZATION_SERVICE/organization_account_ids/for_account_id/#{sparse.fetch(:targets).fetch(:root_account_id)}"
+      post_org_account_ids "#{top_level_admin_user_id(sparse)}" "#{sparse.fetch(:targets).fetch(:root_account_id)}"
 
       # Massive fan-out organizations.
-      curl_time -H 'pad-user-id: #{top_level_admin_user_id(fanout_100k)}' "$ORGANIZATION_SERVICE/organization_account_ids/for_account_id/#{fanout_100k.fetch(:targets).fetch(:root_account_id)}"
-      curl_time -H 'pad-user-id: #{top_level_admin_user_id(fanout_50k)}' "$ORGANIZATION_SERVICE/organization_account_ids/for_account_id/#{fanout_50k.fetch(:targets).fetch(:root_account_id)}"
-      curl_time -H 'pad-user-id: #{top_level_admin_user_id(fanout_10k)}' "$ORGANIZATION_SERVICE/organization_account_ids/for_account_id/#{fanout_10k.fetch(:targets).fetch(:root_account_id)}"
+      post_org_account_ids "#{top_level_admin_user_id(fanout_100k)}" "#{fanout_100k.fetch(:targets).fetch(:root_account_id)}"
+      post_org_account_ids "#{top_level_admin_user_id(fanout_50k)}" "#{fanout_50k.fetch(:targets).fetch(:root_account_id)}"
+      post_org_account_ids "#{top_level_admin_user_id(fanout_10k)}" "#{fanout_10k.fetch(:targets).fetch(:root_account_id)}"
     SH
   end
 

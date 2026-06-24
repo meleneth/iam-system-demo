@@ -22,4 +22,14 @@ class GroupUser < ActiveResource::Base
   ensure
     self.headers.replace(old_headers)
   end
+
+  def self.search(params)
+    raw = connection.post(
+      "/group_users/search",
+      params.to_json,
+      headers.merge("Accept" => "application/json", "Content-Type" => "application/json")
+    )
+
+    ActiveSupport::JSON.decode(raw.body).map { |attrs| new(attrs) }
+  end
 end

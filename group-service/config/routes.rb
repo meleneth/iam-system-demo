@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  post "/group_users/search(.:format)", to: "group_users#search"
+  post "/groups/search(.:format)", to: "groups#search"
+
   resources :group_users
   resources :groups
 

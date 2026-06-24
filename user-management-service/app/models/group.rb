@@ -23,6 +23,16 @@ class Group < ActiveResource::Base
     self.headers.replace(old_headers)
   end
 
+  def self.search(params)
+    raw = connection.post(
+      "/groups/search",
+      params.to_json,
+      headers.merge("Accept" => "application/json", "Content-Type" => "application/json")
+    )
+
+    ActiveSupport::JSON.decode(raw.body).map { |attrs| new(attrs) }
+  end
+
   def self.groups_count(account_ids)
     account_ids = Array(account_ids)
     query_string = URI.encode_www_form(account_ids.map { |id| ["account_id[]", id] })

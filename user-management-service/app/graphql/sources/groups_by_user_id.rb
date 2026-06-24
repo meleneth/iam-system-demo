@@ -21,11 +21,11 @@ module Sources
             GroupUser.with_headers('pad-user-id' => @as) do
               Group.with_headers('pad-user-id' => @as) do
                 gus = keys.each_slice(USER_ID_FETCH_CHUNK_SIZE).flat_map do |user_ids|
-                  GroupUser.find(:all, params: { user_id: user_ids })
+                  GroupUser.search(user_id: user_ids)
                 end
                 group_ids = gus.map(&:group_id).uniq
                 groups = group_ids.each_slice(GROUP_ID_FETCH_CHUNK_SIZE).flat_map do |ids|
-                  Group.find(:all, params: { id: ids })
+                  Group.search(id: ids)
                 end
                 groups_by_id = groups.index_by(&:id)
 

@@ -123,24 +123,38 @@ This will return rows like
 
 As we can see, this an account 13 levels deep in an account hierarchy.  This query in particular unravels the account hierarchy for the entire table, but we can also unravel just one organization's worth at a time if we supply all the account id's.  Organization / Account mapping is stored remotely, so we can't just use the database to find that membership.
 
-## REST API: Organization Acount ID's
-organization-service has an api for returning account_ids for an organization.
+## REST API: Organization Account IDs
+organization-service has an API for returning account_ids for an organization.
 Because we don't know the organization usually, but we always know our account_id because we know our user,
-this API accepts an account_id and will internally look up the organization.
+this API accepts account_ids and will internally look up the organizations.
 
-    organization_account_ids/for_account_id/:account_id
+    POST organization_account_ids/for_account_ids
 
-This will return
+Request body:
 
     {
-      organization: {
-        {id: "1b486568-4214-49e5-bafb-5a381d4cdf1d", name: "Some Amazing Organization"}
-      },
-      account_ids: [
-        "e006c8ed-eb76-4d54-8d41-81b84d882092",
-        "ed4399a9-c0e6-4c24-b3f6-442dfae35fc9"
+      "account_ids": [
+        "account_123",
+        "account_456"
       ]
     }
+
+This returns a compressed organization-to-account map:
+
+    {
+      "organizations": {
+        "org_99": [
+          "account_1",
+          "account_2"
+        ]
+      },
+      "account_to_organization": {
+        "account_123": "org_99",
+        "account_456": "org_99"
+      }
+    }
+
+The older `organization_account_ids/for_account_id/:account_id` route still exists for compatibility, but new callers should use the POST batch endpoint.
 
 This is a huge win because the naive approach requires a request to find the organization_id from this account id, and then another request to load the organization (to get the name), and then a THIRD request to get the account_id's that belong to the organization.  This is the root of all evil for latency.
 
