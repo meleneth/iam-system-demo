@@ -28,21 +28,38 @@ class OrganizationAccount < ActiveResource::Base
 
   def self.account_ids_for_organization_by_account_id(account_id)
     raise "One account_id only please" if account_id.is_a? Array
-    # TODO FIXME SECURITY - account_id is passed to us as a url param, SANITIZE IT
-    url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_id/#{account_id}"
+
+    account_ids_for_organizations_by_account_ids([account_id]).fetch(account_id.to_s)
+  end
+
+  def self.account_ids_for_organizations_by_account_ids(account_ids)
+    url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_ids"
 
     pad_user_id = headers["pad-user-id"]
-    outgoing_headers = { "pad-user-id" => pad_user_id }
+    outgoing_headers = {
+      "pad-user-id" => pad_user_id,
+      "Content-Type" => "application/json"
+    }
     OpenTelemetry.propagation.inject(outgoing_headers)
-    response = Faraday.get(url) do |req|
+    response = Faraday.post(url) do |req|
       outgoing_headers.each { |key, value| req.headers[key] = value }
+      req.body = { account_ids: account_ids }.to_json
     end
 
-    raise "Failed to get org accounts for account_id #{account_id}" unless response.status == 200
+    raise "Failed to get org accounts for account_ids #{account_ids}" unless response.status == 200
 
-    data = JSON.parse(response.body, symbolize_names: true)
-    data[:organization] = Organization.new(data[:organization])
-    return data
+    data = JSON.parse(response.body)
+    organizations = data.fetch("organizations")
+
+    data.fetch("account_to_organization").to_h do |account_id, organization_id|
+      [
+        account_id.to_s,
+        {
+          organization: Organization.new(id: organization_id),
+          account_ids: organizations.fetch(organization_id.to_s)
+        }
+      ]
+    end
   end
 
 end

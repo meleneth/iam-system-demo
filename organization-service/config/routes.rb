@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "organization_account_ids/for_account_id/:account_id", to: "organization_accounts#for_account"
+  post "organization_account_ids/for_account_ids(.:format)", to: "organization_accounts#for_accounts"
 
   get "/organizations/accounts/counts/:organization_id",
       to: "organizations/accounts_count#index",

@@ -120,8 +120,13 @@ class AccountsController < ApplicationController
 
     if misses.any?
       OpenTelemetry::Trace.current_span.add_event("Fetching #{misses.size} account_with_parents misses")
+      organization_payloads = {}
+      OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
+        organization_payloads = OrganizationAccount.account_ids_for_organizations_by_account_ids(misses)
+      end
+
       computed = misses.to_h do |id|
-        results, org_key_set = compute_account_with_parents(id)
+        results, org_key_set = compute_account_with_parents(id, organization_payloads.fetch(id))
         by_id[id] = results
         [id, [results, org_key_set]]
       end
@@ -142,19 +147,22 @@ class AccountsController < ApplicationController
     "account_with_parents:#{account_id}"
   end
 
-  def compute_account_with_parents(account_id)
+  def compute_account_with_parents(account_id, organization_payload = nil)
     OpenTelemetry::Trace.current_span.add_event("Fetching account_with_parents failed, doing it the slow way")
 
     account = Account.find(account_id)
 
     org_key_set = ""
     seed_ids = []
-    OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
-      response     = OrganizationAccount.account_ids_for_organization_by_account_id(account.id)
-      organization = response[:organization]
-      seed_ids     = response[:account_ids]
-      org_key_set  = "org_cachekeys:#{organization.id}"
+    response = organization_payload
+    unless response
+      OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
+        response = OrganizationAccount.account_ids_for_organization_by_account_id(account.id)
+      end
     end
+    organization = response[:organization]
+    seed_ids     = response[:account_ids]
+    org_key_set  = "org_cachekeys:#{organization.id}"
 
     # CTE with bind params: $1::uuid for root account, $2::uuid[] for seed ids
     sql = <<~SQL
