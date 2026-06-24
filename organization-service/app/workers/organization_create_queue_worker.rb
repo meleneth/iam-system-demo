@@ -68,6 +68,14 @@ class OrganizationCreateQueueWorker
       puts "[organization-create-queue-worker] created: org_account_id=#{organization_account.id}"
     end
 
+    if (msp_account_id = body["msp_managed_by_account_id"]).present?
+      mapping = MspManagedAccount.find_or_create_by!(
+        msp_account_id: msp_account_id,
+        managed_account_id: account_id
+      )
+      puts "[organization-create-queue-worker] MSP mapping: #{mapping.msp_account_id} -> #{mapping.managed_account_id}"
+    end
+
     delete(msg)
   rescue => e
     puts "[organization-create-queue-worker] error processing message: #{e.class}: #{e.message}"
@@ -93,4 +101,3 @@ class AwsMessage
     end
   end
 end
-

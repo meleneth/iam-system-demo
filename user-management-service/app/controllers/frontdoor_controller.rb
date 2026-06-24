@@ -89,13 +89,15 @@ class FrontdoorController < ApplicationController
       },
       'massive-fanout-100k' => {
         id: 'massive-fanout-100k',
-        title: 'Massive fanout 100k',
-        detail: '100,000 users across nearly 100,000 accounts, authorized as the root admin.',
+        title: 'MSP reflected users 100k',
+        detail: 'One MSP admin, 99,999 customer accounts, Redis-only reflected user-management grants.',
         query: <<~GRAPHQL
           {
-            organization(id: "97c51e2b-d056-5a0f-81ec-79677720a6cf", as: "5138ea60-cd59-5f63-a280-db91d43783d2") {
-              id
-              name
+            mspUserManagement(mspAccountId: "0f418549-dc1c-554e-947d-17c3a5154857", as: "f56f5767-fad2-57c9-b279-30463d7b3b90") {
+              loading
+              loadedCount
+              totalCount
+              message
               accounts {
                 id
                 users {
@@ -114,13 +116,15 @@ class FrontdoorController < ApplicationController
       },
       'massive-fanout-50k' => {
         id: 'massive-fanout-50k',
-        title: 'Massive fanout 50k',
-        detail: '50,000 users across nearly 50,000 accounts, authorized as the root admin.',
+        title: 'MSP reflected users 50k',
+        detail: 'One MSP admin, 49,999 customer accounts, Redis-only reflected user-management grants.',
         query: <<~GRAPHQL
           {
-            organization(id: "eb21d6a4-b6bc-56e8-a0db-bcea6f8f0647", as: "894c2cfb-02e6-5be4-b48e-f14cae31683b") {
-              id
-              name
+            mspUserManagement(mspAccountId: "3c5b62df-e65e-5bdd-9798-de7c4e53315b", as: "4418a141-eeb1-50a9-893e-f94e2266a599") {
+              loading
+              loadedCount
+              totalCount
+              message
               accounts {
                 id
                 users {
@@ -139,13 +143,15 @@ class FrontdoorController < ApplicationController
       },
       'massive-fanout-10k' => {
         id: 'massive-fanout-10k',
-        title: 'Massive fanout 10k',
-        detail: '10,000 users across nearly 10,000 accounts, authorized as the root admin.',
+        title: 'MSP reflected users 10k',
+        detail: 'One MSP admin, 9,999 customer accounts, Redis-only reflected user-management grants.',
         query: <<~GRAPHQL
           {
-            organization(id: "fc75e5e0-e369-5572-9f47-8156103aa525", as: "e9c7f330-e3c0-5e53-ad59-5d131227f318") {
-              id
-              name
+            mspUserManagement(mspAccountId: "b05e3a9d-ee13-5d71-b248-beaf964c893f", as: "f3a85e16-4fea-53c0-b31a-8ac822431f9a") {
+              loading
+              loadedCount
+              totalCount
+              message
               accounts {
                 id
                 users {

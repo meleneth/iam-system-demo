@@ -532,42 +532,62 @@ class DemoFixtureCatalog
   end
 
   def build_massive_fanout(name, user_count)
-    org_id = uuid("#{name}/org")
-    root_id = uuid("#{name}/root")
-    root_user_id = uuid("#{name}/root-admin")
-    root_groups = account_groups(name, root_id)
-    account_samples = [account_entry(root_id, nil)]
-    user_samples = [user_entry(root_user_id, root_id, true)]
+    msp_org_id = uuid("#{name}/msp/org")
+    msp_account_id = uuid("#{name}/msp/account")
+    msp_admin_user_id = uuid("#{name}/msp/admin")
+    msp_groups = account_groups(name, msp_account_id)
+    customer_count = user_count - 1
+    account_samples = [account_entry(msp_account_id, nil)]
+    user_samples = [user_entry(msp_admin_user_id, msp_account_id, true)]
 
-    @payloads << payload(name, root_id, nil, org_id, root_user_id, true, root_groups, 'root-admin')
+    @payloads << payload(name, msp_account_id, nil, msp_org_id, msp_admin_user_id, true, msp_groups, 'msp-admin')
 
-    (1...user_count).each do |i|
-      account_id = uuid("#{name}/account/#{i}")
-      user_id = uuid("#{name}/user/#{i}")
-      account_samples << account_entry(account_id, root_id) if sample_index?(i, user_count)
-      user_samples << user_entry(user_id, account_id, true) if sample_index?(i, user_count)
-      @payloads << payload(name, account_id, root_id, org_id, user_id, true, account_groups(name, account_id), "account-#{i}-admin")
+    (1..customer_count).each do |i|
+      account_id = uuid("#{name}/customer/account/#{i}")
+      org_id = uuid("#{name}/customer/org/#{i}")
+      user_id = uuid("#{name}/customer/user/#{i}")
+      if sample_index?(i, user_count)
+        account_samples << account_entry(account_id, nil)
+        user_samples << user_entry(user_id, account_id, false)
+      end
+      @payloads << payload(
+        name,
+        account_id,
+        nil,
+        org_id,
+        user_id,
+        false,
+        [group(name, account_id, 'Users')],
+        "customer-#{i}-user",
+        msp_managed_by_account_id: msp_account_id
+      )
     end
 
     add_fixture(
       name: name,
-      description: "#{user_count} users spread across nearly #{user_count} accounts in one organization.",
-      organization_id: org_id,
+      description: "MSP-style fixture with one MSP admin and #{customer_count} customer accounts attached by private MSP mapping, not org membership or parentage.",
+      organization_id: msp_org_id,
       account_count: user_count,
       user_count: user_count,
       account_samples: account_samples,
       user_samples: user_samples,
+      msp: {
+        organization_id: msp_org_id,
+        account_id: msp_account_id,
+        admin_user_id: msp_admin_user_id,
+        managed_account_count: customer_count
+      },
       targets: {
-        root_account_id: root_id,
-        top_level_account_id: root_id,
-        top_level_admin_user_id: root_user_id,
+        msp_account_id: msp_account_id,
+        top_level_account_id: msp_account_id,
+        top_level_admin_user_id: msp_admin_user_id,
         sample_account_ids: account_samples.last(20).map { |account| account[:id] },
-        admin_user_id: root_user_id
+        admin_user_id: msp_admin_user_id
       }
     )
   end
 
-  def add_fixture(name:, description:, organization_id:, targets:, accounts: nil, users: nil, account_count: nil, user_count: nil, groups: nil, account_samples: nil, user_samples: nil)
+  def add_fixture(name:, description:, organization_id:, targets:, accounts: nil, users: nil, account_count: nil, user_count: nil, groups: nil, account_samples: nil, user_samples: nil, msp: nil)
     account_count ||= accounts.length
     user_count ||= users.length
     account_samples ||= sample_collection(accounts)
@@ -584,6 +604,7 @@ class DemoFixtureCatalog
       users: user_count <= LARGE_MANIFEST_SAMPLE_LIMIT ? users : nil,
       user_samples: user_count > LARGE_MANIFEST_SAMPLE_LIMIT ? user_samples : nil,
       groups: groups,
+      msp: msp,
       targets: targets
     }.compact
   end
@@ -611,8 +632,8 @@ class DemoFixtureCatalog
     index < 10 || index >= total_count - 20
   end
 
-  def payload(fixture_name, account_id, parent_account_id, organization_id, user_id, admin, groups, role)
-    {
+  def payload(fixture_name, account_id, parent_account_id, organization_id, user_id, admin, groups, role, msp_managed_by_account_id: nil)
+    event = {
       type: 'demo.user.create',
       index: nil,
       fixture: fixture_name,
@@ -632,6 +653,8 @@ class DemoFixtureCatalog
       },
       groups: groups
     }
+    event[:msp_managed_by_account_id] = msp_managed_by_account_id if msp_managed_by_account_id
+    event
   end
 
   def account_groups(fixture_name, account_id)
@@ -783,10 +806,19 @@ class DemoFixtureArtifacts
       # Sparse enterprise org fan-out.
       post_org_account_ids "#{top_level_admin_user_id(sparse)}" "#{sparse.fetch(:targets).fetch(:root_account_id)}"
 
-      # Massive fan-out organizations.
-      post_org_account_ids "#{top_level_admin_user_id(fanout_100k)}" "#{fanout_100k.fetch(:targets).fetch(:root_account_id)}"
-      post_org_account_ids "#{top_level_admin_user_id(fanout_50k)}" "#{fanout_50k.fetch(:targets).fetch(:root_account_id)}"
-      post_org_account_ids "#{top_level_admin_user_id(fanout_10k)}" "#{fanout_10k.fetch(:targets).fetch(:root_account_id)}"
+      # MSP reflected user-management grant loading and status checks.
+      curl_time \\
+        -H 'Content-Type: application/json' \\
+        --data '{"user_id":"#{top_level_admin_user_id(fanout_100k)}","msp_account_id":"#{fanout_100k.fetch(:targets).fetch(:msp_account_id)}","account_ids":[]}' \\
+        "$AUTHORIZATION_SERVICE/msp_reflected_user_grants/check"
+      curl_time \\
+        -H 'Content-Type: application/json' \\
+        --data '{"user_id":"#{top_level_admin_user_id(fanout_50k)}","msp_account_id":"#{fanout_50k.fetch(:targets).fetch(:msp_account_id)}","account_ids":[]}' \\
+        "$AUTHORIZATION_SERVICE/msp_reflected_user_grants/check"
+      curl_time \\
+        -H 'Content-Type: application/json' \\
+        --data '{"user_id":"#{top_level_admin_user_id(fanout_10k)}","msp_account_id":"#{fanout_10k.fetch(:targets).fetch(:msp_account_id)}","account_ids":[]}' \\
+        "$AUTHORIZATION_SERVICE/msp_reflected_user_grants/check"
     SH
   end
 
@@ -823,9 +855,9 @@ class DemoFixtureArtifacts
       'Deep chain accountWithParents' => '/demo_queries/deep-chain',
       'Wide organization accounts' => '/demo_queries/wide-org',
       'Dense account users and groups' => '/demo_queries/dense-account',
-      'Massive 100k fanout users and groups' => '/demo_queries/massive-fanout-100k',
-      'Massive 50k fanout users and groups' => '/demo_queries/massive-fanout-50k',
-      'Massive 10k fanout users and groups' => '/demo_queries/massive-fanout-10k'
+      'MSP 100k reflected users and groups' => '/demo_queries/massive-fanout-100k',
+      'MSP 50k reflected users and groups' => '/demo_queries/massive-fanout-50k',
+      'MSP 10k reflected users and groups' => '/demo_queries/massive-fanout-10k'
     }
   end
 
@@ -925,14 +957,16 @@ class DemoFixtureArtifacts
           }
         }
       GRAPHQL
-      'Massive 100k fanout users and groups' => <<~GRAPHQL,
+      'MSP 100k reflected users and groups' => <<~GRAPHQL,
         {
-          organization(
-            id: "#{fanout_100k.fetch(:organization_id)}"
+          mspUserManagement(
+            mspAccountId: "#{fanout_100k.fetch(:targets).fetch(:msp_account_id)}"
             as: "#{top_level_admin_user_id(fanout_100k)}"
           ) {
-            id
-            name
+            loading
+            loadedCount
+            totalCount
+            message
             accounts {
               id
               users {
@@ -948,14 +982,16 @@ class DemoFixtureArtifacts
           }
         }
       GRAPHQL
-      'Massive 50k fanout users and groups' => <<~GRAPHQL,
+      'MSP 50k reflected users and groups' => <<~GRAPHQL,
         {
-          organization(
-            id: "#{fanout_50k.fetch(:organization_id)}"
+          mspUserManagement(
+            mspAccountId: "#{fanout_50k.fetch(:targets).fetch(:msp_account_id)}"
             as: "#{top_level_admin_user_id(fanout_50k)}"
           ) {
-            id
-            name
+            loading
+            loadedCount
+            totalCount
+            message
             accounts {
               id
               users {
@@ -971,14 +1007,16 @@ class DemoFixtureArtifacts
           }
         }
       GRAPHQL
-      'Massive 10k fanout users and groups' => <<~GRAPHQL
+      'MSP 10k reflected users and groups' => <<~GRAPHQL
         {
-          organization(
-            id: "#{fanout_10k.fetch(:organization_id)}"
+          mspUserManagement(
+            mspAccountId: "#{fanout_10k.fetch(:targets).fetch(:msp_account_id)}"
             as: "#{top_level_admin_user_id(fanout_10k)}"
           ) {
-            id
-            name
+            loading
+            loadedCount
+            totalCount
+            message
             accounts {
               id
               users {

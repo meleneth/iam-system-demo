@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  post "msp_reflected_user_grants/check", to: "msp_reflected_user_grants#check"
+
   resources :capability_grants
 
   get "can/:scope_type/:permission", to: "can#index", format: false, constraints: { permission: /[^\/]+/ }

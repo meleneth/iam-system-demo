@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  namespace :internal do
+    get "msp_managed_accounts/:msp_account_id", to: "msp_managed_accounts#index"
+    get "msp_managed_accounts/:msp_account_id/:managed_account_id", to: "msp_managed_accounts#show"
+  end
+
   get "organization_account_ids/for_account_id/:account_id", to: "organization_accounts#for_account"
   post "organization_account_ids/for_account_ids(.:format)", to: "organization_accounts#for_accounts"
 

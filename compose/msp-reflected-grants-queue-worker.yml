@@ -1,0 +1,20 @@
+services:
+  msp-reflected-grants-service-worker:
+    image: parent_account_id/authorization-service
+    command: ["./bin/rails", "runner", "MspReflectedGrantsQueueWorker.new.run"]
+    environment:
+      - MSP_REFLECTED_GRANTS_QUEUE_URL=http://eventstream:4566/000000000000/msp_reflected_grants
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+      - AWS_REGION=us-east-1
+      - ACCOUNT_SERVICE_API_BASE_URL=http://account-service:80
+      - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
+      - AUTHORIZATION_CACHE_REDIS_URL=redis://authcache:6379/1
+      - DATABASE_URL=${AUTHZ_DB_DATABASE_URL}
+      - RAILS_ENV=test
+      - RAILS_MAX_THREADS=5
+      - RAILS_MIN_THREADS=5
+      - SECRET_KEY_BASE="${AUTHORIZATION_RAILS_SECRET_KEY_BASE}"
+    depends_on:
+      - eventstream
+      - authorization-service

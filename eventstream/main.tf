@@ -43,6 +43,10 @@ resource "aws_sqs_queue" "grants_create" {
   name = "grants_create"
 }
 
+resource "aws_sqs_queue" "msp_reflected_grants" {
+  name = "msp_reflected_grants"
+}
+
 resource "aws_sns_topic_subscription" "organization_create" {
   topic_arn = aws_sns_topic.user_seed.arn
   protocol = "sqs"
@@ -66,4 +70,3 @@ resource "aws_sns_topic_subscription" "grants_create" {
   protocol = "sqs"
   endpoint = aws_sqs_queue.grants_create.arn
 }
-

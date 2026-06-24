@@ -25,6 +25,12 @@ module Types
       argument :as, ID, required: true
     end
 
+    field :msp_user_management, Types::MspUserManagementType, null: false do
+      description "Private demo view for MSP reflected user-management grants."
+      argument :msp_account_id, ID, required: true
+      argument :as, ID, required: true
+    end
+
     def organization(id:, as:)
       context[:as] = as
       context[:tracer] = TRACER
@@ -70,6 +76,42 @@ module Types
       dataloader.with(Sources::AccountById, as: as, otel_ctx: otel_ctx)
         .load_all(ids)
         .then { |records| records.compact }
+    end
+
+    def msp_user_management(msp_account_id:, as:)
+      context[:as] = as
+      context[:tracer] = TRACER
+      context[:otel_ctx] ||= OpenTelemetry::Context.current
+
+      status = MspReflectedUserGrant.check(user_id: as, msp_account_id: msp_account_id, account_ids: [])
+      raise GraphQL::ExecutionError, status[:error] if status[:status] == "failed"
+      return loading_payload(status) if status.fetch(:loading)
+
+      account_ids = MspManagedAccount.managed_account_ids(msp_account_id)
+      check = MspReflectedUserGrant.check(user_id: as, msp_account_id: msp_account_id, account_ids: account_ids)
+      raise GraphQL::ExecutionError, check[:error] if check[:status] == "failed"
+      return loading_payload(check) if check.fetch(:loading)
+
+      authorized_ids = check.fetch(:authorized_account_ids)
+      {
+        loading: false,
+        loaded_count: check.fetch(:loaded_count),
+        total_count: check.fetch(:total_count),
+        message: "MSP user-management access ready. Loaded #{check.fetch(:loaded_count)} of #{check.fetch(:total_count)} accounts.",
+        accounts: authorized_ids.map { |account_id| { id: account_id } }
+      }
+    end
+
+    def loading_payload(status)
+      loaded = status.fetch(:loaded_count)
+      total = status.fetch(:total_count)
+      {
+        loading: true,
+        loaded_count: loaded,
+        total_count: total,
+        message: "Preparing MSP user-management access. Loaded #{loaded} of #{total} accounts.",
+        accounts: []
+      }
     end
   end
 end
