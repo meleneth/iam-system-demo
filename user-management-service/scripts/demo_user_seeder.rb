@@ -58,6 +58,7 @@ class DemoUserSeeder
 
     total_count = fixture_payloads.length + random_count
     started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    reset_progress_rate(0, started_at)
     fixture_stream = StreamingFixtureScheduler.new(fixture_payloads, total_count, random: @random)
     puts "Streaming #{random_count} random jobs and #{fixture_payloads.length} fixture jobs#{@dry_run ? ' (dry run)' : ''}..."
 
@@ -75,7 +76,7 @@ class DemoUserSeeder
       published += 1
       payload[:index] = published - 1
       send_payload(payload)
-      log_progress(published, total_count, started_at)
+      log_progress(published, total_count)
       maybe_wait_for_grants_queue(published)
     end
 
@@ -83,7 +84,7 @@ class DemoUserSeeder
       published += 1
       payload[:index] = published - 1
       send_payload(payload)
-      log_progress(published, published, started_at)
+      log_progress(published, published)
       maybe_wait_for_grants_queue(published)
     end
 
@@ -103,12 +104,13 @@ class DemoUserSeeder
     ENV.fetch('DEMO_PROGRESS_INTERVAL', DEFAULT_PROGRESS_INTERVAL).to_i.clamp(1, 1_000_000)
   end
 
-  def log_progress(published, total_count, started_at)
+  def log_progress(published, total_count)
     return unless (published % progress_interval).zero? || published == total_count
 
-    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
-    rate = elapsed.positive? ? (published / elapsed).round(1) : published
-    puts "Published #{published}/#{total_count} jobs (#{rate} jobs/sec)"
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @progress_rate_started_at
+    published_in_window = published - @progress_rate_started_published
+    rate = elapsed.positive? ? (published_in_window / elapsed).round(1) : published_in_window
+    puts "Published #{published}/#{total_count} jobs (#{rate} jobs/sec since last grants wait)"
   end
 
   def maybe_wait_for_grants_queue(published)
@@ -117,6 +119,12 @@ class DemoUserSeeder
 
     puts "Seeded #{published} users, waiting for grants queue to drain..."
     wait_for_grants_create_to_drain(published)
+    reset_progress_rate(published)
+  end
+
+  def reset_progress_rate(published, timestamp = Process.clock_gettime(Process::CLOCK_MONOTONIC))
+    @progress_rate_started_published = published
+    @progress_rate_started_at = timestamp
   end
 
   def wait_for_grants_create_to_drain(queued_count)
