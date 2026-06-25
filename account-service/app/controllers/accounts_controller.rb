@@ -144,11 +144,8 @@ class AccountsController < ApplicationController
         organization_payloads = OrganizationAccount.account_ids_for_organizations_by_account_ids(misses)
       end
 
-      computed = misses.to_h do |id|
-        results, org_key_set = compute_account_with_parents(id, organization_payloads.fetch(id))
-        by_id[id] = results
-        [id, [results, org_key_set]]
-      end
+      computed = compute_accounts_with_parents(misses, organization_payloads)
+      computed.each { |id, (results, _org_key_set)| by_id[id] = results }
 
       ACCOUNT_CACHE.pipelined do |pipe|
         computed.each do |id, (results, org_key_set)|
@@ -166,60 +163,65 @@ class AccountsController < ApplicationController
     "account_with_parents:#{account_id}"
   end
 
-  def compute_account_with_parents(account_id, organization_payload = nil)
-    OpenTelemetry::Trace.current_span.add_event("Fetching account_with_parents failed, doing it the slow way")
+  def compute_accounts_with_parents(account_ids, organization_payloads)
+    OpenTelemetry::Trace.current_span.add_event("Fetching account_with_parents misses with set-based CTE")
 
-    account = Account.find(account_id)
+    ids = Array(account_ids).map(&:to_s)
+    return {} if ids.empty?
 
-    org_key_set = ""
-    seed_ids = []
-    response = organization_payload
-    unless response
-      OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
-        response = OrganizationAccount.account_ids_for_organization_by_account_id(account.id)
-      end
+    uuid_type = ActiveRecord::Type.lookup(:uuid)
+    uuid_array_type = ActiveRecord::Type.lookup(:uuid, array: true)
+
+    binds = []
+    placeholders = []
+
+    ids.each_with_index do |id, index|
+      response = organization_payloads.fetch(id)
+      organization = response.fetch(:organization)
+      seed_ids = Array(response.fetch(:account_ids)).map(&:to_s)
+
+      root_index = (index * 3) + 1
+      organization_index = root_index + 1
+      seed_ids_index = root_index + 2
+
+      placeholders << "($#{root_index}::uuid, $#{organization_index}::uuid, $#{seed_ids_index}::uuid[])"
+      binds << ActiveRecord::Relation::QueryAttribute.new("root_account_id_#{index}", id, uuid_type)
+      binds << ActiveRecord::Relation::QueryAttribute.new("organization_id_#{index}", organization.id, uuid_type)
+      binds << ActiveRecord::Relation::QueryAttribute.new("seed_ids_#{index}", seed_ids, uuid_array_type)
     end
-    organization = response[:organization]
-    seed_ids     = response[:account_ids]
-    org_key_set  = "org_cachekeys:#{organization.id}"
 
-    # CTE with bind params: $1::uuid for root account, $2::uuid[] for seed ids
     sql = <<~SQL
-      WITH RECURSIVE account_ancestry(id, parent_account_id, name, level) AS (
-        SELECT a.id, a.parent_account_id, a.name, 0 AS level
-        FROM accounts a
-        WHERE a.id = $1::uuid
+      WITH RECURSIVE roots(root_id, organization_id, seed_ids) AS (
+        VALUES #{placeholders.join(",\n               ")}
+      ),
+      account_ancestry(root_id, organization_id, id, parent_account_id, name, level) AS (
+        SELECT roots.root_id, roots.organization_id, accounts.id, accounts.parent_account_id, accounts.name, 0 AS level
+        FROM roots
+        INNER JOIN accounts ON accounts.id = roots.root_id
 
         UNION ALL
 
-        SELECT a.id, a.parent_account_id, a.name, t.level + 1
-        FROM accounts a
-        INNER JOIN account_ancestry t ON t.parent_account_id = a.id
-        WHERE a.id = ANY($2::uuid[])
+        SELECT account_ancestry.root_id, account_ancestry.organization_id, parents.id, parents.parent_account_id, parents.name, account_ancestry.level + 1
+        FROM account_ancestry
+        INNER JOIN roots ON roots.root_id = account_ancestry.root_id
+        INNER JOIN accounts parents ON parents.id = account_ancestry.parent_account_id
+        WHERE parents.id = ANY(roots.seed_ids)
       )
-      SELECT *
+      SELECT root_id, organization_id, id, parent_account_id, name, level
       FROM account_ancestry
-      WHERE id <> $1::uuid
-      ORDER BY level DESC
+      ORDER BY root_id, level DESC
     SQL
 
-    # ---- Rails type-safe binds ----
-    # Rails 7/8: ActiveRecord::Type.lookup works for PG + arrays.
-    uuid_type       = ActiveRecord::Type.lookup(:uuid)
-    uuid_array_type = ActiveRecord::Type.lookup(:uuid, array: true)
+    rows = ActiveRecord::Base.connection.exec_query(sql, "AccountsWithParentsSetCTE", binds).to_a
+    rows_by_root = rows.group_by { |row| row.fetch("root_id").to_s }
 
-    binds = [
-      ActiveRecord::Relation::QueryAttribute.new("account_id", account.id, uuid_type),
-      ActiveRecord::Relation::QueryAttribute.new("seed_ids",   seed_ids,   uuid_array_type)
-    ]
+    ids.to_h do |id|
+      response = organization_payloads.fetch(id)
+      organization = response.fetch(:organization)
+      org_key_set = "org_cachekeys:#{organization.id}"
+      results = Array(rows_by_root[id]).map { |row| row.except("root_id", "organization_id") }
 
-    OpenTelemetry::Trace.current_span.add_event("AccountWithParentsCTE")
-
-    results = ActiveRecord::Base.connection.exec_query(sql, "AccountWithParentsCTE", binds).to_a
-
-    # include the root account (to match your prior behavior)
-    results << account
-
-    [results, org_key_set]
+      [id, [results, org_key_set]]
+    end
   end
 end
