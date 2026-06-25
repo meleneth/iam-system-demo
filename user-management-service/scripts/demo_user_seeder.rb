@@ -974,6 +974,7 @@ class DemoFixtureArtifacts
             loading
             loadedCount
             totalCount
+            continuance
             message
             accounts {
               id
@@ -999,6 +1000,7 @@ class DemoFixtureArtifacts
             loading
             loadedCount
             totalCount
+            continuance
             message
             accounts {
               id
@@ -1024,6 +1026,7 @@ class DemoFixtureArtifacts
             loading
             loadedCount
             totalCount
+            continuance
             message
             accounts {
               id

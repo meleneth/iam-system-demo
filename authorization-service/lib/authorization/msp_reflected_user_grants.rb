@@ -5,8 +5,8 @@ require "time"
 
 module Authorization
   class MspReflectedUserGrants
-    TTL_SECONDS = 3_600
-    PAGE_SIZE = 1_000
+    TTL_SECONDS = 300
+    STALE_LOADING_SECONDS = 30
     QUEUE_URL = ENV.fetch("MSP_REFLECTED_GRANTS_QUEUE_URL", "http://eventstream:4566/000000000000/msp_reflected_grants")
     NATIVE_MSP_PERMISSIONS = ["account.users.create", "account.users.read"].freeze
 
@@ -20,7 +20,7 @@ module Authorization
       current = status(user_id: user_id, msp_account_id: msp_account_id)
 
       unless current[:status] == "ready"
-        if current[:status] == "missing"
+        if current[:status] == "missing" || stale_loading?(current)
           request_load(user_id: user_id, msp_account_id: msp_account_id)
           current = status(user_id: user_id, msp_account_id: msp_account_id)
         end
@@ -55,6 +55,18 @@ module Authorization
           msp_account_id: msp_account_id
         )
       )
+    rescue => e
+      mark_status(
+        user_id,
+        msp_account_id,
+        status: "failed",
+        loaded_count: 0,
+        total_count: 0,
+        error: "#{e.class}: #{e.message}",
+        updated_at: Time.now.utc.iso8601
+      )
+      expire_keys(user_id, msp_account_id)
+      raise
     end
 
     def load!(user_id:, msp_account_id:)
@@ -62,7 +74,7 @@ module Authorization
       @redis.del(set_key(user_id, msp_account_id))
       mark_status(user_id, msp_account_id, status: "loading", loaded_count: 0, total_count: 0, started_at: now, updated_at: now)
 
-      first_page = @organization_client.page(msp_account_id: msp_account_id, offset: 0, limit: PAGE_SIZE)
+      first_page = @organization_client.page(msp_account_id: msp_account_id)
       total_count = first_page.fetch("total_count").to_i
 
       unless native_msp_user_management_grant?(user_id, msp_account_id)
@@ -73,10 +85,12 @@ module Authorization
       loaded_count = load_page(user_id, msp_account_id, first_page)
       mark_status(user_id, msp_account_id, status: "loading", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
 
-      while loaded_count < total_count
-        page = @organization_client.page(msp_account_id: msp_account_id, offset: loaded_count, limit: PAGE_SIZE)
+      continuance = first_page["continuance"]
+      while continuance.present?
+        page = @organization_client.page(msp_account_id: msp_account_id, continuance: continuance)
         loaded_count += load_page(user_id, msp_account_id, page)
         mark_status(user_id, msp_account_id, status: "loading", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
+        continuance = page["continuance"]
       end
 
       mark_status(user_id, msp_account_id, status: "ready", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
@@ -95,11 +109,25 @@ module Authorization
         status: raw.fetch("status", "missing"),
         loaded_count: raw.fetch("loaded_count", 0).to_i,
         total_count: raw.fetch("total_count", 0).to_i,
+        started_at: raw["started_at"],
+        updated_at: raw["updated_at"],
         error: raw["error"]
       }.compact
     end
 
     private
+
+    def stale_loading?(status)
+      return false unless status[:status] == "loading"
+      return false unless status[:loaded_count].zero? && status[:total_count].zero?
+
+      updated_at = status[:updated_at] && Time.iso8601(status[:updated_at])
+      return true unless updated_at
+
+      Time.now.utc - updated_at > STALE_LOADING_SECONDS
+    rescue ArgumentError
+      true
+    end
 
     def load_page(user_id, msp_account_id, page)
       account_ids = page.fetch("managed_account_ids").map(&:to_s)

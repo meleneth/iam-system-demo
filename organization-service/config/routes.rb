@@ -1,11 +1,14 @@
 Rails.application.routes.draw do
   namespace :internal do
     get "msp_managed_accounts/:msp_account_id", to: "msp_managed_accounts#index"
+    get "msp_managed_accounts/managed/:managed_account_id", to: "msp_managed_accounts#manager"
     get "msp_managed_accounts/:msp_account_id/:managed_account_id", to: "msp_managed_accounts#show"
   end
 
   get "organization_account_ids/for_account_id/:account_id", to: "organization_accounts#for_account"
   post "organization_account_ids/for_account_ids(.:format)", to: "organization_accounts#for_accounts"
+  get "internal/random/organization", to: "internal/random_records#organization"
+  get "internal/random/organizations/:organization_id/account", to: "internal/random_records#organization_account"
 
   get "/organizations/accounts/counts/:organization_id",
       to: "organizations/accounts_count#index",

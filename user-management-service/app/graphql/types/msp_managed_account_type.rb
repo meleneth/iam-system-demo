@@ -13,7 +13,7 @@ module Types
       ctx = context
       otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
       ctx.dataloader
-         .with(Sources::UsersByAccountId, as: "IAM_SYSTEM", tracer: ctx[:tracer], otel_ctx: otel_ctx)
+         .with(Sources::UsersByAccountId, as: ctx[:as], tracer: ctx[:tracer], otel_ctx: otel_ctx)
          .load(object.fetch(:id))
     end
   end

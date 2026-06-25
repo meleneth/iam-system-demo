@@ -12,9 +12,9 @@ module Authorization
       @base_url = base_url
     end
 
-    def page(msp_account_id:, offset:, limit:)
+    def page(msp_account_id:, continuance: nil)
       uri = URI.join(@base_url, "/internal/msp_managed_accounts/#{msp_account_id}")
-      uri.query = URI.encode_www_form(offset: offset, limit: limit)
+      uri.query = URI.encode_www_form(continuance: continuance) if continuance
 
       request = Net::HTTP::Get.new(uri)
       request["pad-user-id"] = "IAM_SYSTEM"

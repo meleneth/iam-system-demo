@@ -2,7 +2,6 @@
 
 require 'aws-sdk-sqs'
 require 'json'
-require "awesome_print"
 
 class GrantsCreateQueueWorker
   POLL_INTERVAL = 1 # seconds
@@ -46,39 +45,23 @@ class GrantsCreateQueueWorker
       return delete(msg)
     end
 
-    user_data = body["user"]
-    org_id = body["organization"]["id"]
-    account_id = body["account"]["id"]
-    is_admin = user_data["is_admin"]
-    user_id = user_data["id"]
-    groups = body["groups"]
-
-    CapabilityGrant.find_or_create_by(user_id: user_id, permission: "organization.read", scope_type: "Organization", scope_id: org_id)
-    CapabilityGrant.find_or_create_by(user_id: user_id, permission: "organization.accounts.read", scope_type: "Organization", scope_id: org_id)
-
-    if is_admin
-      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "organization.accounts.create", scope_type: "Organization", scope_id: org_id)
-      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: account_id)
-      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.users.read", scope_type: "Account", scope_id: account_id)
-      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.users.create", scope_type: "Account", scope_id: account_id)
-      groups.each do |group|
-        CapabilityGrant.find_or_create_by(user_id: user_id, permission: "group.modify", scope_type: "Group", scope_id: group["id"])
-      end
-      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "group.create", scope_type: "Account", scope_id: account_id)
-    else
-      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: account_id)
-      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "account.users.read", scope_type: "Account", scope_id: account_id)
-    end
-
-    groups.each do |group|
-      CapabilityGrant.find_or_create_by(user_id: user_id, permission: "group.read", scope_type: "Group", scope_id: group["id"])
+    rows = grant_rows(body)
+    validate_grant_rows!(rows, body)
+    result = CapabilityGrant.insert_all(
+      rows,
+      unique_by: :index_capability_grants_on_user_perm_scope,
+      returning: %w[id]
+    )
+    inserted_count = result.rows.length
+    if inserted_count != rows.length
+      puts "[grants-create-queue-worker] duplicate native grant projection: inserted=#{inserted_count} expected=#{rows.length} index=#{body["index"]} fixture=#{body["fixture"]} user_id=#{body.dig("user", "id")}"
     end
 
     delete(msg)
   rescue => e
     puts "[grants-create-queue-worker] error processing message: #{e.class}: #{e.message}"
     puts e.backtrace.join("\n")
-    ap body
+    puts JSON.pretty_generate(body) if defined?(body) && body
     # Optionally send to DLQ or log error
   end
 
@@ -87,6 +70,65 @@ class GrantsCreateQueueWorker
       queue_url: @queue_url,
       receipt_handle: msg.receipt_handle
     )
+  end
+
+  private
+
+  def grant_rows(body)
+    user_data = body.fetch("user")
+    org_id = body.fetch("organization").fetch("id")
+    account_id = body.fetch("account").fetch("id")
+    is_admin = user_data.fetch("is_admin")
+    user_id = user_data.fetch("id")
+    groups = Array(body["groups"])
+    timestamp = Time.current
+
+    raw_grants = []
+    add_grant(raw_grants, user_id, "organization.read", "Organization", org_id, timestamp)
+    add_grant(raw_grants, user_id, "organization.accounts.read", "Organization", org_id, timestamp)
+    add_grant(raw_grants, user_id, "account.read", "Account", account_id, timestamp)
+    add_grant(raw_grants, user_id, "account.users.read", "Account", account_id, timestamp)
+
+    if is_admin
+      add_grant(raw_grants, user_id, "organization.accounts.create", "Organization", org_id, timestamp)
+      add_grant(raw_grants, user_id, "account.users.create", "Account", account_id, timestamp)
+      add_grant(raw_grants, user_id, "group.create", "Account", account_id, timestamp)
+      groups.each do |group|
+        add_grant(raw_grants, user_id, "group.modify", "Group", group.fetch("id"), timestamp)
+      end
+    end
+
+    groups.each do |group|
+      add_grant(raw_grants, user_id, "group.read", "Group", group.fetch("id"), timestamp)
+    end
+
+    grants = raw_grants.uniq { |grant| [grant[:user_id], grant[:permission], grant[:scope_type], grant[:scope_id]] }
+    if grants.length != raw_grants.length
+      puts "[grants-create-queue-worker] duplicate grants inside one event: raw=#{raw_grants.length} deduped=#{grants.length} index=#{body["index"]} fixture=#{body["fixture"]} user_id=#{user_id}"
+    end
+
+    grants
+  end
+
+  def validate_grant_rows!(rows, body)
+    invalid_rows = rows.select do |row|
+      row[:user_id].blank? || row[:permission].blank? || row[:scope_type].blank? || row[:scope_id].blank?
+    end
+    return if invalid_rows.empty?
+
+    raise ArgumentError,
+          "invalid native grant projection: invalid_rows=#{invalid_rows.length} index=#{body["index"]} fixture=#{body["fixture"]} user_id=#{body.dig("user", "id")}"
+  end
+
+  def add_grant(grants, user_id, permission, scope_type, scope_id, timestamp)
+    grants << {
+      user_id: user_id,
+      permission: permission,
+      scope_type: scope_type,
+      scope_id: scope_id,
+      created_at: timestamp,
+      updated_at: timestamp
+    }
   end
 end
 
@@ -100,4 +142,3 @@ class AwsMessage
     end
   end
 end
-

@@ -22,4 +22,15 @@ class Organization < ActiveResource::Base
   ensure
     self.headers.replace(old_headers)
   end
+
+  def self.random_internal
+    url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/internal/random/organization"
+    response = Faraday.get(url) do |req|
+      headers.each { |key, value| req.headers[key] = value }
+    end
+
+    raise "Failed to get random organization: #{response.status} #{response.body}" unless response.status == 200
+
+    new(JSON.parse(response.body))
+  end
 end

@@ -85,4 +85,15 @@ class OrganizationAccount < ActiveResource::Base
 
     JSON.parse(response.body, symbolize_names: true)
   end
+
+  def self.random_account_for_organization(organization_id)
+    url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/internal/random/organizations/#{organization_id}/account"
+    response = Faraday.get(url) do |req|
+      headers.each { |key, value| req.headers[key] = value }
+    end
+
+    raise "Failed to get random account for organization #{organization_id}: #{response.status} #{response.body}" unless response.status == 200
+
+    JSON.parse(response.body, symbolize_names: true)
+  end
 end

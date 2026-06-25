@@ -6,10 +6,11 @@ module Sources
 
     # keys: [user_id]
     # result: [Array<Group>] per user_id
-    def initialize(as:, otel_ctx:, tracer:)
+    def initialize(as:, otel_ctx:, tracer:, msp_account_id: nil)
       @as = as
       @otel_ctx = otel_ctx
       @tracer = tracer
+      @msp_account_id = msp_account_id
     end
 
     def fetch(keys)
@@ -18,8 +19,11 @@ module Sources
           groups_by_user = Hash.new { |h, k| h[k] = [] }
 
           with_headers do
-            GroupUser.with_headers('pad-user-id' => @as) do
-              Group.with_headers('pad-user-id' => @as) do
+            request_headers = { 'pad-user-id' => @as }.tap do |headers|
+              headers['pad-msp-account-id'] = @msp_account_id if @msp_account_id.present?
+            end
+            GroupUser.with_headers(request_headers) do
+              Group.with_headers(request_headers) do
                 gus = keys.each_slice(USER_ID_FETCH_CHUNK_SIZE).flat_map do |user_ids|
                   GroupUser.search(user_id: user_ids)
                 end

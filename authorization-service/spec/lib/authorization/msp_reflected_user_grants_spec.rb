@@ -59,10 +59,17 @@ RSpec.describe Authorization::MspReflectedUserGrants do
       scope_type: "Account",
       scope_id: msp_account_id
     )
-    allow(organization_client).to receive(:page).and_return(
+    allow(organization_client).to receive(:page).with(msp_account_id: msp_account_id).and_return(
       {
         "total_count" => managed_account_ids.length,
-        "managed_account_ids" => managed_account_ids
+        "continuance" => "next-page",
+        "managed_account_ids" => managed_account_ids.first(2)
+      }
+    )
+    allow(organization_client).to receive(:page).with(msp_account_id: msp_account_id, continuance: "next-page").and_return(
+      {
+        "total_count" => managed_account_ids.length,
+        "managed_account_ids" => managed_account_ids.last(1)
       }
     )
 

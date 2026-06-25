@@ -6,6 +6,14 @@
       Stable fixture queries for timing runs, cache checks, and Jaeger trace inspection. These links use host-facing development ports.
 
   %section
+    %h2.text-xl.font-semibold Random Explorer
+    %p.mt-2.text-sm.text-gray-600.dark:text-gray-300
+      Pick a live organization, discover its admin through native grants, then inspect account and user counts as that admin.
+    .mt-4
+      %a.inline-flex.items-center.rounded.bg-sky-700.px-4.py-2.font-semibold.text-white.transition.hover:bg-sky-800{ href: random_record_path }
+        Random Record
+
+  %section
     %h2.text-xl.font-semibold Demo Queries
     .mt-4.grid.gap-4.md:grid-cols-2
       - @query_links.each do |link|

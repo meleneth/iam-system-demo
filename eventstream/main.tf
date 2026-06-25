@@ -47,6 +47,10 @@ resource "aws_sqs_queue" "msp_reflected_grants" {
   name = "msp_reflected_grants"
 }
 
+resource "aws_sqs_queue" "group_create" {
+  name = "group_create"
+}
+
 resource "aws_sns_topic_subscription" "organization_create" {
   topic_arn = aws_sns_topic.user_seed.arn
   protocol = "sqs"
@@ -69,4 +73,10 @@ resource "aws_sns_topic_subscription" "grants_create" {
   topic_arn = aws_sns_topic.user_seed.arn
   protocol = "sqs"
   endpoint = aws_sqs_queue.grants_create.arn
+}
+
+resource "aws_sns_topic_subscription" "group_create" {
+  topic_arn = aws_sns_topic.user_seed.arn
+  protocol = "sqs"
+  endpoint = aws_sqs_queue.group_create.arn
 }

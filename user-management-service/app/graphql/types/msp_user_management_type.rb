@@ -6,6 +6,7 @@ module Types
     field :loaded_count, Integer, null: false
     field :total_count, Integer, null: false
     field :message, String, null: false
+    field :continuance, String, null: true
     field :accounts, [Types::MspManagedAccountType], null: false
 
     def loading
@@ -22,6 +23,10 @@ module Types
 
     def message
       object.fetch(:message)
+    end
+
+    def continuance
+      object[:continuance]
     end
 
     def accounts

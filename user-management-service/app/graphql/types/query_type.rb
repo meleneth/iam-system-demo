@@ -29,6 +29,7 @@ module Types
       description "Private demo view for MSP reflected user-management grants."
       argument :msp_account_id, ID, required: true
       argument :as, ID, required: true
+      argument :continuance, String, required: false
     end
 
     def organization(id:, as:)
@@ -78,8 +79,9 @@ module Types
         .then { |records| records.compact }
     end
 
-    def msp_user_management(msp_account_id:, as:)
+    def msp_user_management(msp_account_id:, as:, continuance: nil)
       context[:as] = as
+      context[:msp_account_id] = msp_account_id
       context[:tracer] = TRACER
       context[:otel_ctx] ||= OpenTelemetry::Context.current
 
@@ -87,7 +89,8 @@ module Types
       raise GraphQL::ExecutionError, status[:error] if status[:status] == "failed"
       return loading_payload(status) if status.fetch(:loading)
 
-      account_ids = MspManagedAccount.managed_account_ids(msp_account_id)
+      page = MspManagedAccount.page(msp_account_id, continuance: continuance)
+      account_ids = page.fetch("managed_account_ids").map(&:to_s)
       check = MspReflectedUserGrant.check(user_id: as, msp_account_id: msp_account_id, account_ids: account_ids)
       raise GraphQL::ExecutionError, check[:error] if check[:status] == "failed"
       return loading_payload(check) if check.fetch(:loading)
@@ -97,6 +100,7 @@ module Types
         loading: false,
         loaded_count: check.fetch(:loaded_count),
         total_count: check.fetch(:total_count),
+        continuance: page["continuance"],
         message: "MSP user-management access ready. Loaded #{check.fetch(:loaded_count)} of #{check.fetch(:total_count)} accounts.",
         accounts: authorized_ids.map { |account_id| { id: account_id } }
       }
@@ -109,6 +113,7 @@ module Types
         loading: true,
         loaded_count: loaded,
         total_count: total,
+        continuance: nil,
         message: "Preparing MSP user-management access. Loaded #{loaded} of #{total} accounts.",
         accounts: []
       }

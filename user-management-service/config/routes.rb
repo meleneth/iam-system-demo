@@ -4,6 +4,9 @@ Rails.application.routes.draw do
   get 'slow_accounts/:id', to: 'accounts#slow_view', as: 'slow_account_view'
   get 'slowest_accounts/:id', to: 'accounts#slowest_view', as: 'slowest_account_view'
   get "frontdoor/index"
+  get "frontdoor/random_record", to: "frontdoor#random_record", as: :random_record
+  get "frontdoor/random_record/:organization_id/:account_id", to: "frontdoor#random_record_detail", as: :random_record_detail
+  get "frontdoor/msp_graphql/:kind/:msp_account_id/:admin_user_id", to: "frontdoor#msp_graphql_query", as: :msp_graphql_query
   get "demo_queries/:id", to: "frontdoor#demo_query", as: :demo_query
 
   mount GraphiQL::Rails::Engine, at: "/graphiql", graphql_path: "/graphql"

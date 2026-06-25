@@ -6,6 +6,7 @@ class GroupUsersController < ApplicationController
     filters = params.slice(*GroupUser.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = GroupUser.where(*filters)
+    authorize_group_user_collection_read!(results)
     render json: results
   end
 
@@ -14,11 +15,14 @@ class GroupUsersController < ApplicationController
     filters = params.permit(group_id: [], user_id: [], id: [])
     raise BadFilterError unless filters.present?
 
-    render json: GroupUser.where(*filters)
+    results = GroupUser.where(*filters)
+    authorize_group_user_collection_read!(results)
+    render json: results
   end
 
   # GET /group_users/1
   def show
+    authorize_group_user_collection_read!([@group_user])
     render json: @group_user
   end
 
@@ -57,4 +61,27 @@ class GroupUsersController < ApplicationController
     def group_user_params
       params.fetch(:group_user, {})
     end
+
+  def authorize_group_user_collection_read!(group_users)
+    user_id = request.headers["HTTP_PAD_USER_ID"]
+    raise "no pad-user-id header sent" unless user_id
+    return if user_id == "IAM_SYSTEM"
+
+    group_ids = Array(group_users).map(&:group_id).map(&:to_s).uniq
+    return if group_ids.empty?
+
+    account_ids = Group.where(id: group_ids).distinct.pluck(:account_id).map(&:to_s)
+    return if account_ids.empty?
+
+    if User.user_can(user_id, "Account", "account.users.read", account_ids)
+      return
+    end
+
+    msp_account_id = request.headers["HTTP_PAD_MSP_ACCOUNT_ID"]
+    if msp_account_id.present? && User.msp_reflected_user_can_manage_users?(user_id: user_id, msp_account_id: msp_account_id, account_ids: account_ids)
+      return
+    end
+
+    raise "no authorization for #{user_id} account.users.read #{account_ids}"
+  end
 end

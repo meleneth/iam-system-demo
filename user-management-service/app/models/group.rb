@@ -39,7 +39,7 @@ class Group < ActiveResource::Base
 
     url = "#{Env::GROUP_SERVICE_API_BASE_URL}/accounts/groups/counts?#{query_string}"
 
-    outgoing_headers = {}
+    outgoing_headers = headers.dup
     OpenTelemetry.propagation.inject(outgoing_headers)
 
     response = Faraday.get(url) do |req|

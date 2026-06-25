@@ -31,4 +31,16 @@ class CapabilityGrant < ActiveResource::Base
   ensure
     self.headers.replace(old_headers)
   end
+
+  def self.admin_user_for_organization(organization_id)
+    url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/internal/admin_users/organization/#{organization_id}"
+    response = Faraday.get(url) do |req|
+      headers.each { |key, value| req.headers[key] = value }
+    end
+
+    return nil if response.status == 404
+    raise "Failed to find organization admin for #{organization_id}: #{response.status} #{response.body}" unless response.status == 200
+
+    JSON.parse(response.body, symbolize_names: true)
+  end
 end
