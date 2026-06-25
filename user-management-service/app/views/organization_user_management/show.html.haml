@@ -1,0 +1,40 @@
+.space-y-6{ data: { controller: "organization-users", organization_users_visible_limit_value: 750 } }
+  %section
+    %p.text-sm.font-semibold.uppercase.tracking-wide.text-sky-700.dark:text-sky-300= @mode == "msp" ? "MSP Reflected Access" : "Organization"
+    %h1.mt-2.text-3xl.font-bold= @title
+    %p.mt-3.max-w-4xl.text-gray-700.dark:text-gray-300
+      This page intentionally loads account, user, and group records into browser memory in server-fixed partitions. Filtering runs entirely in the browser against the accumulated dataset.
+
+  %section.grid.gap-4.md:grid-cols-3
+    .rounded.border.border-gray-200.p-4.dark:border-gray-700
+      %span.block.text-sm.text-gray-600.dark:text-gray-300 Actor User
+      %span.mt-1.block.break-all.font-mono.text-xs= @actor_user_id
+    - if @organization_id.present?
+      .rounded.border.border-gray-200.p-4.dark:border-gray-700
+        %span.block.text-sm.text-gray-600.dark:text-gray-300 Organization
+        %span.mt-1.block.break-all.font-mono.text-xs= @organization_id
+    - if @msp_account_id.present?
+      .rounded.border.border-amber-300.bg-amber-50.p-4.text-amber-950.dark:border-amber-700.dark:bg-amber-950.dark:text-amber-100
+        %span.block.text-sm MSP Account
+        %span.mt-1.block.break-all.font-mono.text-xs= @msp_account_id
+
+  %section.rounded.border.border-gray-200.p-4.dark:border-gray-700
+    .grid.gap-3.md:grid-cols-[minmax(0,1fr)_auto_auto_auto]
+      %input.w-full.rounded.border.border-gray-300.bg-white.px-3.py-2.text-gray-900.dark:border-gray-700.dark:bg-gray-950.dark:text-white{ type: "search", placeholder: "Filter users, accounts, groups, names, email, UUIDs", data: { organization_users_target: "filter", action: "input->organization-users#filter" } }
+      %button.rounded.border.border-gray-300.px-3.py-2.font-medium.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ type: "button", data: { action: "organization-users#clear" } } Clear
+      %span.rounded.border.border-gray-200.px-3.py-2.text-sm.dark:border-gray-700{ data: { organization_users_target: "count" } } 0 users
+      %span.rounded.border.border-gray-200.px-3.py-2.text-sm.dark:border-gray-700{ data: { organization_users_target: "status" } } Waiting for partitions
+
+  %section
+    .overflow-x-auto.rounded.border.border-gray-200.dark:border-gray-700
+      %table.w-full.text-left.text-sm
+        %thead.bg-gray-50.dark:bg-gray-800
+          %tr
+            %th.px-3.py-2 User
+            %th.px-3.py-2 Account
+            %th.px-3.py-2 Email
+            %th.px-3.py-2 Groups
+        %tbody{ data: { organization_users_target: "results" } }
+
+  #organization-user-management-partitions.hidden
+    = turbo_frame_tag "organization-user-management-partition-root", src: @partition_path

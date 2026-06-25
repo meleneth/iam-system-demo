@@ -6,6 +6,7 @@ class FrontdoorController < ApplicationController
     @query_links = demo_queries.values
     @jaeger_links = jaeger_links
     @experimental_links = experimental_links
+    @msp_user_management_links = msp_user_management_links
   end
 
   def random_record
@@ -438,6 +439,14 @@ class FrontdoorController < ApplicationController
       ['Deep chain account page as root admin', '/accounts/ed253374-9a50-51cd-ac06-d0d636dd42bd?as=f9684f2b-2fd0-5dd0-b783-9cb238dbc396'],
       ['Branching tree account page as root admin', '/accounts/0a64f8dd-f5bc-5bbe-ac30-43ddabfd3826?as=3914fd49-77a1-55b3-9326-8035926bd29a'],
       ['Dense account page as top-level admin', '/accounts/bcd6677f-a4b2-517c-a8c8-ba4096147509?as=169bdb5e-57a1-53a8-ae8c-028da169baf9']
+    ]
+  end
+
+  def msp_user_management_links
+    [
+      ['MSP 100k user management', organization_user_management_path(msp_account_id: '0f418549-dc1c-554e-947d-17c3a5154857', as: 'f56f5767-fad2-57c9-b279-30463d7b3b90')],
+      ['MSP 50k user management', organization_user_management_path(msp_account_id: '3c5b62df-e65e-5bdd-9798-de7c4e53315b', as: '4418a141-eeb1-50a9-893e-f94e2266a599')],
+      ['MSP 10k user management', organization_user_management_path(msp_account_id: 'b05e3a9d-ee13-5d71-b248-beaf964c893f', as: 'f3a85e16-4fea-53c0-b31a-8ac822431f9a')]
     ]
   end
 end

@@ -7,6 +7,8 @@ Rails.application.routes.draw do
   get "frontdoor/random_record", to: "frontdoor#random_record", as: :random_record
   get "frontdoor/random_record/:organization_id/:account_id", to: "frontdoor#random_record_detail", as: :random_record_detail
   get "frontdoor/msp_graphql/:kind/:msp_account_id/:admin_user_id", to: "frontdoor#msp_graphql_query", as: :msp_graphql_query
+  get "organization_user_management", to: "organization_user_management#show", as: :organization_user_management
+  get "organization_user_management/partition", to: "organization_user_management#partition", as: :organization_user_management_partition
   get "demo_queries/:id", to: "frontdoor#demo_query", as: :demo_query
 
   mount GraphiQL::Rails::Engine, at: "/graphiql", graphql_path: "/graphql"

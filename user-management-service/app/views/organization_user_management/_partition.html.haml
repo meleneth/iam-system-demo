@@ -1,0 +1,5 @@
+= turbo_frame_tag @frame_id do
+  %script{ type: "application/json", data: { organization_users_target: "partition", partition_label: @partition_label } }
+    = raw json_escape(@partition_payload.to_json)
+  - if @next_continuance.present?
+    = turbo_frame_tag @next_frame_id, src: organization_user_management_partition_path(organization_id: @organization_id, msp_account_id: @msp_account_id, as: @actor_user_id, continuance: @next_continuance, frame_id: @next_frame_id)
