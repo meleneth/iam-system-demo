@@ -16,6 +16,12 @@ class AccountsController < ApplicationController
     filters = params.permit(id: [])
     raise BadFilterError unless filters.present?
     results = Account.where(*filters)
+
+    if msp_user_management_display_request?
+      authorize_msp_account_display!(results)
+      return render json: results.as_json(only: %i[id name])
+    end
+
     authorize_account_collection_read!(results)
 
     render json: results
@@ -110,6 +116,30 @@ class AccountsController < ApplicationController
 
     OpenTelemetry::Trace.current_span.add_event("Checking batched auth for user #{pad_user_id} account.read #{account_ids.size} accounts")
     raise "no authorization for #{pad_user_id} account.read #{account_ids}" unless User.user_can(pad_user_id, "Account", "account.read", account_ids)
+  end
+
+  def msp_user_management_display_request?
+    request.headers['HTTP_PAD_MSP_ACCOUNT_ID'].present? && request.headers['HTTP_PAD_USER_ID'] != "IAM_SYSTEM"
+  end
+
+  def authorize_msp_account_display!(accounts)
+    pad_user_id = request.headers['HTTP_PAD_USER_ID']
+    msp_account_id = request.headers['HTTP_PAD_MSP_ACCOUNT_ID']
+    raise "Must pass a pad-user-id header" unless pad_user_id
+
+    account_ids = accounts.respond_to?(:distinct) ? accounts.distinct.pluck(:id) : Array(accounts).map(&:id)
+    account_ids = account_ids.map(&:to_s).uniq
+    return if account_ids.empty?
+
+    OpenTelemetry::Trace.current_span.add_event("Checking MSP reflected account display auth for user #{pad_user_id} #{account_ids.size} accounts")
+    allowed = User.user_can(
+      pad_user_id,
+      "Account",
+      "account.users.read",
+      account_ids,
+      "pad-msp-account-id" => msp_account_id
+    )
+    raise "no MSP reflected authorization for #{pad_user_id} account display #{account_ids}" unless allowed
   end
 
   def fetch_account_with_parents(account_id)
