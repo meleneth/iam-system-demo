@@ -79,15 +79,15 @@ class GroupUsersController < ApplicationController
     account_ids = Group.where(id: group_ids).distinct.pluck(:account_id).map(&:to_s)
     return if account_ids.empty?
 
-    if User.user_can(user_id, "Account", "account.users.read", account_ids)
-      return
-    end
-
     msp_account_id = request.headers["HTTP_PAD_MSP_ACCOUNT_ID"]
     if msp_account_id.present?
       reflected = User.msp_reflected_user_manage_users_check(user_id: user_id, msp_account_id: msp_account_id, account_ids: account_ids)
       return if reflected.authorized?
       return msp_loading_payload(reflected) if reflected.loading?
+    end
+
+    if User.user_can(user_id, "Account", "account.users.read", account_ids)
+      return
     end
 
     raise "no authorization for #{user_id} account.users.read #{account_ids}"

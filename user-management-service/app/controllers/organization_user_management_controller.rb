@@ -167,6 +167,7 @@ class OrganizationUserManagementController < ApplicationController
 
   def accounts_for(account_ids)
     return [] if account_ids.empty?
+    return account_ids.map { |account_id| { "id" => account_id.to_s } } if @msp_account_id.present?
 
     Account.with_headers("pad-user-id" => @actor_user_id) do
       Account.search(id: account_ids).map { |account| resource_attributes(account) }
