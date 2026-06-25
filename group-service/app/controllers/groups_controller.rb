@@ -6,7 +6,9 @@ class GroupsController < ApplicationController
     filters = params.slice(*Group.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = Group.where(*filters)
-    authorize_group_collection_read!(results)
+    auth = authorize_group_collection_read!(results)
+    return render json: auth, status: :accepted if auth
+
     render json: results
   end
 
@@ -16,13 +18,17 @@ class GroupsController < ApplicationController
     raise BadFilterError unless filters.present?
 
     results = Group.where(*filters)
-    authorize_group_collection_read!(results)
+    auth = authorize_group_collection_read!(results)
+    return render json: auth, status: :accepted if auth
+
     render json: results
   end
 
   # GET /groups/1
   def show
-    authorize_group_collection_read!([@group])
+    auth = authorize_group_collection_read!([@group])
+    return render json: auth, status: :accepted if auth
+
     render json: @group
   end
 
@@ -75,10 +81,21 @@ class GroupsController < ApplicationController
     end
 
     msp_account_id = request.headers["HTTP_PAD_MSP_ACCOUNT_ID"]
-    if msp_account_id.present? && User.msp_reflected_user_can_manage_users?(user_id: user_id, msp_account_id: msp_account_id, account_ids: account_ids)
-      return
+    if msp_account_id.present?
+      reflected = User.msp_reflected_user_manage_users_check(user_id: user_id, msp_account_id: msp_account_id, account_ids: account_ids)
+      return if reflected.authorized?
+      return msp_loading_payload(reflected) if reflected.loading?
     end
 
     raise "no authorization for #{user_id} account.users.read #{account_ids}"
+  end
+
+  def msp_loading_payload(reflected)
+    {
+      loading: true,
+      status: reflected.status,
+      loaded_count: reflected.loaded_count,
+      total_count: reflected.total_count
+    }
   end
 end

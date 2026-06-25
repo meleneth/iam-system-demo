@@ -30,6 +30,9 @@ class GroupUser < ActiveResource::Base
       headers.merge("Accept" => "application/json", "Content-Type" => "application/json")
     )
 
-    ActiveSupport::JSON.decode(raw.body).map { |attrs| new(attrs) }
+    decoded = ActiveSupport::JSON.decode(raw.body)
+    raise MspReflectedGrantLoading, decoded if decoded.is_a?(Hash) && decoded["loading"]
+
+    decoded.map { |attrs| new(attrs) }
   end
 end

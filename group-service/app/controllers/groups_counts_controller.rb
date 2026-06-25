@@ -5,7 +5,8 @@ class GroupsCountsController < ApplicationController
   def index
     ids = Array(params[:account_id]).map!(&:to_s).uniq
     return render json: { counts: {} }, status: :ok if ids.empty?
-    authorize_account_group_counts!(ids)
+    auth = authorize_account_group_counts!(ids)
+    return render json: auth, status: :accepted if auth
 
     # Pure SQL aggregate: SELECT account_id, COUNT(*) FROM users WHERE account_id IN (...) GROUP BY account_id
     raw = Group.where(account_id: ids).group(:account_id).count(:id) # => { "acct-uuid" => 123, ... }
@@ -28,10 +29,21 @@ class GroupsCountsController < ApplicationController
     end
 
     msp_account_id = request.headers["HTTP_PAD_MSP_ACCOUNT_ID"]
-    if msp_account_id.present? && User.msp_reflected_user_can_manage_users?(user_id: user_id, msp_account_id: msp_account_id, account_ids: account_ids)
-      return
+    if msp_account_id.present?
+      reflected = User.msp_reflected_user_manage_users_check(user_id: user_id, msp_account_id: msp_account_id, account_ids: account_ids)
+      return if reflected.authorized?
+      return msp_loading_payload(reflected) if reflected.loading?
     end
 
     raise "no authorization for #{user_id} account.users.read #{account_ids}"
+  end
+
+  def msp_loading_payload(reflected)
+    {
+      loading: true,
+      status: reflected.status,
+      loaded_count: reflected.loaded_count,
+      total_count: reflected.total_count
+    }
   end
 end

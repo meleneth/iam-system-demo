@@ -19,7 +19,7 @@
         %span.mt-1.block.break-all.font-mono.text-xs= @msp_account_id
 
   %section.rounded.border.border-gray-200.p-4.dark:border-gray-700
-    .grid.gap-3.md:grid-cols-[minmax(0,1fr)_auto_auto_auto]
+    .grid.gap-3.md:grid-cols-4
       %input.w-full.rounded.border.border-gray-300.bg-white.px-3.py-2.text-gray-900.dark:border-gray-700.dark:bg-gray-950.dark:text-white{ type: "search", placeholder: "Filter users, accounts, groups, names, email, UUIDs", data: { organization_users_target: "filter", action: "input->organization-users#filter" } }
       %button.rounded.border.border-gray-300.px-3.py-2.font-medium.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ type: "button", data: { action: "organization-users#clear" } } Clear
       %span.rounded.border.border-gray-200.px-3.py-2.text-sm.dark:border-gray-700{ data: { organization_users_target: "count" } } 0 users

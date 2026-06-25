@@ -27,6 +27,7 @@ class OrganizationUserManagementController < ApplicationController
     @organization_id = permitted[:organization_id]
     @msp_account_id = permitted[:msp_account_id]
     @mode = @msp_account_id.present? ? "msp" : "organization"
+    @frame_id = permitted[:frame_id].presence || "organization-user-management-partition-root"
 
     cursor = decode_continuance(permitted[:continuance])
     partition = @mode == "msp" ? msp_partition(cursor) : organization_partition(cursor)
@@ -34,10 +35,15 @@ class OrganizationUserManagementController < ApplicationController
     @partition_payload = partition.fetch(:payload)
     @next_continuance = encode_continuance(partition.fetch(:next_cursor)) if partition[:next_cursor]
     @partition_label = partition.fetch(:label)
-    @frame_id = permitted[:frame_id].presence || "organization-user-management-partition-root"
     @next_frame_id = "organization-user-management-partition-#{@next_continuance || "done"}"
 
     render partial: "organization_user_management/partition"
+  rescue MspReflectedGrantLoading => e
+    @partition_payload = loading_payload(e.status)
+    @partition_label = "MSP reflected grant status"
+    @next_continuance = nil
+    @next_frame_id = "organization-user-management-partition-done"
+    render partial: "organization_user_management/partition", status: :accepted
   rescue JSON::ParserError, ArgumentError
     render plain: "Invalid continuance", status: :bad_request
   end
