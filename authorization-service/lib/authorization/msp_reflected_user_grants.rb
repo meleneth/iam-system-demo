@@ -70,35 +70,15 @@ module Authorization
     end
 
     def load!(user_id:, msp_account_id:)
-      now = Time.now.utc.iso8601
-      @redis.del(set_key(user_id, msp_account_id))
-      mark_status(user_id, msp_account_id, status: "loading", loaded_count: 0, total_count: 0, started_at: now, updated_at: now)
-
-      first_page = @organization_client.page(msp_account_id: msp_account_id)
-      total_count = first_page.fetch("total_count").to_i
-
-      unless native_msp_user_management_grant?(user_id, msp_account_id)
-        mark_status(user_id, msp_account_id, status: "ready", loaded_count: 0, total_count: total_count, updated_at: Time.now.utc.iso8601)
-        return
+      Instrumentation.trace(
+        "msp_reflected_user_grants.load",
+        attributes: {
+          "iam.user_id" => user_id,
+          "iam.msp_account_id" => msp_account_id
+        }
+      ) do |span|
+        load_with_trace!(span: span, user_id: user_id, msp_account_id: msp_account_id)
       end
-
-      loaded_count = load_page(user_id, msp_account_id, first_page)
-      mark_status(user_id, msp_account_id, status: "loading", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
-
-      continuance = first_page["continuance"]
-      while continuance.present?
-        page = @organization_client.page(msp_account_id: msp_account_id, continuance: continuance)
-        loaded_count += load_page(user_id, msp_account_id, page)
-        mark_status(user_id, msp_account_id, status: "loading", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
-        continuance = page["continuance"]
-      end
-
-      mark_status(user_id, msp_account_id, status: "ready", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
-    rescue => e
-      mark_status(user_id, msp_account_id, status: "failed", error: "#{e.class}: #{e.message}", updated_at: Time.now.utc.iso8601)
-      raise
-    ensure
-      expire_keys(user_id, msp_account_id)
     end
 
     def status(user_id:, msp_account_id:)
@@ -116,6 +96,96 @@ module Authorization
     end
 
     private
+
+    def load_with_trace!(span:, user_id:, msp_account_id:)
+      started_at_monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      loaded_count = 0
+      page_count = 0
+      total_count = 0
+      now = Time.now.utc.iso8601
+      @redis.del(set_key(user_id, msp_account_id))
+      mark_status(user_id, msp_account_id, status: "loading", loaded_count: 0, total_count: 0, started_at: now, updated_at: now)
+
+      first_page = load_organization_page(msp_account_id: msp_account_id)
+      page_count += 1
+      total_count = first_page.fetch("total_count").to_i
+      span.set_attribute("iam.msp_reflected_grants.total_count", total_count)
+
+      unless native_msp_user_management_grant?(user_id, msp_account_id)
+        duration_ms = elapsed_ms(started_at_monotonic)
+        mark_status(user_id, msp_account_id, status: "ready", loaded_count: 0, total_count: total_count, updated_at: Time.now.utc.iso8601)
+        span.add_event(
+          "msp_reflected_user_grants.ready_without_native_grant",
+          attributes: {
+            "iam.msp_reflected_grants.loaded_count" => 0,
+            "iam.msp_reflected_grants.total_count" => total_count,
+            "iam.msp_reflected_grants.page_count" => page_count,
+            "iam.msp_reflected_grants.duration_ms" => duration_ms
+          }
+        )
+        span.set_attribute("iam.msp_reflected_grants.loaded_count", 0)
+        span.set_attribute("iam.msp_reflected_grants.page_count", page_count)
+        span.set_attribute("iam.msp_reflected_grants.duration_ms", duration_ms)
+        span.set_attribute("iam.msp_reflected_grants.status", "ready_without_native_grant")
+        return
+      end
+
+      loaded_count = load_page(user_id, msp_account_id, first_page)
+      mark_status(user_id, msp_account_id, status: "loading", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
+      span.add_event(
+        "msp_reflected_user_grants.page_loaded",
+        attributes: {
+          "iam.msp_reflected_grants.page_count" => page_count,
+          "iam.msp_reflected_grants.loaded_count" => loaded_count,
+          "iam.msp_reflected_grants.total_count" => total_count
+        }
+      )
+
+      continuance = first_page["continuance"]
+      while continuance.present?
+        page = load_organization_page(msp_account_id: msp_account_id, continuance: continuance)
+        page_count += 1
+        loaded_count += load_page(user_id, msp_account_id, page)
+        mark_status(user_id, msp_account_id, status: "loading", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
+        span.add_event(
+          "msp_reflected_user_grants.page_loaded",
+          attributes: {
+            "iam.msp_reflected_grants.page_count" => page_count,
+            "iam.msp_reflected_grants.loaded_count" => loaded_count,
+            "iam.msp_reflected_grants.total_count" => total_count
+          }
+        )
+        continuance = page["continuance"]
+      end
+
+      duration_ms = elapsed_ms(started_at_monotonic)
+      mark_status(user_id, msp_account_id, status: "ready", loaded_count: loaded_count, total_count: total_count, updated_at: Time.now.utc.iso8601)
+      span.add_event(
+        "msp_reflected_user_grants.ready",
+        attributes: {
+          "iam.msp_reflected_grants.loaded_count" => loaded_count,
+          "iam.msp_reflected_grants.total_count" => total_count,
+          "iam.msp_reflected_grants.page_count" => page_count,
+          "iam.msp_reflected_grants.duration_ms" => duration_ms
+        }
+      )
+      span.set_attribute("iam.msp_reflected_grants.loaded_count", loaded_count)
+      span.set_attribute("iam.msp_reflected_grants.page_count", page_count)
+      span.set_attribute("iam.msp_reflected_grants.duration_ms", duration_ms)
+      span.set_attribute("iam.msp_reflected_grants.status", "ready")
+    rescue => e
+      duration_ms = elapsed_ms(started_at_monotonic)
+      mark_status(user_id, msp_account_id, status: "failed", error: "#{e.class}: #{e.message}", updated_at: Time.now.utc.iso8601)
+      span.record_exception(e)
+      span.set_attribute("iam.msp_reflected_grants.status", "failed")
+      span.set_attribute("iam.msp_reflected_grants.loaded_count", loaded_count)
+      span.set_attribute("iam.msp_reflected_grants.total_count", total_count)
+      span.set_attribute("iam.msp_reflected_grants.page_count", page_count)
+      span.set_attribute("iam.msp_reflected_grants.duration_ms", duration_ms)
+      raise
+    ensure
+      expire_keys(user_id, msp_account_id)
+    end
 
     def stale_loading?(status)
       return false unless status[:status] == "loading"
@@ -136,6 +206,30 @@ module Authorization
       @redis.sadd(set_key(user_id, msp_account_id), account_ids)
       expire_keys(user_id, msp_account_id)
       account_ids.length
+    end
+
+    def load_organization_page(msp_account_id:, continuance: nil)
+      Instrumentation.trace(
+        "msp_reflected_user_grants.organization_page",
+        attributes: {
+          "iam.msp_account_id" => msp_account_id,
+          "iam.msp_reflected_grants.continuance_present" => continuance.present?
+        }
+      ) do |span|
+        page = if continuance.present?
+          @organization_client.page(msp_account_id: msp_account_id, continuance: continuance)
+        else
+          @organization_client.page(msp_account_id: msp_account_id)
+        end
+        span.set_attribute("iam.msp_reflected_grants.page_size", page.fetch("managed_account_ids").length)
+        span.set_attribute("iam.msp_reflected_grants.total_count", page.fetch("total_count").to_i) if page.key?("total_count")
+        span.set_attribute("iam.msp_reflected_grants.next_continuance_present", page["continuance"].present?)
+        page
+      end
+    end
+
+    def elapsed_ms(started_at_monotonic)
+      ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at_monotonic) * 1000).round(2)
     end
 
     def native_msp_user_management_grant?(user_id, msp_account_id)

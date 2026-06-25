@@ -78,6 +78,8 @@ RSpec.describe Authorization::MspReflectedUserGrants do
 
     expect(result.fetch(:loading)).to eq(false)
     expect(result.fetch(:authorized_account_ids)).to match_array(managed_account_ids)
+    expect(result.fetch(:loaded_count)).to eq(managed_account_ids.length)
+    expect(result.fetch(:total_count)).to eq(managed_account_ids.length)
     expect(CapabilityGrant.where(user_id: user_id, scope_id: managed_account_ids)).not_to exist
   end
 
