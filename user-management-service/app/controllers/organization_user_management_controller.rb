@@ -121,16 +121,21 @@ class OrganizationUserManagementController < ApplicationController
   end
 
   def loading_payload(status)
+    status_name = status[:status] || status["status"]
+    retry_path = status_name == "failed" ? nil : request.fullpath
+
     {
       mode: @mode,
       loading: true,
       actor_user_id: @actor_user_id,
       organization_id: @organization_id,
       msp_account_id: @msp_account_id,
-      reflected_status: status[:status],
+      reflected_status: status_name,
       loaded_count: status.fetch(:loaded_count),
       total_count: status.fetch(:total_count),
       message: "Preparing MSP user-management access. Loaded #{status.fetch(:loaded_count)} of #{status.fetch(:total_count)} accounts.",
+      retry_path: retry_path,
+      retry_after_ms: 1500,
       accounts: [],
       users: []
     }
@@ -139,7 +144,7 @@ class OrganizationUserManagementController < ApplicationController
   def users_for(account_ids)
     return [] if account_ids.empty?
 
-    User.with_headers("pad-user-id" => @actor_user_id) do
+    User.with_headers(service_headers) do
       User.search(account_id: account_ids).map { |user| resource_attributes(user) }
     end
   end
@@ -164,7 +169,7 @@ class OrganizationUserManagementController < ApplicationController
     return [] if account_ids.empty?
 
     Account.with_headers("pad-user-id" => @actor_user_id) do
-      Account.where(id: account_ids).to_a.map { |account| resource_attributes(account) }
+      Account.search(id: account_ids).map { |account| resource_attributes(account) }
     end
   rescue ActiveResource::ClientError, ActiveResource::ServerError, RuntimeError
     []

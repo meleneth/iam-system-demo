@@ -49,6 +49,16 @@ class Account < ActiveResource::Base
     end
   end
 
+  def self.search(params)
+    raw = connection.post(
+      "/accounts/search",
+      params.to_json,
+      headers.merge("Accept" => "application/json", "Content-Type" => "application/json")
+    )
+
+    ActiveSupport::JSON.decode(raw.body).map { |attrs| new(attrs) }
+  end
+
 
   # Optional: handle nested resources, errors, etc.
 end

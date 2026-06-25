@@ -29,13 +29,13 @@ RSpec.describe "/users", type: :request do
   # UsersController, or in your router and rack
   # middleware. Be sure to keep this updated too.
   let(:valid_headers) {
-    {}
+    { "pad-user-id" => "IAM_SYSTEM" }
   }
 
   describe "GET /index" do
     it "renders a successful response" do
       User.create! valid_attributes
-      get users_url, headers: valid_headers, as: :json
+      get users_url, params: { account_id: valid_attributes.fetch(:account_id) }, headers: valid_headers, as: :json
       expect(response).to be_successful
     end
   end
@@ -43,8 +43,83 @@ RSpec.describe "/users", type: :request do
   describe "GET /show" do
     it "renders a successful response" do
       user = User.create! valid_attributes
-      get user_url(user), as: :json
+      get user_url(user), headers: valid_headers, as: :json
       expect(response).to be_successful
+    end
+  end
+
+  describe "read authorization" do
+    let!(:user) { User.create!(valid_attributes) }
+
+    it "checks account.users.read through authorization-service for individual users" do
+      expect(User).to receive(:user_can?).with(
+        user_id: "reader-user",
+        permission: "account.users.read",
+        account_ids: [valid_attributes.fetch(:account_id)]
+      ).and_return(true)
+
+      get user_url(user), headers: { "pad-user-id" => "reader-user" }, as: :json
+
+      expect(response).to have_http_status(:ok), response.body
+    end
+
+    it "checks account.users.read once for collection account IDs" do
+      expect(User).to receive(:user_can?).with(
+        user_id: "reader-user",
+        permission: "account.users.read",
+        account_ids: [valid_attributes.fetch(:account_id)]
+      ).and_return(true)
+
+      post "/users/search",
+           params: { account_id: [valid_attributes.fetch(:account_id)] },
+           headers: { "pad-user-id" => "reader-user" },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns loading when MSP reflected grants are still loading" do
+      allow(User).to receive(:user_can?).and_return(false)
+      expect(User).to receive(:msp_reflected_user_manage_users_check).with(
+        user_id: "msp-admin",
+        msp_account_id: "msp-account",
+        account_ids: [valid_attributes.fetch(:account_id)]
+      ).and_return(User::ReflectedAuthCheck.new(authorized?: false, loading?: true, status: "loading", loaded_count: 10, total_count: 100))
+
+      post "/users/search",
+           params: { account_id: [valid_attributes.fetch(:account_id)] },
+           headers: { "pad-user-id" => "msp-admin", "pad-msp-account-id" => "msp-account" },
+           as: :json
+
+      expect(response).to have_http_status(:accepted)
+      expect(JSON.parse(response.body)).to include("loading" => true, "loaded_count" => 10, "total_count" => 100)
+    end
+
+    it "returns forbidden when native and MSP reflected grants do not authorize the account" do
+      allow(User).to receive(:user_can?).and_return(false)
+      allow(User).to receive(:msp_reflected_user_manage_users_check).and_return(
+        User::ReflectedAuthCheck.new(authorized?: false, loading?: false, status: "ready", loaded_count: 0, total_count: 0)
+      )
+
+      get user_url(user), headers: { "pad-user-id" => "reader-user" }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "checks account.users.read before returning user counts" do
+      expect(User).to receive(:user_can?).with(
+        user_id: "reader-user",
+        permission: "account.users.read",
+        account_ids: [valid_attributes.fetch(:account_id)]
+      ).and_return(true)
+
+      get users_counts_url,
+          params: { account_id: [valid_attributes.fetch(:account_id)] },
+          headers: { "pad-user-id" => "reader-user" },
+          as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)).to include(valid_attributes.fetch(:account_id) => 1)
     end
   end
 

@@ -20,6 +20,7 @@ export default class extends Controller {
     const payload = JSON.parse(element.textContent)
     if (payload.loading) {
       this.setStatus(payload.message || "Preparing access")
+      this.retryPartition(element, payload)
       return
     }
 
@@ -120,6 +121,17 @@ export default class extends Controller {
 
   setStatus(text) {
     if (this.hasStatusTarget) this.statusTarget.textContent = text
+  }
+
+  retryPartition(element, payload) {
+    if (!payload.retry_path) return
+
+    const frame = element.closest("turbo-frame")
+    if (!frame) return
+
+    window.setTimeout(() => {
+      frame.src = payload.retry_path
+    }, payload.retry_after_ms || 1500)
   }
 
   statusText(payload) {

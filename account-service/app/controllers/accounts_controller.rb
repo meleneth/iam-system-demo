@@ -6,15 +6,17 @@ class AccountsController < ApplicationController
     filters = params.slice(*Account.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = Account.where(*filters)
+    authorize_account_collection_read!(results)
 
-    pad_user_id = request.headers['HTTP_PAD_USER_ID']
-    if pad_user_id == "IAM_SYSTEM"
-      OpenTelemetry::Trace.current_span.add_event("Skipping auth for system user")
-    else
-      OpenTelemetry::Trace.current_span.add_event("Checking auth for user #{pad_user_id}")
-      account_ids = results.map(&:id)
-      raise "no authorization for #{pad_user_id} account.read #{account_ids}" unless User.user_can(pad_user_id, "Account", "account.read",  account_ids)
-    end
+    render json: results
+  end
+
+  # POST /accounts/search
+  def search
+    filters = params.permit(id: [])
+    raise BadFilterError unless filters.present?
+    results = Account.where(*filters)
+    authorize_account_collection_read!(results)
 
     render json: results
   end
@@ -91,6 +93,23 @@ class AccountsController < ApplicationController
   # Only allow a list of trusted parameters through.
   def account_params
     params.permit(:parent_account_id)
+  end
+
+  def authorize_account_collection_read!(accounts)
+    pad_user_id = request.headers['HTTP_PAD_USER_ID']
+    raise "Must pass a pad-user-id header" unless pad_user_id
+
+    if pad_user_id == "IAM_SYSTEM"
+      OpenTelemetry::Trace.current_span.add_event("Skipping auth for system user")
+      return
+    end
+
+    account_ids = accounts.respond_to?(:distinct) ? accounts.distinct.pluck(:id) : Array(accounts).map(&:id)
+    account_ids = account_ids.map(&:to_s).uniq
+    return if account_ids.empty?
+
+    OpenTelemetry::Trace.current_span.add_event("Checking batched auth for user #{pad_user_id} account.read #{account_ids.size} accounts")
+    raise "no authorization for #{pad_user_id} account.read #{account_ids}" unless User.user_can(pad_user_id, "Account", "account.read", account_ids)
   end
 
   def fetch_account_with_parents(account_id)
