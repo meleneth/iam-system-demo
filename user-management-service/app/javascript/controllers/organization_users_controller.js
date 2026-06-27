@@ -95,12 +95,20 @@ export default class extends Controller {
 
     row.append(
       this.cell(user.id, "font-mono text-xs"),
-      this.cell([user.accountName, user.accountId].filter(Boolean).join(" ") || user.accountId, "font-mono text-xs"),
+      this.cell(this.accountLabel(user), "font-mono text-xs"),
       this.cell(user.email || user.username || "-"),
       this.cell(user.groups.map((group) => group.name || group.id).join(", ") || "-")
     )
 
     return row
+  }
+
+  accountLabel(user) {
+    if (!user.accountName) return user.accountId
+    if (!user.accountId) return user.accountName
+    if (user.accountName.includes(user.accountId.slice(0, 8))) return user.accountName
+
+    return `${user.accountName} ${user.accountId}`
   }
 
   cell(text, extraClasses = "") {

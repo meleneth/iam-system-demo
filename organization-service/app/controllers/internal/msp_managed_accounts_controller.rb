@@ -4,7 +4,7 @@ require "base64"
 
 module Internal
   class MspManagedAccountsController < ApplicationController
-    PAGE_SIZE = 500
+    PAGE_SIZE = 5000
 
     def index
       return unless require_iam_system!

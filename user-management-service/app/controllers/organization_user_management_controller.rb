@@ -3,7 +3,7 @@
 require "base64"
 
 class OrganizationUserManagementController < ApplicationController
-  ACCOUNT_PARTITION_SIZE = 500
+  ACCOUNT_PARTITION_SIZE = 5000
   VISIBLE_PARTITION_LABEL = "server-fixed"
 
   def show
