@@ -26,6 +26,8 @@ module Mel
     end
 
     def fetch(&block)
+      return fetch_without_cache(&block) unless redis_enabled?
+
       redis_keys = @keys.map { |k| @key_proc.call(k) }
 
       raw_values = {}
@@ -82,6 +84,25 @@ module Mel
       end
 
       final
+    end
+
+    private
+
+    def redis_enabled?
+      !@cache.respond_to?(:redis_enabled?) || @cache.redis_enabled?
+    end
+
+    def fetch_without_cache(&block)
+      new_values = if block.arity == 1
+                    yield(@keys)
+                  else
+                    yield(@keys, self)
+                  end
+      unless new_values.is_a?(Hash)
+        raise ArgumentError, "Block must return a hash of { logical_key => value }"
+      end
+
+      @keys.to_h { |key| [key, new_values[key]] }
     end
   end
 end

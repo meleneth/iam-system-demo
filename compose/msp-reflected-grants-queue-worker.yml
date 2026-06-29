@@ -10,6 +10,7 @@ services:
       - ACCOUNT_SERVICE_API_BASE_URL=http://account-service:80
       - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
       - AUTHORIZATION_CACHE_REDIS_URL=redis://authcache:6379/1
+      - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
       - DATABASE_URL=${AUTHZ_DB_DATABASE_URL}
       - RAILS_ENV=test
       - RAILS_MAX_THREADS=5

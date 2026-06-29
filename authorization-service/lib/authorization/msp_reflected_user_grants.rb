@@ -17,6 +17,8 @@ module Authorization
 
     def check(user_id:, msp_account_id:, account_ids:)
       account_ids = Array(account_ids).map(&:to_s)
+      return redis_disabled_result(user_id: user_id, msp_account_id: msp_account_id) unless redis_enabled?
+
       current = status(user_id: user_id, msp_account_id: msp_account_id)
 
       unless current[:status] == "ready"
@@ -36,6 +38,8 @@ module Authorization
     end
 
     def request_load(user_id:, msp_account_id:)
+      return unless redis_enabled?
+
       now = Time.now.utc.iso8601
       @redis.mapped_hmset(
         status_key(user_id, msp_account_id),
@@ -70,6 +74,8 @@ module Authorization
     end
 
     def load!(user_id:, msp_account_id:)
+      return unless redis_enabled?
+
       Instrumentation.trace(
         "msp_reflected_user_grants.load",
         attributes: {
@@ -96,6 +102,21 @@ module Authorization
     end
 
     private
+
+    def redis_enabled?
+      !@redis.respond_to?(:redis_enabled?) || @redis.redis_enabled?
+    end
+
+    def redis_disabled_result(user_id:, msp_account_id:)
+      {
+        status: "failed",
+        loaded_count: 0,
+        total_count: 0,
+        loading: false,
+        authorized_account_ids: [],
+        error: "Redis cache disabled for reflected grants #{user_id}/#{msp_account_id}"
+      }
+    end
 
     def load_with_trace!(span:, user_id:, msp_account_id:)
       started_at_monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)

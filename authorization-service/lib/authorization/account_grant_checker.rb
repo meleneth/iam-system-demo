@@ -6,7 +6,7 @@ module Authorization
       @user_id = user_id
       @permission = permission
       @redis = redis
-      @user_grants_key = cached_user_grants(user_id, permission)
+      @user_grants_key = cached_user_grants(user_id, permission) if redis_enabled?
     end
 
 		def authorized_for_all?(hierarchies)
@@ -39,11 +39,24 @@ module Authorization
 
     def batch_check(account_ids)
       return {} if account_ids.empty?
+      return batch_check_without_cache(account_ids) unless redis_enabled?
+
       values = @redis.pipelined do |pipe|
         account_ids.each { |id| pipe.sismember(@user_grants_key, id) }
       end
 
       account_ids.zip(values).to_h.transform_values(&:itself)
+    end
+
+    def batch_check_without_cache(account_ids)
+      granted_ids = CapabilityGrant.where(
+        user_id: @user_id,
+        permission: @permission,
+        scope_type: "Account",
+        scope_id: account_ids
+      ).pluck(:scope_id).map(&:to_s).to_set
+
+      account_ids.to_h { |id| [id, granted_ids.include?(id.to_s)] }
     end
 
     def cached_user_grants(user_id, permission)
@@ -58,6 +71,10 @@ module Authorization
         AUTHORIZATION_CACHE.expire(key, 300)
       end
       key
+    end
+
+    def redis_enabled?
+      !@redis.respond_to?(:redis_enabled?) || @redis.redis_enabled?
     end
   end
 end

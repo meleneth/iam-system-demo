@@ -8,6 +8,16 @@ RSpec.describe Mel::MultiFetchCache do
   let(:key_proc) { ->(k) { "key:#{k}" } }
   let(:tracking_key_proc) { ->(k) { "track:#{k}" } }
 
+  class DisabledCache
+    def redis_enabled?
+      false
+    end
+
+    def pipelined
+      raise "Redis should not be called when disabled"
+    end
+  end
+
   it "returns all hits without calling block" do
     keys = %w[a b]
 
@@ -138,5 +148,19 @@ RSpec.describe Mel::MultiFetchCache do
         "not a hash"
       end
     }.to raise_error(ArgumentError, /Block must return a hash/)
+  end
+
+  it "treats every key as a miss and skips cache calls when Redis is disabled" do
+    result = Mel::MultiFetchCache.fetch_many(
+      keys: %w[a b],
+      ttl: 300,
+      cache: DisabledCache.new,
+      key_proc: key_proc
+    ) do |missing|
+      expect(missing).to eq(%w[a b])
+      { "a" => 10 }
+    end
+
+    expect(result).to eq("a" => 10, "b" => nil)
   end
 end

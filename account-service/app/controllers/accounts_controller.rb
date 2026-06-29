@@ -157,6 +157,10 @@ class AccountsController < ApplicationController
     by_id = {}
     misses = []
 
+    if cache_disabled?
+      OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; treating #{ids.size} account_with_parents entries as misses")
+    end
+
     ids.each_with_index do |id, index|
       cached = cached_values[index]
       if cached
@@ -177,16 +181,24 @@ class AccountsController < ApplicationController
       computed = compute_accounts_with_parents(misses, organization_payloads)
       computed.each { |id, (results, _org_key_set)| by_id[id] = results }
 
-      ACCOUNT_CACHE.pipelined do |pipe|
-        computed.each do |id, (results, org_key_set)|
-          cache_key = account_with_parents_cache_key(id)
-          pipe.set(cache_key, results.to_json, ex: 300)
-          pipe.sadd(org_key_set, cache_key) if org_key_set.present?
+      unless cache_disabled?
+        ACCOUNT_CACHE.pipelined do |pipe|
+          computed.each do |id, (results, org_key_set)|
+            cache_key = account_with_parents_cache_key(id)
+            pipe.set(cache_key, results.to_json, ex: 300)
+            pipe.sadd(org_key_set, cache_key) if org_key_set.present?
+          end
         end
+      else
+        OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; skipped writing #{computed.size} account_with_parents entries")
       end
     end
 
     ids.map { |id| by_id[id] }
+  end
+
+  def cache_disabled?
+    ACCOUNT_CACHE.respond_to?(:redis_enabled?) && !ACCOUNT_CACHE.redis_enabled?
   end
 
   def account_with_parents_cache_key(account_id)

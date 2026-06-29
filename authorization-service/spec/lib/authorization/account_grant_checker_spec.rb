@@ -24,6 +24,16 @@ RSpec.describe Authorization::AccountGrantChecker do
     )
   end
 
+  class DisabledAuthorizationRedis
+    def redis_enabled?
+      false
+    end
+
+    def pipelined
+      raise "Redis should not be called when disabled"
+    end
+  end
+
   let(:subject) { Authorization::AccountGrantChecker.new(user_id: user_id, permission: permission, redis: fake_redis) }
 
   before :each do
@@ -64,6 +74,23 @@ RSpec.describe Authorization::AccountGrantChecker do
         .and_return({other_hierarchy_child.id => false})
 
       expect(subject.authorized_for_all?([hierarchy, other_hierarchy])).to be_falsey
+    end
+
+    it "checks account grants directly when Redis is disabled" do
+      CapabilityGrant.create!(
+        user_id: user_id,
+        permission: permission,
+        scope_type: "Account",
+        scope_id: hierarchy_grandparent.id
+      )
+
+      checker = Authorization::AccountGrantChecker.new(
+        user_id: user_id,
+        permission: permission,
+        redis: DisabledAuthorizationRedis.new
+      )
+
+      expect(checker.authorized_for_all?([hierarchy])).to be(true)
     end
   end
 end

@@ -145,6 +145,10 @@ class OrganizationAccountsController < ApplicationController
     by_organization_id = {}
     misses = []
 
+    if cache_disabled?
+      OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; treating #{organization_ids.size} organization account-id lists as misses")
+    end
+
     organization_ids.each_with_index do |organization_id, index|
       cached = cached_values[index]
       if cached
@@ -159,14 +163,22 @@ class OrganizationAccountsController < ApplicationController
         by_organization_id[organization_id] = rows.map(&:account_id)
       end
 
-      ORGANIZATION_CACHE.pipelined do |pipe|
-        misses.each do |organization_id|
-          pipe.set(account_ids_cache_key(organization_id), by_organization_id.fetch(organization_id).to_json, ex: 300)
+      unless cache_disabled?
+        ORGANIZATION_CACHE.pipelined do |pipe|
+          misses.each do |organization_id|
+            pipe.set(account_ids_cache_key(organization_id), by_organization_id.fetch(organization_id).to_json, ex: 300)
+          end
         end
+      else
+        OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; skipped writing #{misses.size} organization account-id lists")
       end
     end
 
     by_organization_id
+  end
+
+  def cache_disabled?
+    ORGANIZATION_CACHE.respond_to?(:redis_enabled?) && !ORGANIZATION_CACHE.redis_enabled?
   end
 
   def account_ids_cache_key(organization_id)

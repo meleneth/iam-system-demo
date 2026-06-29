@@ -12,6 +12,7 @@ services:
       - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
       - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
       - USER_SERVICE_API_BASE_URL=http://user-service:80
+      - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
       - SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
     build:
       context: "./account-service"
@@ -23,4 +24,3 @@ services:
     <<: *account-service-template
     ports:
       - "${ACCOUNT_AUTH_SERVICE_WEB_PORT}:3000"
-
