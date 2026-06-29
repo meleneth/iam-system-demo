@@ -17,7 +17,7 @@ module Authorization
 
     def check(user_id:, msp_account_id:, account_ids:)
       account_ids = Array(account_ids).map(&:to_s)
-      return redis_disabled_result(user_id: user_id, msp_account_id: msp_account_id) unless redis_enabled?
+      return check_without_cache(user_id: user_id, msp_account_id: msp_account_id, account_ids: account_ids) unless redis_enabled?
 
       current = status(user_id: user_id, msp_account_id: msp_account_id)
 
@@ -107,14 +107,15 @@ module Authorization
       !@redis.respond_to?(:redis_enabled?) || @redis.redis_enabled?
     end
 
-    def redis_disabled_result(user_id:, msp_account_id:)
+    def check_without_cache(user_id:, msp_account_id:, account_ids:)
+      authorized_account_ids = native_msp_user_management_grant?(user_id, msp_account_id) ? account_ids : []
+
       {
-        status: "failed",
-        loaded_count: 0,
-        total_count: 0,
+        status: "ready",
+        loaded_count: account_ids.length,
+        total_count: account_ids.length,
         loading: false,
-        authorized_account_ids: [],
-        error: "Redis cache disabled for reflected grants #{user_id}/#{msp_account_id}"
+        authorized_account_ids: authorized_account_ids
       }
     end
 

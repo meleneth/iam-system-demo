@@ -96,12 +96,13 @@ module Types
       return loading_payload(check) if check.fetch(:loading)
 
       authorized_ids = check.fetch(:authorized_account_ids)
+      total_count = page.fetch("total_count", check.fetch(:total_count)).to_i
       {
         loading: false,
         loaded_count: check.fetch(:loaded_count),
-        total_count: check.fetch(:total_count),
+        total_count: total_count,
         continuance: page["continuance"],
-        message: "MSP user-management access ready. Loaded #{check.fetch(:loaded_count)} of #{check.fetch(:total_count)} accounts.",
+        message: "MSP user-management access ready. Loaded #{check.fetch(:loaded_count)} of #{total_count} accounts.",
         accounts: authorized_ids.map { |account_id| { id: account_id } }
       }
     end

@@ -45,6 +45,12 @@ RSpec.describe Authorization::MspReflectedUserGrants do
     end
   end
 
+  class DisabledMspRedis < FakeMspRedis
+    def redis_enabled?
+      false
+    end
+  end
+
   let(:redis) { FakeMspRedis.new }
   let(:organization_client) { instance_double(Authorization::MspManagedAccountsClient) }
   let(:service) { described_class.new(redis: redis, organization_client: organization_client) }
@@ -96,6 +102,35 @@ RSpec.describe Authorization::MspReflectedUserGrants do
 
     expect(result.fetch(:loading)).to eq(false)
     expect(result.fetch(:authorized_account_ids)).to be_empty
+    expect(result.fetch(:total_count)).to eq(managed_account_ids.length)
+  end
+
+  it "authorizes requested MSP accounts directly when Redis is disabled and the native grant exists" do
+    CapabilityGrant.create!(
+      user_id: user_id,
+      permission: "account.users.read",
+      scope_type: "Account",
+      scope_id: msp_account_id
+    )
+
+    service = described_class.new(redis: DisabledMspRedis.new, organization_client: organization_client)
+    result = service.check(user_id: user_id, msp_account_id: msp_account_id, account_ids: managed_account_ids)
+
+    expect(result.fetch(:status)).to eq("ready")
+    expect(result.fetch(:loading)).to eq(false)
+    expect(result.fetch(:authorized_account_ids)).to match_array(managed_account_ids)
+    expect(result.fetch(:loaded_count)).to eq(managed_account_ids.length)
+    expect(result.fetch(:total_count)).to eq(managed_account_ids.length)
+  end
+
+  it "returns no requested MSP accounts when Redis is disabled and the native grant is missing" do
+    service = described_class.new(redis: DisabledMspRedis.new, organization_client: organization_client)
+    result = service.check(user_id: user_id, msp_account_id: msp_account_id, account_ids: managed_account_ids)
+
+    expect(result.fetch(:status)).to eq("ready")
+    expect(result.fetch(:loading)).to eq(false)
+    expect(result.fetch(:authorized_account_ids)).to be_empty
+    expect(result.fetch(:loaded_count)).to eq(managed_account_ids.length)
     expect(result.fetch(:total_count)).to eq(managed_account_ids.length)
   end
 end
