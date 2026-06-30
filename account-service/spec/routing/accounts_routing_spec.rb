@@ -11,20 +11,20 @@ RSpec.describe AccountsController, type: :routing do
     end
 
 
-    it "routes to #create" do
-      expect(post: "/accounts").to route_to("accounts#create")
+    it "does not route to #create" do
+      expect(post: "/accounts").not_to be_routable
     end
 
-    it "routes to #update via PUT" do
-      expect(put: "/accounts/1").to route_to("accounts#update", id: "1")
+    it "does not route to #update via PUT" do
+      expect(put: "/accounts/1").not_to be_routable
     end
 
-    it "routes to #update via PATCH" do
-      expect(patch: "/accounts/1").to route_to("accounts#update", id: "1")
+    it "does not route to #update via PATCH" do
+      expect(patch: "/accounts/1").not_to be_routable
     end
 
-    it "routes to #destroy" do
-      expect(delete: "/accounts/1").to route_to("accounts#destroy", id: "1")
+    it "does not route to #destroy" do
+      expect(delete: "/accounts/1").not_to be_routable
     end
   end
 end

@@ -11,20 +11,20 @@ RSpec.describe GroupUsersController, type: :routing do
     end
 
 
-    it "routes to #create" do
-      expect(post: "/group_users").to route_to("group_users#create")
+    it "does not route to #create" do
+      expect(post: "/group_users").not_to be_routable
     end
 
-    it "routes to #update via PUT" do
-      expect(put: "/group_users/1").to route_to("group_users#update", id: "1")
+    it "does not route to #update via PUT" do
+      expect(put: "/group_users/1").not_to be_routable
     end
 
-    it "routes to #update via PATCH" do
-      expect(patch: "/group_users/1").to route_to("group_users#update", id: "1")
+    it "does not route to #update via PATCH" do
+      expect(patch: "/group_users/1").not_to be_routable
     end
 
-    it "routes to #destroy" do
-      expect(delete: "/group_users/1").to route_to("group_users#destroy", id: "1")
+    it "does not route to #destroy" do
+      expect(delete: "/group_users/1").not_to be_routable
     end
   end
 end

@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   post "msp_reflected_user_grants/check", to: "msp_reflected_user_grants#check"
   get "internal/admin_users/organization/:organization_id", to: "internal/admin_users#organization"
 
-  resources :capability_grants
+  resources :capability_grants, only: %i[index show]
 
   get "can/:scope_type/:permission", to: "can#index", format: false, constraints: { permission: /[^\/]+/ }
   post "can/:scope_type/:permission", to: "can#index", format: false, constraints: { permission: /[^\/]+/ }

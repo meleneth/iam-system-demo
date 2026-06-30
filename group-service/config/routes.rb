@@ -2,8 +2,8 @@ Rails.application.routes.draw do
   post "/group_users/search(.:format)", to: "group_users#search"
   post "/groups/search(.:format)", to: "groups#search"
 
-  resources :group_users
-  resources :groups
+  resources :group_users, only: %i[index show]
+  resources :groups, only: %i[index show]
 
   get "/accounts/groups/counts",
     to: "groups_counts#index",

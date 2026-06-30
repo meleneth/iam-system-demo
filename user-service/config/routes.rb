@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  resources :users
+  resources :users, only: %i[index show]
   post "/users/search(.:format)", to: "users#search"
 
   get "/accounts/users/counts",

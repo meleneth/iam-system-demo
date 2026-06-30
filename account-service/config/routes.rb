@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  resources :accounts
+  resources :accounts, only: %i[index show]
   post "/accounts/search(.:format)", to: "accounts#search"
   get "/account_with_parents/:account_id(.:format)", to: "accounts#account_with_parents"
   get "/accounts_with_parents(.:format)", to: "accounts#accounts_with_parents"

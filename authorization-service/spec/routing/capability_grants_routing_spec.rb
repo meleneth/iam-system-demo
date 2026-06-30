@@ -11,20 +11,20 @@ RSpec.describe CapabilityGrantsController, type: :routing do
     end
 
 
-    it "routes to #create" do
-      expect(post: "/capability_grants").to route_to("capability_grants#create")
+    it "does not route to #create" do
+      expect(post: "/capability_grants").not_to be_routable
     end
 
-    it "routes to #update via PUT" do
-      expect(put: "/capability_grants/1").to route_to("capability_grants#update", id: "1")
+    it "does not route to #update via PUT" do
+      expect(put: "/capability_grants/1").not_to be_routable
     end
 
-    it "routes to #update via PATCH" do
-      expect(patch: "/capability_grants/1").to route_to("capability_grants#update", id: "1")
+    it "does not route to #update via PATCH" do
+      expect(patch: "/capability_grants/1").not_to be_routable
     end
 
-    it "routes to #destroy" do
-      expect(delete: "/capability_grants/1").to route_to("capability_grants#destroy", id: "1")
+    it "does not route to #destroy" do
+      expect(delete: "/capability_grants/1").not_to be_routable
     end
   end
 end

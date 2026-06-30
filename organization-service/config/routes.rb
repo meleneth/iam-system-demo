@@ -14,8 +14,8 @@ Rails.application.routes.draw do
       to: "organizations/accounts_count#index",
       as: :organizations_account_counts
 
-  resources :organization_accounts
-  resources :organizations
+  resources :organization_accounts, only: %i[index show]
+  resources :organizations, only: %i[index show]
 
   post "/graphql", to: "graphql#execute"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
