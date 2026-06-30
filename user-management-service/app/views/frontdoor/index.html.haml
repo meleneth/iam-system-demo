@@ -22,15 +22,6 @@
           %span.mt-1.block.text-sm.text-gray-600.dark:text-gray-300= link[:detail]
 
   %section
-    %h2.text-xl.font-semibold MSP User Management
-    %p.mt-2.text-sm.text-gray-600.dark:text-gray-300
-      These pages load MSP-managed account users and groups into browser memory in Hotwire partitions, then filter locally with Stimulus.
-    .mt-4.grid.gap-3.md:grid-cols-2
-      - @msp_user_management_links.each do |title, href|
-        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: href }
-          = title
-
-  %section
     %h2.text-xl.font-semibold Jaeger
     .mt-4.grid.gap-3.md:grid-cols-2
       - @jaeger_links.each do |title, href|

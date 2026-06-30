@@ -25,13 +25,6 @@ module Types
       argument :as, ID, required: true
     end
 
-    field :msp_user_management, Types::MspUserManagementType, null: false do
-      description "Private demo view for MSP reflected user-management grants."
-      argument :msp_account_id, ID, required: true
-      argument :as, ID, required: true
-      argument :continuance, String, required: false
-    end
-
     def organization(id:, as:)
       context[:as] = as
       context[:tracer] = TRACER
@@ -79,45 +72,5 @@ module Types
         .then { |records| records.compact }
     end
 
-    def msp_user_management(msp_account_id:, as:, continuance: nil)
-      context[:as] = as
-      context[:msp_account_id] = msp_account_id
-      context[:tracer] = TRACER
-      context[:otel_ctx] ||= OpenTelemetry::Context.current
-
-      status = MspReflectedUserGrant.check(user_id: as, msp_account_id: msp_account_id, account_ids: [])
-      raise GraphQL::ExecutionError, status[:error] if status[:status] == "failed"
-      return loading_payload(status) if status.fetch(:loading)
-
-      page = MspManagedAccount.page(msp_account_id, continuance: continuance)
-      account_ids = page.fetch("managed_account_ids").map(&:to_s)
-      check = MspReflectedUserGrant.check(user_id: as, msp_account_id: msp_account_id, account_ids: account_ids)
-      raise GraphQL::ExecutionError, check[:error] if check[:status] == "failed"
-      return loading_payload(check) if check.fetch(:loading)
-
-      authorized_ids = check.fetch(:authorized_account_ids)
-      total_count = page.fetch("total_count", check.fetch(:total_count)).to_i
-      {
-        loading: false,
-        loaded_count: check.fetch(:loaded_count),
-        total_count: total_count,
-        continuance: page["continuance"],
-        message: "MSP user-management access ready. Loaded #{check.fetch(:loaded_count)} of #{total_count} accounts.",
-        accounts: authorized_ids.map { |account_id| { id: account_id } }
-      }
-    end
-
-    def loading_payload(status)
-      loaded = status.fetch(:loaded_count)
-      total = status.fetch(:total_count)
-      {
-        loading: true,
-        loaded_count: loaded,
-        total_count: total,
-        continuance: nil,
-        message: "Preparing MSP user-management access. Loaded #{loaded} of #{total} accounts.",
-        accounts: []
-      }
-    end
   end
 end

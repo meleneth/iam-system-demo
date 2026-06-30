@@ -14,9 +14,6 @@ Local:
     - Name: account_create
     - Name: user_create
     - Name: grants_create
-    # Direct SQS queue for auth-service MSP reflected grant load requests.
-    # This is intentionally not subscribed to user_seed SNS.
-    - Name: msp_reflected_grants
     - Name: group_create
   Topics:
     - Name: user_seed

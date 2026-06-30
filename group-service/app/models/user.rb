@@ -3,8 +3,6 @@
 require "faraday"
 
 class User
-  MspReflectedCheck = Data.define(:authorized?, :loading?, :status, :loaded_count, :total_count)
-
   def self.user_can(user_id, scope_type, permission, scope_id)
     scope_ids = Array(scope_id)
     url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/can/#{scope_type}/#{permission}"
@@ -19,45 +17,5 @@ class User
     end
 
     response.status == 200
-  end
-
-  def self.msp_reflected_user_can_manage_users?(user_id:, msp_account_id:, account_ids:)
-    msp_reflected_user_manage_users_check(
-      user_id: user_id,
-      msp_account_id: msp_account_id,
-      account_ids: account_ids
-    ).authorized?
-  end
-
-  def self.msp_reflected_user_manage_users_check(user_id:, msp_account_id:, account_ids:)
-    ids = Array(account_ids).map(&:to_s)
-    return MspReflectedCheck.new(authorized?: true, loading?: false, status: "ready", loaded_count: 0, total_count: 0) if ids.empty?
-
-    url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/msp_reflected_user_grants/check"
-    outgoing_headers = {
-      "pad-user-id" => user_id,
-      "Content-Type" => "application/json"
-    }
-    OpenTelemetry.propagation.inject(outgoing_headers)
-
-    response = Faraday.post(url) do |req|
-      outgoing_headers.each { |key, value| req.headers[key] = value }
-      req.body = {
-        user_id: user_id,
-        msp_account_id: msp_account_id,
-        account_ids: ids
-      }.to_json
-    end
-
-    return MspReflectedCheck.new(authorized?: false, loading?: false, status: "failed", loaded_count: 0, total_count: 0) unless [200, 202].include?(response.status)
-
-    body = JSON.parse(response.body, symbolize_names: true)
-    loading = body[:loading] || response.status == 202
-    return MspReflectedCheck.new(authorized?: false, loading?: true, status: body[:status], loaded_count: body[:loaded_count].to_i, total_count: body[:total_count].to_i) if loading
-
-    authorized = (ids - Array(body[:authorized_account_ids]).map(&:to_s)).empty?
-    MspReflectedCheck.new(authorized?: authorized, loading?: false, status: body[:status], loaded_count: body[:loaded_count].to_i, total_count: body[:total_count].to_i)
-  rescue JSON::ParserError
-    MspReflectedCheck.new(authorized?: false, loading?: false, status: "failed", loaded_count: 0, total_count: 0)
   end
 end

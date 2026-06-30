@@ -8,9 +8,9 @@
   %section.rounded.border.border-amber-300.bg-amber-50.p-4.text-amber-950.dark:border-amber-700.dark:bg-amber-950.dark:text-amber-100
     %h2.text-lg.font-semibold Demo-Only Auth Hacking
     %p.mt-2.text-sm
-      This random explorer is not a production feature. It enumerates organization IDs, account IDs, MSP relationships, and admin user IDs specifically so the demo can jump into interesting records during a live seed. A real caller should not be able to discover those identifiers unless they already know them or are already authorized in that context.
+      This random explorer is not a production feature. It enumerates organization IDs, account IDs, and admin user IDs specifically so the demo can jump into interesting records during a live seed. A real caller should not be able to discover those identifiers unless they already know them or are already authorized in that context.
     %p.mt-2.text-sm
-      The page switches to the discovered admin after bootstrap. Private MSP relationship checks remain IAM_SYSTEM-only because the MSP mapping is intentionally invisible to ordinary callers.
+      The page switches to the discovered admin after bootstrap.
 
   - if @error
     %section.rounded.border.border-red-200.bg-red-50.p-4.text-red-900.dark:border-red-800.dark:bg-red-950.dark:text-red-100
@@ -23,14 +23,12 @@
               %th.py-1 Organization
               %th.py-1 Random Account
               %th.py-1 Admin User
-              %th.py-1 MSP
           %tbody
             - @attempts.each do |attempt|
               %tr.border-t.border-red-200.dark:border-red-800
                 %td.py-1.font-mono.text-xs= attempt[:organization_id]
                 %td.py-1.font-mono.text-xs= attempt[:account_id]
                 %td.py-1.font-mono.text-xs= attempt[:admin_user_id] || 'none'
-                %td.py-1= attempt[:msp_managed] ? 'yes' : 'no'
       %p.mt-4
         %a.font-medium.text-sky-700.hover:underline.dark:text-sky-300{ href: random_record_path } Try another random record
   - else
@@ -49,47 +47,20 @@
         %span.block.text-sm.text-gray-600.dark:text-gray-300 Users
         %span.mt-1.block.text-2xl.font-bold= @total_user_count
 
-    - if @msp_relationship
-      %section.rounded.border.border-amber-300.bg-amber-50.p-4.text-amber-950.dark:border-amber-700.dark:bg-amber-950.dark:text-amber-100
-        %h2.text-lg.font-semibold MSP-Managed Account
-        %p.mt-2.text-sm
-          This selected account is attached to an MSP through the private internal MSP mapping. The mapping is discovered with IAM_SYSTEM because non-system requests are supposed to behave as if the mapping does not exist; they should not be able to learn the MSP account ID, MSP organization ID, or relationship direction unless that knowledge was already available through another authorized path.
-        .mt-4.grid.gap-3.md:grid-cols-2
-          .rounded.border.border-amber-200.p-3.dark:border-amber-800
-            %span.block.text-sm MSP Account
-            %span.mt-1.block.break-all.font-mono.text-xs= @msp_relationship.fetch(:msp_account_id)
-          .rounded.border.border-amber-200.p-3.dark:border-amber-800
-            %span.block.text-sm MSP Organization
-            %span.mt-1.block.break-all.font-mono.text-xs= @msp_relationship.fetch(:msp_organization_id)
-          .rounded.border.border-amber-200.p-3.dark:border-amber-800
-            %span.block.text-sm Reflected Grant Status
-            %span.mt-1.block.font-semibold= @msp_reflected_status.fetch(:status)
-          .rounded.border.border-amber-200.p-3.dark:border-amber-800
-            %span.block.text-sm Reflected Progress
-            %span.mt-1.block= "#{@msp_reflected_status.fetch(:loaded_count)} / #{@msp_reflected_status.fetch(:total_count)}"
-
     %section
       %h2.text-xl.font-semibold Useful Links
       .mt-4.grid.gap-3.md:grid-cols-2
         %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: random_record_path } Pick Another Random Record
         %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: random_record_detail_path(@organization.id, @selected_account_id) } Refresh This Record
-        - unless @msp_relationship
-          %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: account_view_path(@selected_account_id, as: @admin_user_id) } Open Selected Account Page
-          %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: organization_user_management_path(organization_id: @organization.id, as: @admin_user_id) } Organization User Management
-        - if @msp_relationship
-          %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: organization_user_management_path(msp_account_id: @msp_relationship.fetch(:msp_account_id), as: @admin_user_id) } MSP User Management
-          %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: msp_graphql_query_path(kind: "accounts", msp_account_id: @msp_relationship.fetch(:msp_account_id), admin_user_id: @admin_user_id) } MSP Accounts GraphQL Query, First Page
-          %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: msp_graphql_query_path(kind: "full", msp_account_id: @msp_relationship.fetch(:msp_account_id), admin_user_id: @admin_user_id) } MSP Users and Groups GraphQL Query, First Page
+        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: account_view_path(@selected_account_id, as: @admin_user_id) } Open Selected Account Page
+        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: organization_user_management_path(organization_id: @organization.id, as: @admin_user_id) } Organization User Management
         %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: "/graphiql" } GraphiQL
         %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: "http://localhost:11160/search?service=user-management-service" } Jaeger User Management Traces
 
     %section
       %h2.text-xl.font-semibold Account User Counts
       %p.mt-2.text-sm.text-gray-600.dark:text-gray-300
-        - if @msp_relationship
-          Showing the selected MSP-managed customer account. User count is loaded after private MSP discovery; normal account browsing is intentionally not exposed through the MSP mapping.
-        - else
-          Showing #{@display_account_ids.length} of #{@account_ids.length} accounts. User counts are computed for the full organization as #{@admin_user_id}.
+        Showing #{@display_account_ids.length} of #{@account_ids.length} accounts. User counts are computed for the full organization as #{@admin_user_id}.
       .mt-4.overflow-x-auto.rounded.border.border-gray-200.dark:border-gray-700
         %table.w-full.text-left.text-sm
           %thead.bg-gray-50.dark:bg-gray-800
@@ -108,5 +79,4 @@
                 %td.px-3.py-2.font-mono.text-xs= account&.parent_account_id.presence || '-'
                 %td.px-3.py-2= @user_counts_by_account_id.fetch(account_id, 0)
                 %td.px-3.py-2
-                  - unless @msp_relationship
-                    %a.font-medium.text-sky-700.hover:underline.dark:text-sky-300{ href: account_view_path(account_id, as: @admin_user_id) } Open
+                  %a.font-medium.text-sky-700.hover:underline.dark:text-sky-300{ href: account_view_path(account_id, as: @admin_user_id) } Open

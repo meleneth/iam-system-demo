@@ -6,7 +6,6 @@ class FrontdoorController < ApplicationController
     @query_links = demo_queries.values
     @jaeger_links = jaeger_links
     @experimental_links = experimental_links
-    @msp_user_management_links = msp_user_management_links
   end
 
   def random_record
@@ -34,7 +33,7 @@ class FrontdoorController < ApplicationController
     selection = selection_for_random_account(organization, permitted.fetch(:account_id))
 
     unless selection
-      @error = "Could not find a native admin grant for organization #{organization.id} or its MSP, if managed."
+      @error = "Could not find a native admin grant for organization #{organization.id}."
       @attempts = [
         {
           organization_id: organization.id,
@@ -49,13 +48,8 @@ class FrontdoorController < ApplicationController
     @organization = selection.fetch(:organization)
     @selected_account_id = selection.fetch(:account_id)
     @admin_user_id = selection.fetch(:admin_user_id)
-    @msp_relationship = selection[:msp_relationship]
 
-    if @msp_relationship
-      load_msp_managed_detail
-    else
-      load_native_org_detail
-    end
+    load_native_org_detail
 
     render :random_record
   end
@@ -65,17 +59,6 @@ class FrontdoorController < ApplicationController
     render layout: false
   rescue KeyError
     raise ActionController::RoutingError, "Unknown demo query: #{params[:id]}"
-  end
-
-  def msp_graphql_query
-    permitted = params.permit(:kind, :msp_account_id, :admin_user_id, :continuance)
-    @demo_query = dynamic_msp_query(
-      kind: permitted.fetch(:kind),
-      msp_account_id: permitted.fetch(:msp_account_id),
-      admin_user_id: permitted.fetch(:admin_user_id),
-      continuance: permitted[:continuance]
-    )
-    render :demo_query, layout: false
   end
 
   private
@@ -95,7 +78,7 @@ class FrontdoorController < ApplicationController
             organization_id: organization.id,
             account_id: random_account.fetch(:account_id),
             admin_user_id: selection&.fetch(:admin_user_id, nil),
-            msp_managed: selection&.key?(:msp_relationship) || false
+            msp_managed: false
           }
           return selection if selection
         end
@@ -106,32 +89,6 @@ class FrontdoorController < ApplicationController
   end
 
   def selection_for_random_account(organization, account_id)
-    # AUTH HACKING: required for demo functionality. MSP mappings are private/internal; a non-system caller should
-    # not be able to discover that this managed account is attached to an MSP unless they already know that relationship.
-    manager = MspManagedAccount.manager_for(account_id)
-    if manager.fetch(:managed)
-      msp_account_id = manager.fetch(:msp_account_id)
-      # AUTH HACKING: required for demo functionality. This walks from a private MSP account ID to its owning org
-      # solely to bootstrap the demo actor; that identity discovery would not exist in production.
-      msp_org_payload = OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
-        OrganizationAccount.account_ids_for_organization_by_account_id(msp_account_id)
-      end
-      msp_organization = msp_org_payload.fetch(:organization)
-      admin = admin_for_organization(msp_organization.id)
-      return nil unless admin
-
-      return {
-        organization: organization,
-        account_id: account_id,
-        admin_user_id: admin.fetch(:user_id),
-        msp_relationship: {
-          msp_account_id: msp_account_id,
-          msp_organization_id: msp_organization.id,
-          msp_account_count: msp_org_payload.fetch(:account_ids).length
-        }
-      }
-    end
-
     admin = admin_for_organization(organization.id)
     return nil unless admin
 
@@ -166,20 +123,6 @@ class FrontdoorController < ApplicationController
 
     @display_account_ids = @account_ids.first(RANDOM_RECORD_DISPLAY_LIMIT)
     @accounts_by_id = fetch_accounts_for(@display_account_ids)
-  end
-
-  def load_msp_managed_detail
-    @account_ids = [@selected_account_id]
-    @account_count = 1
-    @msp_reflected_status = MspReflectedUserGrant.check(
-      user_id: @admin_user_id,
-      msp_account_id: @msp_relationship.fetch(:msp_account_id),
-      account_ids: @account_ids
-    )
-    @user_counts_by_account_id = user_counts_for(@account_ids)
-    @total_user_count = @user_counts_by_account_id.values.sum
-    @display_account_ids = @account_ids
-    @accounts_by_id = {}
   end
 
   def user_counts_for(account_ids)
@@ -268,158 +211,8 @@ class FrontdoorController < ApplicationController
             }
           }
         GRAPHQL
-      },
-      'massive-fanout-100k' => {
-        id: 'massive-fanout-100k',
-        title: 'MSP reflected users 100k',
-        detail: 'One MSP admin, 99,999 customer accounts, Redis-only reflected user-management grants.',
-        query: <<~GRAPHQL
-          {
-            mspUserManagement(mspAccountId: "0f418549-dc1c-554e-947d-17c3a5154857", as: "f56f5767-fad2-57c9-b279-30463d7b3b90") {
-              loading
-              loadedCount
-              totalCount
-              continuance
-              message
-              accounts {
-                id
-                users {
-                  id
-                  email
-                  accountId
-                  groups {
-                    id
-                    name
-                  }
-                }
-              }
-            }
-          }
-        GRAPHQL
-      },
-      'massive-fanout-50k' => {
-        id: 'massive-fanout-50k',
-        title: 'MSP reflected users 50k',
-        detail: 'One MSP admin, 49,999 customer accounts, Redis-only reflected user-management grants.',
-        query: <<~GRAPHQL
-          {
-            mspUserManagement(mspAccountId: "3c5b62df-e65e-5bdd-9798-de7c4e53315b", as: "4418a141-eeb1-50a9-893e-f94e2266a599") {
-              loading
-              loadedCount
-              totalCount
-              continuance
-              message
-              accounts {
-                id
-                users {
-                  id
-                  email
-                  accountId
-                  groups {
-                    id
-                    name
-                  }
-                }
-              }
-            }
-          }
-        GRAPHQL
-      },
-      'massive-fanout-10k' => {
-        id: 'massive-fanout-10k',
-        title: 'MSP reflected users 10k',
-        detail: 'One MSP admin, 9,999 customer accounts, Redis-only reflected user-management grants.',
-        query: <<~GRAPHQL
-          {
-            mspUserManagement(mspAccountId: "b05e3a9d-ee13-5d71-b248-beaf964c893f", as: "f3a85e16-4fea-53c0-b31a-8ac822431f9a") {
-              loading
-              loadedCount
-              totalCount
-              continuance
-              message
-              accounts {
-                id
-                users {
-                  id
-                  email
-                  accountId
-                  groups {
-                    id
-                    name
-                  }
-                }
-              }
-            }
-          }
-        GRAPHQL
       }
     }
-  end
-
-  def dynamic_msp_query(kind:, msp_account_id:, admin_user_id:, continuance: nil)
-    case kind
-    when "accounts"
-      {
-        title: "MSP reflected accounts",
-        query: msp_user_management_query(
-          msp_account_id: msp_account_id,
-          admin_user_id: admin_user_id,
-          continuance: continuance,
-          body: <<~GRAPHQL
-            accounts {
-              id
-            }
-          GRAPHQL
-        )
-      }
-    when "full"
-      {
-        title: "MSP reflected users and groups",
-        query: msp_user_management_query(
-          msp_account_id: msp_account_id,
-          admin_user_id: admin_user_id,
-          continuance: continuance,
-          body: <<~GRAPHQL
-            accounts {
-              id
-              users {
-                id
-                email
-                accountId
-                groups {
-                  id
-                  name
-                }
-              }
-            }
-          GRAPHQL
-        )
-      }
-    else
-      raise ActionController::RoutingError, "Unknown MSP GraphQL query: #{kind}"
-    end
-  end
-
-  def msp_user_management_query(msp_account_id:, admin_user_id:, continuance:, body:)
-    args = {
-      mspAccountId: msp_account_id,
-      as: admin_user_id
-    }
-    args[:continuance] = continuance if continuance.present?
-    argument_source = args.map { |key, value| "#{key}: #{value.to_s.to_json}" }.join(", ")
-
-    <<~GRAPHQL
-      {
-        mspUserManagement(#{argument_source}) {
-          loading
-          loadedCount
-          totalCount
-          continuance
-          message
-      #{body.indent(4)}
-        }
-      }
-    GRAPHQL
   end
 
   def jaeger_links
@@ -442,11 +235,4 @@ class FrontdoorController < ApplicationController
     ]
   end
 
-  def msp_user_management_links
-    [
-      ['MSP 100k user management', organization_user_management_path(msp_account_id: '0f418549-dc1c-554e-947d-17c3a5154857', as: 'f56f5767-fad2-57c9-b279-30463d7b3b90')],
-      ['MSP 50k user management', organization_user_management_path(msp_account_id: '3c5b62df-e65e-5bdd-9798-de7c4e53315b', as: '4418a141-eeb1-50a9-893e-f94e2266a599')],
-      ['MSP 10k user management', organization_user_management_path(msp_account_id: 'b05e3a9d-ee13-5d71-b248-beaf964c893f', as: 'f3a85e16-4fea-53c0-b31a-8ac822431f9a')]
-    ]
-  end
 end

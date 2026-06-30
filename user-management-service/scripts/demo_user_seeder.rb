@@ -814,19 +814,6 @@ class DemoFixtureArtifacts
       # Sparse enterprise org fan-out.
       post_org_account_ids "#{top_level_admin_user_id(sparse)}" "#{sparse.fetch(:targets).fetch(:root_account_id)}"
 
-      # MSP reflected user-management grant loading and status checks.
-      curl_time \\
-        -H 'Content-Type: application/json' \\
-        --data '{"user_id":"#{top_level_admin_user_id(fanout_100k)}","msp_account_id":"#{fanout_100k.fetch(:targets).fetch(:msp_account_id)}","account_ids":[]}' \\
-        "$AUTHORIZATION_SERVICE/msp_reflected_user_grants/check"
-      curl_time \\
-        -H 'Content-Type: application/json' \\
-        --data '{"user_id":"#{top_level_admin_user_id(fanout_50k)}","msp_account_id":"#{fanout_50k.fetch(:targets).fetch(:msp_account_id)}","account_ids":[]}' \\
-        "$AUTHORIZATION_SERVICE/msp_reflected_user_grants/check"
-      curl_time \\
-        -H 'Content-Type: application/json' \\
-        --data '{"user_id":"#{top_level_admin_user_id(fanout_10k)}","msp_account_id":"#{fanout_10k.fetch(:targets).fetch(:msp_account_id)}","account_ids":[]}' \\
-        "$AUTHORIZATION_SERVICE/msp_reflected_user_grants/check"
     SH
   end
 
@@ -960,84 +947,6 @@ class DemoFixtureArtifacts
               groups {
                 id
                 name
-              }
-            }
-          }
-        }
-      GRAPHQL
-      'MSP 100k reflected users and groups' => <<~GRAPHQL,
-        {
-          mspUserManagement(
-            mspAccountId: "#{fanout_100k.fetch(:targets).fetch(:msp_account_id)}"
-            as: "#{top_level_admin_user_id(fanout_100k)}"
-          ) {
-            loading
-            loadedCount
-            totalCount
-            continuance
-            message
-            accounts {
-              id
-              users {
-                id
-                email
-                accountId
-                groups {
-                  id
-                  name
-                }
-              }
-            }
-          }
-        }
-      GRAPHQL
-      'MSP 50k reflected users and groups' => <<~GRAPHQL,
-        {
-          mspUserManagement(
-            mspAccountId: "#{fanout_50k.fetch(:targets).fetch(:msp_account_id)}"
-            as: "#{top_level_admin_user_id(fanout_50k)}"
-          ) {
-            loading
-            loadedCount
-            totalCount
-            continuance
-            message
-            accounts {
-              id
-              users {
-                id
-                email
-                accountId
-                groups {
-                  id
-                  name
-                }
-              }
-            }
-          }
-        }
-      GRAPHQL
-      'MSP 10k reflected users and groups' => <<~GRAPHQL
-        {
-          mspUserManagement(
-            mspAccountId: "#{fanout_10k.fetch(:targets).fetch(:msp_account_id)}"
-            as: "#{top_level_admin_user_id(fanout_10k)}"
-          ) {
-            loading
-            loadedCount
-            totalCount
-            continuance
-            message
-            accounts {
-              id
-              users {
-                id
-                email
-                accountId
-                groups {
-                  id
-                  name
-                }
               }
             }
           }

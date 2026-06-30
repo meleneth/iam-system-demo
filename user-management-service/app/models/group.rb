@@ -31,7 +31,6 @@ class Group < ActiveResource::Base
     )
 
     decoded = ActiveSupport::JSON.decode(raw.body)
-    raise MspReflectedGrantLoading, decoded if decoded.is_a?(Hash) && decoded["loading"]
 
     decoded.map { |attrs| new(attrs) }
   end
@@ -49,10 +48,9 @@ class Group < ActiveResource::Base
       outgoing_headers.each { |key, value| req.headers[key] = value }
     end
 
-    data = JSON.parse(response.body, symbolize_names: true)
-    raise MspReflectedGrantLoading, data if response.status == 202 && data[:loading]
     raise "Error getting Account's Group counts" unless response.status == 200
 
+    data = JSON.parse(response.body, symbolize_names: true)
     Rails.logger.info data
     data
   end

@@ -1,10 +1,18 @@
 require 'rails_helper'
+require 'ostruct'
 
 RSpec.describe "Cans", type: :request do
+  class DisabledAuthorizationCache
+    def redis_enabled?
+      false
+    end
+  end
+
   describe "POST /can/Account/:permission" do
     let(:user_id) { SecureRandom.uuid }
     let(:msp_account_id) { SecureRandom.uuid }
     let(:customer_account_id) { SecureRandom.uuid }
+    let(:parent_account_id) { SecureRandom.uuid }
     let(:headers) do
       {
         "pad-user-id" => user_id,
@@ -12,21 +20,24 @@ RSpec.describe "Cans", type: :request do
       }
     end
 
-    it "authorizes MSP reflected user-management grants without loading native account hierarchy" do
-      reflected = instance_double(Authorization::MspReflectedUserGrants)
-      allow(Authorization::MspReflectedUserGrants).to receive(:new).and_return(reflected)
-      expect(reflected).to receive(:check).with(
+    before do
+      stub_const("AUTHORIZATION_CACHE", DisabledAuthorizationCache.new)
+    end
+
+    it "uses native account hierarchy grants when stale MSP headers are present" do
+      CapabilityGrant.create!(
         user_id: user_id,
-        msp_account_id: msp_account_id,
-        account_ids: [customer_account_id]
-      ).and_return(
-        status: "ready",
-        loading: false,
-        loaded_count: 1,
-        total_count: 1,
-        authorized_account_ids: [customer_account_id]
+        permission: "account.users.read",
+        scope_type: "Account",
+        scope_id: parent_account_id
       )
-      expect(Account).not_to receive(:with_headers)
+      allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+      allow(Account).to receive(:with_parents_batch).with([customer_account_id]).and_return(
+        [[
+          OpenStruct.new(id: parent_account_id),
+          OpenStruct.new(id: customer_account_id)
+        ]]
+      )
 
       post "/can/Account/account.users.read",
            params: { scope_id: [customer_account_id] },
@@ -36,29 +47,18 @@ RSpec.describe "Cans", type: :request do
       expect(response).to have_http_status(:ok)
     end
 
-    it "returns loading progress for MSP reflected grants without loading native account hierarchy" do
-      reflected = instance_double(Authorization::MspReflectedUserGrants)
-      allow(Authorization::MspReflectedUserGrants).to receive(:new).and_return(reflected)
-      expect(reflected).to receive(:check).and_return(
-        status: "loading",
-        loading: true,
-        loaded_count: 250,
-        total_count: 1000,
-        authorized_account_ids: []
+    it "does not authorize stale MSP headers without native account grants" do
+      allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+      allow(Account).to receive(:with_parents_batch).with([customer_account_id]).and_return(
+        [[OpenStruct.new(id: customer_account_id)]]
       )
-      expect(Account).not_to receive(:with_headers)
 
       post "/can/Account/account.users.read",
            params: { scope_id: [customer_account_id] },
            headers: headers,
            as: :json
 
-      expect(response).to have_http_status(:accepted)
-      expect(response.parsed_body).to include(
-        "loading" => true,
-        "loaded_count" => 250,
-        "total_count" => 1000
-      )
+      expect(response).to have_http_status(:forbidden)
     end
   end
 

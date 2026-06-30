@@ -4,9 +4,6 @@ The development eventstream uses `goaws` and loads queues/topics from
 Keep new SQS/SNS infrastructure in `goaws.yaml`; runtime-created queues are
 only a temporary repair for the current process and will disappear on restart.
 
-`msp_reflected_grants` is a direct SQS queue used by auth-service load requests,
-not an SNS subscription from `user_seed`.
-
 The Terraform below is kept as a secondary/manual setup path.
 
 test:

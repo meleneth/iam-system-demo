@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  post "msp_reflected_user_grants/check", to: "msp_reflected_user_grants#check"
   get "internal/admin_users/organization/:organization_id", to: "internal/admin_users#organization"
 
   resources :capability_grants, only: %i[index show]

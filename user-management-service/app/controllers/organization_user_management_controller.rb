@@ -7,30 +7,27 @@ class OrganizationUserManagementController < ApplicationController
   VISIBLE_PARTITION_LABEL = "server-fixed"
 
   def show
-    permitted = params.permit(:organization_id, :msp_account_id, :as)
+    permitted = params.permit(:organization_id, :as)
     @actor_user_id = permitted.require(:as)
-    @organization_id = permitted[:organization_id]
-    @msp_account_id = permitted[:msp_account_id]
-    @mode = @msp_account_id.present? ? "msp" : "organization"
-    @title = @mode == "msp" ? "MSP User Management" : "Organization User Management"
+    @organization_id = permitted.require(:organization_id)
+    @mode = "organization"
+    @title = "Organization User Management"
     @partition_path = organization_user_management_partition_path(
       organization_id: @organization_id,
-      msp_account_id: @msp_account_id,
       as: @actor_user_id,
       frame_id: "organization-user-management-partition-root"
     )
   end
 
   def partition
-    permitted = params.permit(:organization_id, :msp_account_id, :as, :continuance, :frame_id)
+    permitted = params.permit(:organization_id, :as, :continuance, :frame_id)
     @actor_user_id = permitted.require(:as)
-    @organization_id = permitted[:organization_id]
-    @msp_account_id = permitted[:msp_account_id]
-    @mode = @msp_account_id.present? ? "msp" : "organization"
+    @organization_id = permitted.require(:organization_id)
+    @mode = "organization"
     @frame_id = permitted[:frame_id].presence || "organization-user-management-partition-root"
 
     cursor = decode_continuance(permitted[:continuance])
-    partition = @mode == "msp" ? msp_partition(cursor) : organization_partition(cursor)
+    partition = organization_partition(cursor)
 
     @partition_payload = partition.fetch(:payload)
     @next_continuance = encode_continuance(partition.fetch(:next_cursor)) if partition[:next_cursor]
@@ -38,38 +35,11 @@ class OrganizationUserManagementController < ApplicationController
     @next_frame_id = "organization-user-management-partition-#{@next_continuance || "done"}"
 
     render partial: "organization_user_management/partition"
-  rescue MspReflectedGrantLoading => e
-    @partition_payload = loading_payload(e.status)
-    @partition_label = "MSP reflected grant status"
-    @next_continuance = nil
-    @next_frame_id = "organization-user-management-partition-done"
-    render partial: "organization_user_management/partition", status: :accepted
   rescue JSON::ParserError, ArgumentError
     render plain: "Invalid continuance", status: :bad_request
   end
 
   private
-
-  def msp_partition(cursor)
-    page = MspManagedAccount.page(@msp_account_id, continuance: cursor&.fetch("msp_continuance", nil))
-    account_ids = page.fetch("managed_account_ids").map(&:to_s)
-    status = MspReflectedUserGrant.check(user_id: @actor_user_id, msp_account_id: @msp_account_id, account_ids: account_ids)
-
-    if status.fetch(:loading) || status[:status] == "failed"
-      return {
-        label: "MSP reflected grant status",
-        payload: loading_payload(status),
-        next_cursor: nil
-      }
-    end
-
-    authorized_account_ids = status.fetch(:authorized_account_ids).map(&:to_s)
-    {
-      label: "MSP account partition #{VISIBLE_PARTITION_LABEL}",
-      payload: data_payload(account_ids: authorized_account_ids, total_account_count: status.fetch(:total_count)),
-      next_cursor: page["continuance"].present? ? { "msp_continuance" => page.fetch("continuance") } : nil
-    }
-  end
 
   def organization_partition(cursor)
     account_ids = organization_account_ids
@@ -106,7 +76,6 @@ class OrganizationUserManagementController < ApplicationController
       loading: false,
       actor_user_id: @actor_user_id,
       organization_id: @organization_id,
-      msp_account_id: @msp_account_id,
       total_account_count: total_account_count,
       partition_account_count: account_ids.length,
       accounts: account_ids.map { |account_id| accounts_by_id[account_id] || { "id" => account_id, "name" => nil, "parent_account_id" => nil } },
@@ -117,27 +86,6 @@ class OrganizationUserManagementController < ApplicationController
           "groups" => groups_by_user_id[user.fetch("id").to_s] || []
         )
       end
-    }
-  end
-
-  def loading_payload(status)
-    status_name = status[:status] || status["status"]
-    retry_path = status_name == "failed" ? nil : request.fullpath
-
-    {
-      mode: @mode,
-      loading: true,
-      actor_user_id: @actor_user_id,
-      organization_id: @organization_id,
-      msp_account_id: @msp_account_id,
-      reflected_status: status_name,
-      loaded_count: status.fetch(:loaded_count),
-      total_count: status.fetch(:total_count),
-      message: "Preparing MSP user-management access. Loaded #{status.fetch(:loaded_count)} of #{status.fetch(:total_count)} accounts.",
-      retry_path: retry_path,
-      retry_after_ms: 1500,
-      accounts: [],
-      users: []
     }
   end
 
@@ -176,9 +124,7 @@ class OrganizationUserManagementController < ApplicationController
   end
 
   def service_headers
-    headers = { "pad-user-id" => @actor_user_id }
-    headers["pad-msp-account-id"] = @msp_account_id if @msp_account_id.present?
-    headers
+    { "pad-user-id" => @actor_user_id }
   end
 
   def resource_attributes(resource)

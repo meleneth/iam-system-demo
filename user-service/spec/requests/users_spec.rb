@@ -20,10 +20,6 @@ RSpec.describe "/users", type: :request do
     { account_id: "28fb6349-0f1d-4642-81ca-8732c6115138", email: "foo@example.com" }
   }
 
-  let(:invalid_attributes) {
-    { account_id: nil, email: "foo@example.com" }
-  }
-
   # This should return the minimal set of values that should be in the headers
   # in order to pass any filters (e.g. authentication) defined in
   # UsersController, or in your router and rack
@@ -35,7 +31,7 @@ RSpec.describe "/users", type: :request do
   describe "GET /index" do
     it "renders a successful response" do
       User.create! valid_attributes
-      get users_url, params: { account_id: valid_attributes.fetch(:account_id) }, headers: valid_headers, as: :json
+      get "/users", params: { account_id: valid_attributes.fetch(:account_id) }, headers: valid_headers, as: :json
       expect(response).to be_successful
     end
   end
@@ -78,28 +74,23 @@ RSpec.describe "/users", type: :request do
       expect(response).to have_http_status(:ok)
     end
 
-    it "returns loading when MSP reflected grants are still loading" do
-      allow(User).to receive(:user_can?).and_return(false)
-      expect(User).to receive(:msp_reflected_user_manage_users_check).with(
+    it "ignores stale MSP headers and checks account.users.read" do
+      expect(User).to receive(:user_can?).with(
         user_id: "msp-admin",
-        msp_account_id: "msp-account",
+        permission: "account.users.read",
         account_ids: [valid_attributes.fetch(:account_id)]
-      ).and_return(User::ReflectedAuthCheck.new(authorized?: false, loading?: true, status: "loading", loaded_count: 10, total_count: 100))
+      ).and_return(true)
 
       post "/users/search",
            params: { account_id: [valid_attributes.fetch(:account_id)] },
            headers: { "pad-user-id" => "msp-admin", "pad-msp-account-id" => "msp-account" },
            as: :json
 
-      expect(response).to have_http_status(:accepted)
-      expect(JSON.parse(response.body)).to include("loading" => true, "loaded_count" => 10, "total_count" => 100)
+      expect(response).to have_http_status(:ok)
     end
 
-    it "returns forbidden when native and MSP reflected grants do not authorize the account" do
+    it "returns forbidden when native grants do not authorize the account" do
       allow(User).to receive(:user_can?).and_return(false)
-      allow(User).to receive(:msp_reflected_user_manage_users_check).and_return(
-        User::ReflectedAuthCheck.new(authorized?: false, loading?: false, status: "ready", loaded_count: 0, total_count: 0)
-      )
 
       get user_url(user), headers: { "pad-user-id" => "reader-user" }, as: :json
 
@@ -113,7 +104,7 @@ RSpec.describe "/users", type: :request do
         account_ids: [valid_attributes.fetch(:account_id)]
       ).and_return(true)
 
-      get users_counts_url,
+      get "/accounts/users/counts",
           params: { account_id: [valid_attributes.fetch(:account_id)] },
           headers: { "pad-user-id" => "reader-user" },
           as: :json
@@ -123,80 +114,16 @@ RSpec.describe "/users", type: :request do
     end
   end
 
-  describe "POST /create" do
-    context "with valid parameters" do
-      it "creates a new User" do
-        expect {
-          post users_url,
-               params: { user: valid_attributes }, headers: valid_headers, as: :json
-        }.to change(User, :count).by(1)
-      end
+  describe "unsupported write routes" do
+    it "does not expose create, update, or destroy routes" do
+      post "/users", headers: valid_headers, as: :json
+      expect(response).to have_http_status(:not_found)
 
-      it "renders a JSON response with the new user" do
-        post users_url,
-             params: { user: valid_attributes }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:created)
-        expect(response.content_type).to match(a_string_including("application/json"))
-      end
-    end
+      patch "/users/#{SecureRandom.uuid}", headers: valid_headers, as: :json
+      expect(response).to have_http_status(:not_found)
 
-    context "with invalid parameters" do
-      it "does not create a new User" do
-        expect {
-          post users_url,
-               params: { user: invalid_attributes }, as: :json
-        }.to change(User, :count).by(0)
-      end
-
-      it "renders a JSON response with errors for the new user" do
-        post users_url,
-             params: { user: invalid_attributes }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
-      end
-    end
-  end
-
-  describe "PATCH /update" do
-    context "with valid parameters" do
-      let(:new_attributes) {
-        skip("Add a hash of attributes valid for your model")
-      }
-
-      it "updates the requested user" do
-        user = User.create! valid_attributes
-        patch user_url(user),
-              params: { user: new_attributes }, headers: valid_headers, as: :json
-        user.reload
-        skip("Add assertions for updated state")
-      end
-
-      it "renders a JSON response with the user" do
-        user = User.create! valid_attributes
-        patch user_url(user),
-              params: { user: new_attributes }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:ok)
-        expect(response.content_type).to match(a_string_including("application/json"))
-      end
-    end
-
-    context "with invalid parameters" do
-      it "renders a JSON response with errors for the user" do
-        user = User.create! valid_attributes
-        patch user_url(user),
-              params: { user: invalid_attributes }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
-      end
-    end
-  end
-
-  describe "DELETE /destroy" do
-    it "destroys the requested user" do
-      user = User.create! valid_attributes
-      expect {
-        delete user_url(user), headers: valid_headers, as: :json
-      }.to change(User, :count).by(-1)
+      delete "/users/#{SecureRandom.uuid}", headers: valid_headers, as: :json
+      expect(response).to have_http_status(:not_found)
     end
   end
 end

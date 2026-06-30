@@ -1,6 +1,6 @@
 .space-y-6{ data: { controller: "organization-users", organization_users_visible_limit_value: 750 } }
   %section
-    %p.text-sm.font-semibold.uppercase.tracking-wide.text-sky-700.dark:text-sky-300= @mode == "msp" ? "MSP Reflected Access" : "Organization"
+    %p.text-sm.font-semibold.uppercase.tracking-wide.text-sky-700.dark:text-sky-300 Organization
     %h1.mt-2.text-3xl.font-bold= @title
     %p.mt-3.max-w-4xl.text-gray-700.dark:text-gray-300
       This page intentionally loads account, user, and group records into browser memory in server-fixed partitions. Filtering runs entirely in the browser against the accumulated dataset.
@@ -9,14 +9,9 @@
     .rounded.border.border-gray-200.p-4.dark:border-gray-700
       %span.block.text-sm.text-gray-600.dark:text-gray-300 Actor User
       %span.mt-1.block.break-all.font-mono.text-xs= @actor_user_id
-    - if @organization_id.present?
-      .rounded.border.border-gray-200.p-4.dark:border-gray-700
-        %span.block.text-sm.text-gray-600.dark:text-gray-300 Organization
-        %span.mt-1.block.break-all.font-mono.text-xs= @organization_id
-    - if @msp_account_id.present?
-      .rounded.border.border-amber-300.bg-amber-50.p-4.text-amber-950.dark:border-amber-700.dark:bg-amber-950.dark:text-amber-100
-        %span.block.text-sm MSP Account
-        %span.mt-1.block.break-all.font-mono.text-xs= @msp_account_id
+    .rounded.border.border-gray-200.p-4.dark:border-gray-700
+      %span.block.text-sm.text-gray-600.dark:text-gray-300 Organization
+      %span.mt-1.block.break-all.font-mono.text-xs= @organization_id
 
   %section.rounded.border.border-gray-200.p-4.dark:border-gray-700
     .grid.gap-3.md:grid-cols-4

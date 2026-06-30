@@ -79,7 +79,7 @@ RSpec.describe "Account hierarchies", type: :request do
 end
 
 RSpec.describe "Account search", type: :request do
-  it "loads MSP account display names through reflected user-management auth" do
+  it "ignores stale MSP headers and checks normal account.read authorization" do
     account = Account.create!(name: "Customer Account")
     actor_user_id = SecureRandom.uuid
     msp_account_id = SecureRandom.uuid
@@ -87,9 +87,8 @@ RSpec.describe "Account search", type: :request do
     expect(User).to receive(:user_can).with(
       actor_user_id,
       "Account",
-      "account.users.read",
-      [account.id.to_s],
-      "pad-msp-account-id" => msp_account_id
+      "account.read",
+      [account.id.to_s]
     ).and_return(true)
 
     post "/accounts/search",
@@ -101,11 +100,6 @@ RSpec.describe "Account search", type: :request do
          as: :json
 
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body).to eq([
-      {
-        "id" => account.id,
-        "name" => "Customer Account"
-      }
-    ])
+    expect(response.parsed_body.first).to include("id" => account.id, "name" => "Customer Account")
   end
 end

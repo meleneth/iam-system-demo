@@ -43,10 +43,6 @@ resource "aws_sqs_queue" "grants_create" {
   name = "grants_create"
 }
 
-resource "aws_sqs_queue" "msp_reflected_grants" {
-  name = "msp_reflected_grants"
-}
-
 resource "aws_sqs_queue" "group_create" {
   name = "group_create"
 }

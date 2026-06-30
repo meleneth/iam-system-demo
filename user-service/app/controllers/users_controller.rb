@@ -83,13 +83,6 @@ class UsersController < ApplicationController
     account_ids = account_ids_for(users)
     return if account_ids.empty?
 
-    msp_account_id = request.headers["HTTP_PAD_MSP_ACCOUNT_ID"]
-    if msp_account_id.present?
-      reflected = User.msp_reflected_user_manage_users_check(user_id: user_id, msp_account_id: msp_account_id, account_ids: account_ids)
-      return if reflected.authorized?
-      return msp_loading_payload(reflected) if reflected.loading?
-    end
-
     return if User.user_can?(user_id: user_id, permission: "account.users.read", account_ids: account_ids)
 
     render json: { error: "forbidden" }, status: :forbidden
@@ -103,12 +96,4 @@ class UsersController < ApplicationController
     end.uniq
   end
 
-  def msp_loading_payload(reflected)
-    {
-      loading: true,
-      status: reflected.status,
-      loaded_count: reflected.loaded_count,
-      total_count: reflected.total_count
-    }
-  end
 end
