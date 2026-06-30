@@ -49,42 +49,27 @@ class OrganizationCreateQueueWorker
     organization_id = organization_data["id"]
     account_id = body["account"]["id"]
 
-    organization = Organization.find_by(id: organization_id)
-    if organization
-      puts "[organization-create-queue-worker] already exists: #{organization_id}"
-    else
-      organization = Organization.create!(id: organization_id)
-      puts "[organization-create-queue-worker] created: organization_id=#{organization.id}"
-    end
-
-    organization_account = OrganizationAccount.find_by(organization_id: organization_id, account_id: account_id)
-    if organization_account
-      puts "[organization-create-queue-worker] OrgAccount already exists: #{organization_id} -> #{account_id}"
-    else
-      organization_account = OrganizationAccount.create!(
-        organization_id: organization_id,
-        account_id: account_id
-      )
-      puts "[organization-create-queue-worker] created: org_account_id=#{organization_account.id}"
-    end
-
-    if (msp_account_id = body["msp_managed_by_account_id"]).present?
-      result = MspManagedAccount.insert_all(
-        [
-          {
-            msp_account_id: msp_account_id,
-            managed_account_id: account_id,
-            created_at: Time.current,
-            updated_at: Time.current
-          }
-        ],
-        unique_by: :idx_msp_managed_accounts_unique_pair,
-        returning: %w[id]
-      )
-      if result.rows.empty?
-        puts "[organization-create-queue-worker] duplicate MSP mapping projection: index=#{body["index"]} fixture=#{body["fixture"]} msp_account_id=#{msp_account_id} managed_account_id=#{account_id}"
+    Organization.transaction do
+      organization = Organization.find_by(id: organization_id)
+      if organization
+        puts "[organization-create-queue-worker] already exists: #{organization_id}"
+      else
+        organization = Organization.create!(id: organization_id)
+        puts "[organization-create-queue-worker] created: organization_id=#{organization.id}"
       end
-      puts "[organization-create-queue-worker] MSP mapping: #{msp_account_id} -> #{account_id}"
+
+      organization_account = OrganizationAccount.find_by(organization_id: organization_id, account_id: account_id)
+      if organization_account
+        puts "[organization-create-queue-worker] OrgAccount already exists: #{organization_id} -> #{account_id}"
+      else
+        organization_account = OrganizationAccount.create!(
+          organization_id: organization_id,
+          account_id: account_id
+        )
+        puts "[organization-create-queue-worker] created: org_account_id=#{organization_account.id}"
+      end
+
+      project_msp_relationship!(body, organization_id)
     end
 
     delete(msg)
@@ -99,6 +84,30 @@ class OrganizationCreateQueueWorker
       queue_url: @queue_url,
       receipt_handle: msg.receipt_handle
     )
+  end
+
+  private
+
+  def project_msp_relationship!(body, client_organization_id)
+    msp_organization_id = body["msp_managed_by_organization_id"]
+    msp_account_id = body["msp_account_id"]
+    return if msp_organization_id.blank? && msp_account_id.blank?
+
+    raise ArgumentError, "msp_managed_by_organization_id and msp_account_id must be provided together" if msp_organization_id.blank? || msp_account_id.blank?
+
+    relationship = MspManagedOrganization.find_or_initialize_by(client_organization_id: client_organization_id)
+    relationship.assign_attributes(
+      msp_organization_id: msp_organization_id,
+      msp_account_id: msp_account_id
+    )
+
+    if relationship.persisted? && !relationship.changed?
+      puts "[organization-create-queue-worker] duplicate MSP org mapping projection: index=#{body["index"]} fixture=#{body["fixture"]} msp_organization_id=#{msp_organization_id} msp_account_id=#{msp_account_id} client_organization_id=#{client_organization_id}"
+      return
+    end
+
+    relationship.save!
+    puts "[organization-create-queue-worker] MSP org mapping: #{msp_organization_id}/#{msp_account_id} -> #{client_organization_id}"
   end
 end
 
