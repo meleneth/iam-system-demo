@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_24_233000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_30_064000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -32,5 +32,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_233000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id", "permission", "scope_type", "scope_id"], name: "index_capability_grants_on_user_perm_scope", unique: true
+    t.index ["user_id", "scope_id", "permission"], name: "idx_capability_grants_msp_org_lookup", where: "(((scope_type)::text = 'Organization'::text) AND ((permission)::text ~~ 'msp.%'::text))"
   end
 end
