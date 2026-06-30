@@ -64,11 +64,19 @@ Decisions locked:
 - Cache final capability arrays for 5 minutes by user_id, scope_type, and scope_id.
 - Redis-disabled mode computes from SQL plus live organization-service relationship facts; auth-service does not keep a second SQL projection of MSP relationships.
 - Demo dataset can use one MSP cohort; tests must prove multi-cohort isolation.
+- organization.read.accounts is the canonical org-scoped capability for reading organization account membership; organization.accounts.read is accepted temporarily for old seeded data.
+
+Completed slices:
+- Added app-facing /capabilities Organization and Account endpoints.
+- Added organization-service POST /internal/auth/account_contexts guarded by IAM_SYSTEM_AUTH.
+- Added msp_managed_organizations and removed the old msp_managed_accounts table/API.
+- Removed account-level MSP reflected auth route, worker, queue, pad-msp-account-id paths, and user-management MSP facade/demo links.
+- Added multi-cohort capability reflection tests and direct target-account do.some.mcguffin coverage.
+- Added partial index for msp.* organization grant lookup.
+- Reduced development queue worker compose files to two runnable workers each.
 
 Open questions:
-- Exact schema/migration path from msp_managed_accounts to MSP org -> client org links, including cohort account.
 - How Redis cache should represent org-level MSP capability expansion, and how no-cache SQL path stays semantically equivalent.
-- Which existing MSP-specific public routes/GraphQL fields should be removed or hidden after the new capabilities endpoint exists.
 - How demo_user_seeder should regenerate MSP fixtures around MSP orgs, cohort accounts, client orgs, and client accounts.
-- Whether capability_grants should get a partial index for msp.* organization grants.
+- Whether the temporary organization.accounts.read alias should be removed after the next full reseed.
 - Whether to repair group-service's missing spec helper as a separate test-harness cleanup.
