@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
   namespace :internal do
+    namespace :auth do
+      post "account_contexts", to: "account_contexts#create"
+    end
+
     get "msp_managed_accounts/:msp_account_id", to: "msp_managed_accounts#index"
     get "msp_managed_accounts/managed/:managed_account_id", to: "msp_managed_accounts#manager"
     get "msp_managed_accounts/:msp_account_id/:managed_account_id", to: "msp_managed_accounts#show"

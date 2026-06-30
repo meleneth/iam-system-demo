@@ -52,6 +52,11 @@ Decisions locked:
 - MSP reflection is target-hierarchy based for pathological coverage, but a non-msp account grant on the MSP account is a broad hammer for every valid target account in that managed context.
 - Normal account parent-chain collapse uses the existing account-service parent hierarchy API.
 - The organization-service IAM_SYSTEM_AUTH endpoint handles MSP/client-org context.
+- Auth-context endpoint shape:
+  - POST /internal/auth/account_contexts
+  - Header: pad-user-id: IAM_SYSTEM_AUTH
+  - Body contains contexts with msp_organization_id, msp_account_id, and account parent lines supplied by auth-service.
+  - Response returns only valid matched account contexts; out-of-context records are omitted rather than returned as denials.
 - /can remains the internal service-to-service authorization workhorse.
 - /capabilities does not support System scope; no system capabilities are currently defined.
 - Remove old account-level MSP reflected route/plumbing instead of preserving compatibility.
@@ -61,7 +66,6 @@ Decisions locked:
 - Demo dataset can use one MSP cohort; tests must prove multi-cohort isolation.
 
 Open questions:
-- Exact relationship endpoint shape for batched auth-context lookup.
 - Exact schema/migration path from msp_managed_accounts to MSP org -> client org links, including cohort account.
 - How Redis cache should represent org-level MSP capability expansion, and how no-cache SQL path stays semantically equivalent.
 - Which existing MSP-specific public routes/GraphQL fields should be removed or hidden after the new capabilities endpoint exists.
