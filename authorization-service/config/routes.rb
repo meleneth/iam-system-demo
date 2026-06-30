@@ -4,6 +4,9 @@ Rails.application.routes.draw do
 
   resources :capability_grants, only: %i[index show]
 
+  get "capabilities/Organization/:organization_id", to: "capabilities#organization"
+  get "capabilities/Account/:account_id", to: "capabilities#account"
+
   get "can/:scope_type/:permission", to: "can#index", format: false, constraints: { permission: /[^\/]+/ }
   post "can/:scope_type/:permission", to: "can#index", format: false, constraints: { permission: /[^\/]+/ }
 
