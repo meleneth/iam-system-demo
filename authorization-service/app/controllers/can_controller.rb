@@ -42,13 +42,6 @@ class CanController < ApplicationController
         scope_type: "Organization",
         scope_id: scope_id
       )
-    when "System"
-      authorized = CapabilityGrant.exists?(
-        user_id: user_id,
-        permission: permission,
-        scope_type: "System",
-        scope_id: nil
-      )
     else
       return render json: { error: "Invalid scope_type" }, status: :bad_request
     end

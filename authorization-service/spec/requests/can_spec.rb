@@ -61,4 +61,15 @@ RSpec.describe "Cans", type: :request do
       )
     end
   end
+
+  describe "POST /can/System/:permission" do
+    it "rejects system scope because no system capabilities are defined" do
+      post "/can/System/system.admin",
+           headers: { "pad-user-id" => SecureRandom.uuid },
+           as: :json
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body).to eq("error" => "Invalid scope_type")
+    end
+  end
 end
