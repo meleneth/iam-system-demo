@@ -88,6 +88,7 @@ class GrantsCreateQueueWorker
     add_grant(raw_grants, user_id, "organization.read.accounts", "Organization", org_id, timestamp)
     add_grant(raw_grants, user_id, "account.read", "Account", account_id, timestamp)
     add_grant(raw_grants, user_id, "account.users.read", "Account", account_id, timestamp)
+    add_grant(raw_grants, user_id, "msp.admin.users", "Organization", org_id, timestamp) if body["msp_admin"]
 
     if is_admin
       add_grant(raw_grants, user_id, "organization.accounts.create", "Organization", org_id, timestamp)

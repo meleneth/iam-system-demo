@@ -74,9 +74,9 @@ Completed slices:
 - Added multi-cohort capability reflection tests and direct target-account do.some.mcguffin coverage.
 - Added partial index for msp.* organization grant lookup.
 - Reduced development queue worker compose files to two runnable workers each.
+- Updated demo_user_seeder to generate org-level MSP fixtures with MSP account cohorts, private client-org mappings, and explicit msp.admin.users seed events.
 
 Open questions:
 - How Redis cache should represent org-level MSP capability expansion, and how no-cache SQL path stays semantically equivalent.
-- How demo_user_seeder should regenerate MSP fixtures around MSP orgs, cohort accounts, client orgs, and client accounts.
 - Whether the temporary organization.accounts.read alias should be removed after the next full reseed.
 - Whether to repair group-service's missing spec helper as a separate test-harness cleanup.

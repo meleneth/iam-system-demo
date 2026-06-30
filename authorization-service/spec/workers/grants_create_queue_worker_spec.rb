@@ -48,6 +48,29 @@ RSpec.describe GrantsCreateQueueWorker do
     expect(CapabilityGrant.where(user_id: user_id, permission: "group.read", scope_id: users_group_id).count).to eq(1)
   end
 
+  it "projects MSP admin grants only from explicit MSP admin seed events" do
+    msg = message(
+      user: { id: user_id, email: "msp-admin@example.com", account_id: account_id, is_admin: true },
+      account: { id: account_id, parent_account_id: nil },
+      organization: { id: organization_id },
+      groups: [
+        { id: users_group_id, name: "Users" },
+        { id: admins_group_id, name: "Admins" }
+      ],
+      msp_admin: true
+    )
+
+    expect { worker.process(msg) }.to change(CapabilityGrant, :count).by(12)
+    expect(
+      CapabilityGrant.exists?(
+        user_id: user_id,
+        permission: "msp.admin.users",
+        scope_type: "Organization",
+        scope_id: organization_id
+      )
+    ).to be(true)
+  end
+
   it "fails malformed events before insert_all can bypass model validations" do
     msg = message(
       user: { id: user_id, email: "user@example.com", account_id: account_id, is_admin: false },
@@ -62,14 +85,15 @@ RSpec.describe GrantsCreateQueueWorker do
     expect(worker).not_to have_received(:delete)
   end
 
-  def message(user:, account:, organization:, groups:)
+  def message(user:, account:, organization:, groups:, msp_admin: false)
     FakeMessage.new(
       JSON.dump(
         type: "demo.user.create",
         user: user,
         account: account,
         organization: organization,
-        groups: groups
+        groups: groups,
+        msp_admin: msp_admin
       ),
       SecureRandom.uuid
     )

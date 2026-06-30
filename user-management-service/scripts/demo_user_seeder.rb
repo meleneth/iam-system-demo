@@ -548,7 +548,17 @@ class DemoFixtureCatalog
     account_samples = [account_entry(msp_account_id, nil)]
     user_samples = [user_entry(msp_admin_user_id, msp_account_id, true)]
 
-    @payloads << payload(name, msp_account_id, nil, msp_org_id, msp_admin_user_id, true, msp_groups, 'msp-admin')
+    @payloads << payload(
+      name,
+      msp_account_id,
+      nil,
+      msp_org_id,
+      msp_admin_user_id,
+      true,
+      msp_groups,
+      'msp-admin',
+      msp_admin: true
+    )
 
     (1..customer_count).each do |i|
       account_id = uuid("#{name}/customer/account/#{i}")
@@ -574,7 +584,7 @@ class DemoFixtureCatalog
 
     add_fixture(
       name: name,
-      description: "MSP-style fixture with one MSP admin and #{customer_count} customer accounts attached by private MSP mapping, not org membership or parentage.",
+      description: "MSP organization fixture with one MSP admin, one MSP account cohort, and #{customer_count} client organizations attached by private MSP mapping.",
       organization_id: msp_org_id,
       account_count: user_count,
       user_count: user_count,
@@ -587,6 +597,7 @@ class DemoFixtureCatalog
         managed_organization_count: customer_count
       },
       targets: {
+        msp_organization_id: msp_org_id,
         msp_account_id: msp_account_id,
         top_level_account_id: msp_account_id,
         top_level_admin_user_id: msp_admin_user_id,
@@ -641,7 +652,7 @@ class DemoFixtureCatalog
     index < 10 || index >= total_count - 20
   end
 
-  def payload(fixture_name, account_id, parent_account_id, organization_id, user_id, admin, groups, role, msp_managed_by_organization_id: nil, msp_account_id: nil)
+  def payload(fixture_name, account_id, parent_account_id, organization_id, user_id, admin, groups, role, msp_managed_by_organization_id: nil, msp_account_id: nil, msp_admin: false)
     if msp_managed_by_organization_id.nil? != msp_account_id.nil?
       raise ArgumentError, "msp_managed_by_organization_id and msp_account_id must be provided together"
     end
@@ -670,6 +681,7 @@ class DemoFixtureCatalog
       event[:msp_managed_by_organization_id] = msp_managed_by_organization_id
       event[:msp_account_id] = msp_account_id
     end
+    event[:msp_admin] = true if msp_admin
     event
   end
 
@@ -857,10 +869,7 @@ class DemoFixtureArtifacts
     {
       'Deep chain accountWithParents' => '/demo_queries/deep-chain',
       'Wide organization accounts' => '/demo_queries/wide-org',
-      'Dense account users and groups' => '/demo_queries/dense-account',
-      'MSP 100k reflected users and groups' => '/demo_queries/massive-fanout-100k',
-      'MSP 50k reflected users and groups' => '/demo_queries/massive-fanout-50k',
-      'MSP 10k reflected users and groups' => '/demo_queries/massive-fanout-10k'
+      'Dense account users and groups' => '/demo_queries/dense-account'
     }
   end
 
@@ -869,10 +878,6 @@ class DemoFixtureArtifacts
     wide = fixture('wide_org')
     dense = fixture('dense_account')
     branching = fixture('branching_tree')
-    fanout_100k = fixture('massive_fanout_100k')
-    fanout_50k = fixture('massive_fanout_50k')
-    fanout_10k = fixture('massive_fanout_10k')
-
     {
       'Deep chain accountWithParents' => <<~GRAPHQL,
         {
