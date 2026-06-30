@@ -24,3 +24,9 @@ services:
     <<: *account-service-template
     ports:
       - "${ACCOUNT_AUTH_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      account-db:
+        condition: service_healthy
+        restart: true
+      account-service:
+        condition: service_started

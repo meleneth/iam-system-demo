@@ -45,8 +45,7 @@ RSpec.describe OrganizationCreateQueueWorker do
     expect(worker).to have_received(:delete).twice
   end
 
-  it "rejects MSP organization mappings when the MSP account is not in the MSP organization" do
-    Organization.create!(id: msp_organization_id)
+  it "projects MSP organization mappings when client messages arrive before the MSP admin account message" do
     msg = FakeMessage.new(
       JSON.dump(
         type: "demo.user.create",
@@ -61,9 +60,16 @@ RSpec.describe OrganizationCreateQueueWorker do
     )
 
     expect { worker.process(msg) }
-      .to change(MspManagedOrganization, :count).by(0)
-      .and change(Organization, :count).by(0)
-      .and change(OrganizationAccount, :count).by(0)
-    expect(worker).not_to have_received(:delete)
+      .to change(MspManagedOrganization, :count).by(1)
+      .and change(Organization, :count).by(2)
+      .and change(OrganizationAccount, :count).by(2)
+
+    expect(
+      OrganizationAccount.where(
+        organization_id: msp_organization_id,
+        account_id: msp_account_id
+      )
+    ).to exist
+    expect(worker).to have_received(:delete)
   end
 end

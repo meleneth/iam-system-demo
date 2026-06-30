@@ -101,6 +101,8 @@ class OrganizationCreateQueueWorker
       msp_account_id: msp_account_id
     )
 
+    project_msp_account_membership!(msp_organization_id, msp_account_id)
+
     if relationship.persisted? && !relationship.changed?
       puts "[organization-create-queue-worker] duplicate MSP org mapping projection: index=#{body["index"]} fixture=#{body["fixture"]} msp_organization_id=#{msp_organization_id} msp_account_id=#{msp_account_id} client_organization_id=#{client_organization_id}"
       return
@@ -108,6 +110,14 @@ class OrganizationCreateQueueWorker
 
     relationship.save!
     puts "[organization-create-queue-worker] MSP org mapping: #{msp_organization_id}/#{msp_account_id} -> #{client_organization_id}"
+  end
+
+  def project_msp_account_membership!(msp_organization_id, msp_account_id)
+    Organization.find_or_create_by!(id: msp_organization_id)
+    OrganizationAccount.find_or_create_by!(
+      organization_id: msp_organization_id,
+      account_id: msp_account_id
+    )
   end
 end
 
