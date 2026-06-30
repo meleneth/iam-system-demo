@@ -567,7 +567,8 @@ class DemoFixtureCatalog
         false,
         [group(name, account_id, 'Users')],
         "customer-#{i}-user",
-        msp_managed_by_account_id: msp_account_id
+        msp_managed_by_organization_id: msp_org_id,
+        msp_account_id: msp_account_id
       )
     end
 
@@ -583,7 +584,7 @@ class DemoFixtureCatalog
         organization_id: msp_org_id,
         account_id: msp_account_id,
         admin_user_id: msp_admin_user_id,
-        managed_account_count: customer_count
+        managed_organization_count: customer_count
       },
       targets: {
         msp_account_id: msp_account_id,
@@ -640,7 +641,11 @@ class DemoFixtureCatalog
     index < 10 || index >= total_count - 20
   end
 
-  def payload(fixture_name, account_id, parent_account_id, organization_id, user_id, admin, groups, role, msp_managed_by_account_id: nil)
+  def payload(fixture_name, account_id, parent_account_id, organization_id, user_id, admin, groups, role, msp_managed_by_organization_id: nil, msp_account_id: nil)
+    if msp_managed_by_organization_id.nil? != msp_account_id.nil?
+      raise ArgumentError, "msp_managed_by_organization_id and msp_account_id must be provided together"
+    end
+
     event = {
       type: 'demo.user.create',
       index: nil,
@@ -661,7 +666,10 @@ class DemoFixtureCatalog
       },
       groups: groups
     }
-    event[:msp_managed_by_account_id] = msp_managed_by_account_id if msp_managed_by_account_id
+    if msp_managed_by_organization_id || msp_account_id
+      event[:msp_managed_by_organization_id] = msp_managed_by_organization_id
+      event[:msp_account_id] = msp_account_id
+    end
     event
   end
 
