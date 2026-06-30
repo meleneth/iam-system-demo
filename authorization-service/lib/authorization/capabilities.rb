@@ -6,9 +6,10 @@ module Authorization
   class Capabilities
     TTL_SECONDS = 300
 
-    def initialize(user_id:, redis: AUTHORIZATION_CACHE)
+    def initialize(user_id:, redis: AUTHORIZATION_CACHE, account_context_client: AccountContextClient.new)
       @user_id = user_id
       @redis = redis
+      @account_context_client = account_context_client
     end
 
     def for_organization(organization_id)
@@ -23,13 +24,14 @@ module Authorization
 
     def for_account(account_id)
       cached(scope_type: "Account", scope_id: account_id) do
-        account_ids = account_hierarchy_ids(account_id)
-        CapabilityGrant
-          .where(user_id: @user_id, scope_type: "Account", scope_id: account_ids)
+        hierarchy_ids = account_hierarchy_ids(account_id)
+        direct_capabilities = CapabilityGrant
+          .where(user_id: @user_id, scope_type: "Account", scope_id: hierarchy_ids)
           .where.not("permission LIKE ?", "msp.%")
           .distinct
           .pluck(:permission)
-          .sort
+
+        (direct_capabilities + reflected_msp_account_capabilities(account_id, hierarchy_ids)).uniq.sort
       end
     end
 
@@ -54,6 +56,45 @@ module Authorization
       end
 
       Array(hierarchies&.first).map { |account| account.id.to_s }
+    end
+
+    def reflected_msp_account_capabilities(account_id, hierarchy_ids)
+      msp_organization_ids = CapabilityGrant
+        .where(user_id: @user_id, scope_type: "Organization", permission: "msp.admin.users")
+        .pluck(:scope_id)
+        .map(&:to_s)
+      return [] if msp_organization_ids.empty?
+
+      account_grants = CapabilityGrant
+        .where(user_id: @user_id, scope_type: "Account")
+        .where.not(scope_id: hierarchy_ids)
+        .where.not("permission LIKE ?", "msp.%")
+        .pluck(:scope_id, :permission)
+
+      permissions_by_msp_account_id = account_grants.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(scope_id, permission), memo|
+        memo[scope_id.to_s] << permission
+      end
+      return [] if permissions_by_msp_account_id.empty?
+
+      contexts = msp_organization_ids.flat_map do |msp_organization_id|
+        permissions_by_msp_account_id.keys.map do |msp_account_id|
+          {
+            msp_organization_id: msp_organization_id,
+            msp_account_id: msp_account_id,
+            accounts: [
+              {
+                account_id: account_id.to_s,
+                parent_account_ids: hierarchy_ids - [account_id.to_s]
+              }
+            ]
+          }
+        end
+      end
+
+      response = @account_context_client.account_contexts(contexts: contexts)
+      Array(response.fetch("accounts")).flat_map do |account_context|
+        permissions_by_msp_account_id[account_context.fetch("msp_account_id").to_s]
+      end
     end
 
     def redis_enabled?
