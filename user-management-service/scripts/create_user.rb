@@ -12,7 +12,7 @@ class CapabilityGranter
   def grant!
     CapabilityGrant.with_headers("pad-user-id" => "IAM_SYSTEM") do
       CapabilityGrant.create!(user_id: @user_id, permission: "organization.read", scope_type: "Organization", scope_id: @org_id)
-      CapabilityGrant.create!(user_id: @user_id, permission: "organization.accounts.read", scope_type: "Organization", scope_id: @org_id)
+      CapabilityGrant.create!(user_id: @user_id, permission: "organization.read.accounts", scope_type: "Organization", scope_id: @org_id)
 
       if @is_admin
         CapabilityGrant.create!(user_id: @user_id, permission: "organization.accounts.create", scope_type: "Organization", scope_id: @org_id)

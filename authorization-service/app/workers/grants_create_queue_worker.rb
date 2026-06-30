@@ -85,7 +85,7 @@ class GrantsCreateQueueWorker
 
     raw_grants = []
     add_grant(raw_grants, user_id, "organization.read", "Organization", org_id, timestamp)
-    add_grant(raw_grants, user_id, "organization.accounts.read", "Organization", org_id, timestamp)
+    add_grant(raw_grants, user_id, "organization.read.accounts", "Organization", org_id, timestamp)
     add_grant(raw_grants, user_id, "account.read", "Account", account_id, timestamp)
     add_grant(raw_grants, user_id, "account.users.read", "Account", account_id, timestamp)
 

@@ -55,22 +55,22 @@ RSpec.describe Authorization::Capabilities do
   it "caches final capability arrays for five minutes" do
     CapabilityGrant.create!(
       user_id: user_id,
-      permission: "organization.accounts.read",
+      permission: "organization.read.accounts",
       scope_type: "Organization",
       scope_id: organization_id
     )
 
-    expect(service.for_organization(organization_id)).to eq(["organization.accounts.read"])
+    expect(service.for_organization(organization_id)).to eq(["organization.read.accounts"])
     expect(redis.sets).to contain_exactly(
       [
         "capabilities:#{user_id}:Organization:#{organization_id}",
-        "[\"organization.accounts.read\"]",
+        "[\"organization.read.accounts\"]",
         300
       ]
     )
 
     CapabilityGrant.delete_all
-    expect(service.for_organization(organization_id)).to eq(["organization.accounts.read"])
+    expect(service.for_organization(organization_id)).to eq(["organization.read.accounts"])
   end
 
   it "reflects only the MSP account grants returned by the organization auth context" do

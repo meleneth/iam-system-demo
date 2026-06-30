@@ -20,7 +20,7 @@ class OrganizationsController < ApplicationController
     raise "no pad-user-id header sent" unless pad_user_id
     if pad_user_id != "IAM_SYSTEM"
       unless User.user_can(pad_user_id, "Organization", "organization.read",  organization_id)
-        raise "no authorization for #{pad_user_id} organization.accounts.read #{organization_id}"
+        raise "no authorization for #{pad_user_id} organization.read #{organization_id}"
       end
     end
     render json: @organization

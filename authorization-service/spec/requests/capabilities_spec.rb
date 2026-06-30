@@ -13,7 +13,7 @@ RSpec.describe "Capabilities", type: :request do
     it "returns direct organization-scoped capability names" do
       organization_id = SecureRandom.uuid
       other_organization_id = SecureRandom.uuid
-      CapabilityGrant.create!(user_id: user_id, permission: "organization.accounts.read", scope_type: "Organization", scope_id: organization_id)
+      CapabilityGrant.create!(user_id: user_id, permission: "organization.read.accounts", scope_type: "Organization", scope_id: organization_id)
       CapabilityGrant.create!(user_id: user_id, permission: "msp.admin.users", scope_type: "Organization", scope_id: organization_id)
       CapabilityGrant.create!(user_id: user_id, permission: "organization.read", scope_type: "Organization", scope_id: other_organization_id)
       CapabilityGrant.create!(user_id: user_id, permission: "do.some.mcguffin", scope_type: "Account", scope_id: SecureRandom.uuid)
@@ -21,7 +21,7 @@ RSpec.describe "Capabilities", type: :request do
       get "/capabilities/Organization/#{organization_id}", headers: { "pad-user-id" => user_id }
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body).to eq(["msp.admin.users", "organization.accounts.read"])
+      expect(response.parsed_body).to eq(["msp.admin.users", "organization.read.accounts"])
     end
   end
 

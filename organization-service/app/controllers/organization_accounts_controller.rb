@@ -18,8 +18,8 @@ class OrganizationAccountsController < ApplicationController
 
     if pad_user_id != "IAM_SYSTEM"
       if filters[:organization_id]
-        unless User.user_can(pad_user_id, "Organization", "organization.accounts.read",  filters[:organization_id])
-          raise "no authorization for #{pad_user_id} organization.accounts.read #{filters[:organization_id]}"
+        unless organization_accounts_read?(pad_user_id, filters[:organization_id])
+          raise "no authorization for #{pad_user_id} organization.read.accounts #{filters[:organization_id]}"
         end
       end
       if filters[:account_id]
@@ -96,6 +96,11 @@ class OrganizationAccountsController < ApplicationController
     unless User.user_can(pad_user_id, "Account", "account.read", account_ids)
       raise "no authorization for #{pad_user_id} account.read #{account_ids}"
     end
+  end
+
+  def organization_accounts_read?(pad_user_id, organization_id)
+    User.user_can(pad_user_id, "Organization", "organization.read.accounts", organization_id) ||
+      User.user_can(pad_user_id, "Organization", "organization.accounts.read", organization_id)
   end
 
   def organization_payloads_for_account_ids(account_ids)
