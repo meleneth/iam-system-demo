@@ -6,3 +6,10 @@ scrape_configs:
   static_configs:
   - targets:
     - otel-collector:9464
+- job_name: iam_cache_metrics
+  metrics_path: /metrics
+  static_configs:
+  - targets:
+    - account-service:80
+    - authorization-service:80
+    - organization-service:80

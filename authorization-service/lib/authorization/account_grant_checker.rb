@@ -44,11 +44,23 @@ module Authorization
       values = @redis.pipelined do |pipe|
         account_ids.each { |id| pipe.sismember(@user_grants_key, id) }
       end
+      IamDemo::CacheMetrics.record(
+        cache: "user_grants_set_membership",
+        outcome: "hit",
+        count: account_ids.size,
+        redis_enabled: true
+      )
 
       account_ids.zip(values).to_h.transform_values(&:itself)
     end
 
     def batch_check_without_cache(account_ids)
+      IamDemo::CacheMetrics.record(
+        cache: "user_grants_set_membership",
+        outcome: "miss",
+        count: account_ids.size,
+        redis_enabled: false
+      )
       granted_ids = CapabilityGrant.where(
         user_id: @user_id,
         permission: @permission,
@@ -61,7 +73,20 @@ module Authorization
 
     def cached_user_grants(user_id, permission)
       key = "user_grants:#{user_id}:#{permission}"
-      unless AUTHORIZATION_CACHE.exists?(key)
+      if AUTHORIZATION_CACHE.exists?(key)
+        IamDemo::CacheMetrics.record(
+          cache: "user_grants_set",
+          outcome: "hit",
+          count: 1,
+          redis_enabled: true
+        )
+      else
+        IamDemo::CacheMetrics.record(
+          cache: "user_grants_set",
+          outcome: "miss",
+          count: 1,
+          redis_enabled: true
+        )
         scope_ids = CapabilityGrant.where(
           user_id: user_id,
           permission: permission,

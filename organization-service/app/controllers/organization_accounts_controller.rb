@@ -162,6 +162,18 @@ class OrganizationAccountsController < ApplicationController
         misses << organization_id
       end
     end
+    IamDemo::CacheMetrics.record(
+      cache: "account_ids_by_organization",
+      outcome: "hit",
+      count: organization_ids.size - misses.size,
+      redis_enabled: !cache_disabled?
+    )
+    IamDemo::CacheMetrics.record(
+      cache: "account_ids_by_organization",
+      outcome: "miss",
+      count: misses.size,
+      redis_enabled: !cache_disabled?
+    )
 
     if misses.any?
       OrganizationAccount.where(organization_id: misses).group_by { |org_account| org_account.organization_id.to_s }.each do |organization_id, rows|

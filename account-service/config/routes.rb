@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get "/metrics", to: "metrics#show"
+
   resources :accounts, only: %i[index show]
   post "/accounts/search(.:format)", to: "accounts#search"
   get "/account_with_parents/:account_id(.:format)", to: "accounts#account_with_parents"

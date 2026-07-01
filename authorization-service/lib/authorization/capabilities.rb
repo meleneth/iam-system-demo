@@ -54,6 +54,18 @@ module Authorization
       else
         unresolved_account_ids = account_ids
       end
+      IamDemo::CacheMetrics.record(
+        cache: "account_permission",
+        outcome: "hit",
+        count: account_ids.size - unresolved_account_ids.size,
+        redis_enabled: redis_enabled?
+      )
+      IamDemo::CacheMetrics.record(
+        cache: "account_permission",
+        outcome: "miss",
+        count: unresolved_account_ids.size,
+        redis_enabled: redis_enabled?
+      )
 
       authorized = cached_results.dup
 
@@ -97,11 +109,34 @@ module Authorization
     private
 
     def cached(scope_type:, scope_id:)
-      return yield unless redis_enabled?
+      unless redis_enabled?
+        IamDemo::CacheMetrics.record(
+          cache: "capabilities",
+          outcome: "miss",
+          count: 1,
+          redis_enabled: false
+        )
+        return yield
+      end
 
       key = cache_key(scope_type, scope_id)
       raw = @redis.get(key)
-      return JSON.parse(raw) if raw.present?
+      if raw.present?
+        IamDemo::CacheMetrics.record(
+          cache: "capabilities",
+          outcome: "hit",
+          count: 1,
+          redis_enabled: true
+        )
+        return JSON.parse(raw)
+      end
+
+      IamDemo::CacheMetrics.record(
+        cache: "capabilities",
+        outcome: "miss",
+        count: 1,
+        redis_enabled: true
+      )
 
       capabilities = yield
       @redis.set(key, capabilities.to_json, ex: TTL_SECONDS)

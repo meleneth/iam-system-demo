@@ -1,7 +1,7 @@
 ---
 services:
   grafana:
-    image: grafana/grafana:12.0.1
+    image: grafana/grafana:13.1.0
     ports:
     - "${GRAFANA_WEB_PORT}:3000"
     environment:
@@ -10,4 +10,6 @@ services:
     volumes:
     - "./data/test/grafana:/var/lib/grafana"
     - "./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources"
+    - "./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards"
+    - "./grafana/dashboards:/var/lib/grafana/dashboards"
     user: "${HOST_UID}:${HOST_GID}"

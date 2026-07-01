@@ -13,6 +13,11 @@ COLD_ONLY="${COLD_ONLY:-0}"
 REDIS_CACHE_SERVICES="${REDIS_CACHE_SERVICES:-accountcache authcache groupcache orgcache}"
 MSP_READY_ATTEMPTS="${MSP_READY_ATTEMPTS:-120}"
 MSP_READY_SLEEP_SECONDS="${MSP_READY_SLEEP_SECONDS:-1}"
+GRAFANA_BASE_URL="${GRAFANA_BASE_URL:-http://localhost:11150}"
+GRAFANA_DASHBOARD_UID="${GRAFANA_DASHBOARD_UID:-iam-demo-cache-hit-miss}"
+GRAFANA_ANNOTATION_USER="${GRAFANA_ANNOTATION_USER:-admin}"
+GRAFANA_ANNOTATION_PASSWORD="${GRAFANA_ANNOTATION_PASSWORD:-admin}"
+GRAFANA_ANNOTATIONS_ENABLED="${GRAFANA_ANNOTATIONS_ENABLED:-1}"
 
 USER_MANAGEMENT_BASE_URL="${USER_MANAGEMENT_BASE_URL:-http://localhost:7500}"
 JAEGER_BASE_URL="${JAEGER_BASE_URL:-http://localhost:11160}"
@@ -42,6 +47,32 @@ configured_redis_toggle() {
 
 redis_enabled() {
   [[ "$(configured_redis_toggle)" =~ ^([Tt][Rr][Uu][Ee]|1|[Yy][Ee][Ss]|[Oo][Nn])$ ]]
+}
+
+grafana_annotate() {
+  local text="$1"
+  local tags="${2:-benchmark}"
+
+  [[ "$GRAFANA_ANNOTATIONS_ENABLED" == "1" ]] || return 0
+
+  local response_file="$OUT_DIR/grafana_annotation_${text//[^A-Za-z0-9_.-]/_}.json"
+  ruby -rjson -e '
+    text, dashboard_uid, raw_tags = ARGV
+    tags = raw_tags.split(",").map(&:strip).reject(&:empty?)
+    puts JSON.generate({
+      dashboardUID: dashboard_uid,
+      tags: tags,
+      text: text
+    })
+  ' "$text" "$GRAFANA_DASHBOARD_UID" "$tags" |
+    curl -sS \
+      -u "$GRAFANA_ANNOTATION_USER:$GRAFANA_ANNOTATION_PASSWORD" \
+      -H "Content-Type: application/json" \
+      -X POST \
+      --data-binary @- \
+      "$GRAFANA_BASE_URL/api/annotations" \
+      > "$response_file" 2>"$response_file.curl_error" ||
+    echo "Grafana annotation failed for '$text'; see $response_file.curl_error" >&2
 }
 
 flush_redis_caches() {
@@ -346,6 +377,8 @@ run_msp_fanout_walk() {
   local admin_user_id="$4"
   local run="$5"
 
+  grafana_annotate "$phase $label run $run started" "benchmark,fanout,$phase,$label"
+
   local continuance=""
   local page=1
   local total_time="0"
@@ -429,14 +462,17 @@ run_msp_fanout_walk() {
   fi
 
   echo "$phase,${label}_full_walk_$run,POST,$USER_MANAGEMENT_BASE_URL/graphql,$last_http_code,$total_time,$total_download,$final_response,$notes" | tee -a "$RESULTS"
+  grafana_annotate "$phase $label run $run finished: $notes" "benchmark,fanout,$phase,$label"
 }
 
 run_phase() {
   local phase="$1"
   echo
   echo "=== $phase ==="
+  grafana_annotate "$phase started" "benchmark,phase,$phase"
 
   for run in $(seq 1 "$RUNS"); do
+    grafana_annotate "$phase run $run started" "benchmark,run,$phase"
     curl_time "$phase" "web_root_$run" GET "$USER_MANAGEMENT_BASE_URL/"
     curl_time "$phase" "graphql_deep_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$deep_body"
     curl_time "$phase" "graphql_wide_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$wide_body"
@@ -456,12 +492,16 @@ run_phase() {
       curl_time "$phase" "web_branching_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$branch_leaf?as=$branch_admin"
       curl_time "$phase" "web_dense_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$dense_account?as=$dense_admin"
     fi
+    grafana_annotate "$phase run $run finished" "benchmark,run,$phase"
   done
+
+  grafana_annotate "$phase finished" "benchmark,phase,$phase"
 }
 
 echo "Writing benchmark output to $OUT_DIR"
 echo "URLs: $URLS"
 echo "Timings: $RESULTS"
+grafana_annotate "benchmark started: $OUT_DIR" "benchmark,lifecycle"
 
 run_phase "startup_cold"
 
@@ -473,6 +513,7 @@ if [[ "$COLD_ONLY" == "1" ]]; then
   echo "Timing CSV: $RESULTS"
   echo "URL list: $URLS"
   echo "Jaeger: $JAEGER_BASE_URL/search?service=user-management-service"
+  grafana_annotate "benchmark complete: $OUT_DIR" "benchmark,lifecycle"
   exit 0
 fi
 
@@ -499,3 +540,4 @@ echo "Benchmark complete."
 echo "Timing CSV: $RESULTS"
 echo "URL list: $URLS"
 echo "Jaeger: $JAEGER_BASE_URL/search?service=user-management-service"
+grafana_annotate "benchmark complete: $OUT_DIR" "benchmark,lifecycle"

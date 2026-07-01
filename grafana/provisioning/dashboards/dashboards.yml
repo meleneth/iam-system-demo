@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+- name: IAM Demo
+  orgId: 1
+  folder: IAM Demo
+  type: file
+  disableDeletion: false
+  updateIntervalSeconds: 10
+  allowUiUpdates: true
+  options:
+    path: /var/lib/grafana/dashboards

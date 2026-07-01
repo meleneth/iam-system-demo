@@ -140,6 +140,18 @@ class AccountsController < ApplicationController
         misses << id
       end
     end
+    IamDemo::CacheMetrics.record(
+      cache: "account_with_parents",
+      outcome: "hit",
+      count: ids.size - misses.size,
+      redis_enabled: !cache_disabled?
+    )
+    IamDemo::CacheMetrics.record(
+      cache: "account_with_parents",
+      outcome: "miss",
+      count: misses.size,
+      redis_enabled: !cache_disabled?
+    )
 
     if misses.any?
       OpenTelemetry::Trace.current_span.add_event("Fetching #{misses.size} account_with_parents misses")
