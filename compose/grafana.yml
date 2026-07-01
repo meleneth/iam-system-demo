@@ -6,7 +6,9 @@ services:
     - "${GRAFANA_WEB_PORT}:3000"
     environment:
     - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    - GF_SECURITY_ADMIN_USER=admin
     - GF_SECURITY_ADMIN_PASSWORD=admin
+    - GF_SECURITY_DISABLE_INITIAL_ADMIN_PASSWORD_CHANGE=true
     volumes:
     - "./data/test/grafana:/var/lib/grafana"
     - "./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources"

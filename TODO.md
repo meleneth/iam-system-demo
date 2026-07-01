@@ -17,6 +17,13 @@ Actually Do Soon:
 
 add a same_org scoped support for organization_accounts/for/:account_id that saves from having to get the org id then ask again for the org accounts
 
+Observability next slices:
+
+- [x] Wire service logs into Loki and provision the Loki datasource in Grafana.
+- [ ] Add Redis exporter coverage for accountcache, authcache, groupcache, and orgcache, then add Redis panels to Grafana.
+- [ ] Add Postgres exporter coverage for each service database, then add Postgres panels to Grafana.
+- [ ] Correlate Rails logs with trace IDs so Grafana/Jaeger/Loki can pivot across traces and logs.
+
 MSP authorization redesign:
 
 Current MSP dataset/model is invalid. MSP identity is organization-level, not account-level.

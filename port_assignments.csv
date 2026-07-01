@@ -4,4 +4,6 @@ dev,accountcache,6379,11232
 dev,orgcache,6379,11251
 dev,authcache,6379,11201
 dev,groupcache,6379,11116
+dev,loki,3100,11175
+dev,promtail,9080,11176
 dev,account_auth_service,3000,11231
