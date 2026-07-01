@@ -74,3 +74,28 @@ This run uses the restored `mspUserManagement` GraphQL field with `continuance`;
 | warm | 0.514 | 3.919 | 10.967 | 686.220 | 281.135 | 46.276 |
 
 All rows above returned HTTP 200. Fanout validation: 100k walked 99,999 accounts over 100 pages, 50k walked 49,999 accounts over 50 pages, and 10k walked 9,999 accounts over 10 pages.
+
+## 2026-07-01 Short Cold Auth-Mode Matrix
+
+Command shape:
+
+```bash
+AUTHORIZATION_CHECK_MODE=<can|capabilities> GLOBAL_IAM_DEMO_USE_REDIS=<true|false> OUT_DIR=<dir> RUNS=1 COLD_ONLY=1 CACHE_WAIT_SECONDS=0 INCLUDE_MSP_100K=0 INCLUDE_MSP_50K=0 INCLUDE_MSP_10K=1 bash benchmark_demo.sh
+```
+
+CSV roots:
+
+- Main matrix: `data/development/benchmark-runs/20260630-capmode-cold-short-clean-220611`
+- Can/Redis second run without Redis wipe: `data/development/benchmark-runs/20260630-can-redis-second-run-no-flush-232044`
+
+Times are `curl` `time_total` values in seconds. The second `can + Redis` row was run immediately after the first `can + Redis` run on the same recreated stack, without flushing Redis between runs.
+
+| Auth mode | Redis | Cache state | Deep | Wide | Dense | 10k MSP fanout |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| can | true | flushed before run | 4.041 | 10.940 | 16.194 | 51.061 |
+| can | false | Redis disabled | 3.935 | 7.393 | 18.418 | 102.100 |
+| capabilities | true | flushed before run | 4.396 | 10.248 | 13.909 | failed: curl 52 on page 1 |
+| capabilities | false | Redis disabled | 6.133 | 26.448 | 15.292 | failed: curl 52 on page 1 |
+| can | true | second run, no Redis wipe | 0.414 | 3.427 | 10.238 | 19.345 |
+
+All deep, wide, and dense rows returned HTTP 200. The `can` 10k MSP fanout rows returned HTTP 200 and walked 9,999 accounts over 10 continuation pages. The capabilities-mode 10k MSP fanout rows failed through the frontdoor with `curl: (52) Empty reply from server` before page 1 completed.

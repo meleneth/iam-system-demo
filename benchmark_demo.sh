@@ -6,6 +6,10 @@ OUT_DIR="${OUT_DIR:-data/development/benchmark-runs/$(date +%Y%m%d-%H%M%S)}"
 RUNS="${RUNS:-3}"
 CACHE_WAIT_SECONDS="${CACHE_WAIT_SECONDS:-310}"
 INCLUDE_EXPERIMENTAL="${INCLUDE_EXPERIMENTAL:-0}"
+INCLUDE_MSP_100K="${INCLUDE_MSP_100K:-1}"
+INCLUDE_MSP_50K="${INCLUDE_MSP_50K:-1}"
+INCLUDE_MSP_10K="${INCLUDE_MSP_10K:-1}"
+COLD_ONLY="${COLD_ONLY:-0}"
 REDIS_CACHE_SERVICES="${REDIS_CACHE_SERVICES:-accountcache authcache groupcache orgcache}"
 MSP_READY_ATTEMPTS="${MSP_READY_ATTEMPTS:-120}"
 MSP_READY_SLEEP_SECONDS="${MSP_READY_SLEEP_SECONDS:-1}"
@@ -110,6 +114,7 @@ curl_time() {
   result="$(curl "${curl_args[@]}" "$url" 2>"$output_file.curl_error")" || curl_exit=$?
   if [[ "$curl_exit" -ne 0 ]]; then
     result="000,0,0"
+    printf '{}\n' > "$output_file"
     echo "curl failed for $phase,$label with exit $curl_exit; see $output_file.curl_error" >&2
   fi
   echo "$phase,$label,$method,$url,$result,$output_file," | tee -a "$RESULTS"
@@ -366,6 +371,13 @@ run_msp_fanout_walk() {
 
     total_time="$(ruby -e 'puts ARGV.map(&:to_f).sum' "$total_time" "$page_time")"
     total_download=$((total_download + page_download))
+
+    if [[ "$last_http_code" == "000" ]]; then
+      stop_reason="curl_failed"
+      echo "Stopping $phase/$label run $run: curl failed on page $page." >&2
+      break
+    fi
+
     total_accounts=$((total_accounts + $(graphql_accounts_count "$final_response")))
 
     if graphql_has_errors "$final_response"; then
@@ -429,9 +441,15 @@ run_phase() {
     curl_time "$phase" "graphql_deep_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$deep_body"
     curl_time "$phase" "graphql_wide_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$wide_body"
     curl_time "$phase" "graphql_dense_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$dense_body"
-    run_msp_fanout_walk "$phase" "graphql_100k_fanout" "$fanout_100k_msp_account" "$fanout_100k_admin" "$run"
-    run_msp_fanout_walk "$phase" "graphql_50k_fanout" "$fanout_50k_msp_account" "$fanout_50k_admin" "$run"
-    run_msp_fanout_walk "$phase" "graphql_10k_fanout" "$fanout_10k_msp_account" "$fanout_10k_admin" "$run"
+    if [[ "$INCLUDE_MSP_100K" == "1" ]]; then
+      run_msp_fanout_walk "$phase" "graphql_100k_fanout" "$fanout_100k_msp_account" "$fanout_100k_admin" "$run"
+    fi
+    if [[ "$INCLUDE_MSP_50K" == "1" ]]; then
+      run_msp_fanout_walk "$phase" "graphql_50k_fanout" "$fanout_50k_msp_account" "$fanout_50k_admin" "$run"
+    fi
+    if [[ "$INCLUDE_MSP_10K" == "1" ]]; then
+      run_msp_fanout_walk "$phase" "graphql_10k_fanout" "$fanout_10k_msp_account" "$fanout_10k_admin" "$run"
+    fi
 
     if [[ "$INCLUDE_EXPERIMENTAL" == "1" ]]; then
       curl_time "$phase" "web_deep_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$deep_leaf?as=$deep_admin"
@@ -446,6 +464,17 @@ echo "URLs: $URLS"
 echo "Timings: $RESULTS"
 
 run_phase "startup_cold"
+
+if [[ "$COLD_ONLY" == "1" ]]; then
+  echo
+  echo "Skipping warm and cache-expiry phases because COLD_ONLY=1."
+  echo
+  echo "Benchmark complete."
+  echo "Timing CSV: $RESULTS"
+  echo "URL list: $URLS"
+  echo "Jaeger: $JAEGER_BASE_URL/search?service=user-management-service"
+  exit 0
+fi
 
 echo
 echo "Repeating cold-cache run after startup noise is out of the way."
