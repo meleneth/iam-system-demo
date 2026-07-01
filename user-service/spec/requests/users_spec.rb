@@ -13,11 +13,15 @@ require 'rails_helper'
 # sticking to rails and rspec-rails APIs to keep things simple and stable.
 
 RSpec.describe "/users", type: :request do
+  FakeFaradayResponse = Struct.new(:status, :body)
+  FakeFaradayRequest = Struct.new(:headers, :body, keyword_init: true)
+
   # This should return the minimal set of attributes required to create a valid
   # User. As you add validations to User, be sure to
   # adjust the attributes here as well.
+  let(:account_id) { SecureRandom.uuid }
   let(:valid_attributes) {
-    { account_id: "28fb6349-0f1d-4642-81ca-8732c6115138", email: "foo@example.com" }
+    { account_id: account_id, email: "foo@example.com" }
   }
 
   # This should return the minimal set of values that should be in the headers
@@ -31,7 +35,7 @@ RSpec.describe "/users", type: :request do
   describe "GET /index" do
     it "renders a successful response" do
       User.create! valid_attributes
-      get "/users", params: { account_id: valid_attributes.fetch(:account_id) }, headers: valid_headers, as: :json
+      get "/users", params: { account_id: valid_attributes.fetch(:account_id) }, headers: valid_headers
       expect(response).to be_successful
     end
   end
@@ -106,11 +110,62 @@ RSpec.describe "/users", type: :request do
 
       get "/accounts/users/counts",
           params: { account_id: [valid_attributes.fetch(:account_id)] },
-          headers: { "pad-user-id" => "reader-user" },
-          as: :json
+          headers: { "pad-user-id" => "reader-user" }
 
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to include(valid_attributes.fetch(:account_id) => 1)
+    end
+  end
+
+  describe "capabilities-only authorization mode" do
+    it "checks batched account capabilities instead of calling /can" do
+      account_ids = [SecureRandom.uuid, SecureRandom.uuid]
+      request = nil
+      old_mode = ENV["AUTHORIZATION_CHECK_MODE"]
+      ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"
+
+      expect(Faraday).to receive(:post).with("#{User.authorization_service_url}/capabilities/Account") do |&block|
+        request = FakeFaradayRequest.new(headers: {})
+        block.call(request)
+        FakeFaradayResponse.new(
+          200,
+          account_ids.to_h { |account_id| [account_id, ["account.users.read"]] }.to_json
+        )
+      end
+
+      expect(User.user_can?(user_id: "reader-user", permission: "account.users.read", account_ids: account_ids)).to eq(true)
+      expect(JSON.parse(request.body)).to eq("scope_id" => account_ids)
+    ensure
+      ENV["AUTHORIZATION_CHECK_MODE"] = old_mode
+    end
+
+    it "requires the capability on every requested account" do
+      authorized_account_id = SecureRandom.uuid
+      unauthorized_account_id = SecureRandom.uuid
+      old_mode = ENV["AUTHORIZATION_CHECK_MODE"]
+      ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"
+
+      expect(Faraday).to receive(:post).with("#{User.authorization_service_url}/capabilities/Account") do |&block|
+        request = FakeFaradayRequest.new(headers: {})
+        block.call(request)
+        FakeFaradayResponse.new(
+          200,
+          {
+            authorized_account_id => ["account.users.read"],
+            unauthorized_account_id => []
+          }.to_json
+        )
+      end
+
+      expect(
+        User.user_can?(
+          user_id: "reader-user",
+          permission: "account.users.read",
+          account_ids: [authorized_account_id, unauthorized_account_id]
+        )
+      ).to eq(false)
+    ensure
+      ENV["AUTHORIZATION_CHECK_MODE"] = old_mode
     end
   end
 

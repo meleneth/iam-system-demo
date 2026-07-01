@@ -192,6 +192,61 @@ permission = organization.read.accounts, organization.accounts.read, organizatio
 scope_id = organization_id
 ```
 
+### Capabilities-Only Override
+
+Set:
+
+```text
+AUTHORIZATION_CHECK_MODE=capabilities
+```
+
+to force the all-capabilities authorization style. In this mode, downstream services must not call `/can`. Instead, they call the batched capabilities endpoints:
+
+```text
+POST /capabilities/Account
+POST /capabilities/Organization
+body: { "scope_id": ["..."] }
+header: pad-user-id: <actor user id>
+```
+
+authorization-service returns a map from each requested scope ID to the full capability-name array for that scope. The caller then checks whether every requested scope includes the permission it needs.
+
+This mode intentionally models the caller-parses-caps design:
+
+1. Data service identifies distinct object scopes it wants to return.
+2. Data service fetches all capabilities for those scopes.
+3. Data service scans each returned capability array looking for the one permission it needs.
+4. Data service denies the request if any requested scope lacks that permission.
+
+When this override is active, authorization-service rejects `/can` with `503`. That makes accidental use of the normal precise-question authorization path visible in tests and benchmarks.
+
+## Required Grants By Loaded Object
+
+This is the object-loading contract the services are supposed to enforce. "Owning account" means the account scope on the returned row or the account scope reached through that row's parent object.
+
+| Loaded object/data | Serving service | Required grant for a real actor | Scope checked | Where it is enforced |
+| --- | --- | --- | --- | --- |
+| Account row | account-service | `account.read` | Returned account ID | `GET /accounts/:id`, `GET /accounts`, `POST /accounts/search` |
+| Account parent chain | account-service | `account.read` | Requested account ID | `GET /account_with_parents/:account_id` |
+| Batched account parent chains | account-service | `IAM_SYSTEM` only | Requested account IDs | `POST /accounts_with_parents` |
+| User row | user-service | `account.users.read` | User's `account_id` | `GET /users/:id` |
+| User collection/search | user-service | `account.users.read` | Distinct returned/requested user account IDs | `GET /users`, `POST /users/search` |
+| User counts by account | user-service | `account.users.read` | Requested account IDs | `GET /accounts/users/counts` |
+| Group row | group-service | `account.users.read` | Group's `account_id` | `GET /groups/:id` |
+| Group collection/search | group-service | `account.users.read` | Distinct returned group account IDs | `GET /groups`, `POST /groups/search` |
+| Group counts by account | group-service | `account.users.read` | Requested account IDs | `GET /accounts/groups/counts` |
+| Group membership row | group-service | `account.users.read` | Owning group's `account_id` | `GET /group_users/:id` |
+| Group membership collection/search | group-service | `account.users.read` | Distinct owning group account IDs | `GET /group_users`, `POST /group_users/search` |
+| Organization row | organization-service | `organization.read` | Organization ID | `GET /organizations/:id` |
+| Organization account membership by organization | organization-service | `organization.read.accounts` or legacy `organization.accounts.read` | Organization ID | `GET /organization_accounts?organization_id=...` |
+| Organization account count | organization-service | `organization.read.accounts` or legacy `organization.accounts.read` | Organization ID | `GET /organizations/accounts/counts/:organization_id` |
+| Organization context by account IDs | organization-service | `account.read` | Requested account IDs | `POST /organization_account_ids/for_account_ids` |
+| MSP managed-account page | organization-service | `IAM_SYSTEM` only | MSP account ID | `GET /internal/msp_managed_organizations/:msp_account_id` |
+| MSP relationship context for auth | organization-service | `IAM_SYSTEM_AUTH` only | Provided MSP organization/account + target account contexts | `POST /internal/auth/account_contexts` |
+| MSP user-management GraphQL page | user-management-service | `msp.admin.users` | MSP organization ID | `mspUserManagement(...)` before loading managed accounts |
+
+For MSP user-management, `msp.admin.users` proves the actor can use the MSP organization context. It does not by itself authorize direct account-context data reads. The account/user/group payloads are still loaded through downstream services. In normal mode, those services ask `/can/Account/account.users.read` for each distinct managed account scope. In capabilities-only mode, they fetch account capabilities in batches and check for `account.users.read` themselves. The reflected MSP answer is produced inside authorization-service from the actor's MSP organization grant, account grant, account hierarchy facts, and organization-service's `IAM_SYSTEM_AUTH` relationship check.
+
 ## App-Facing Capabilities API
 
 The intended app-facing proof API is:
@@ -338,6 +393,58 @@ Semantics:
 - Returns direct/cascaded account capabilities.
 - Reflects MSP account grants only when the organization relationship proves the MSP manages the client organization.
 - Excludes `msp.*` grants in account context.
+
+#### `POST /capabilities/Organization`
+
+Purpose: batched organization capability listing for capabilities-only authorization mode.
+
+Caller identity: `pad-user-id`.
+
+Body:
+
+```json
+{ "scope_id": ["uuid", "uuid"] }
+```
+
+Response:
+
+```json
+{
+  "organization-uuid": ["organization.read.accounts"]
+}
+```
+
+Semantics:
+
+- Returns the full organization capability-name array for each requested organization scope.
+- Callers are responsible for checking that each requested organization includes the permission they need.
+
+#### `POST /capabilities/Account`
+
+Purpose: batched account capability listing for capabilities-only authorization mode.
+
+Caller identity: `pad-user-id`.
+
+Body:
+
+```json
+{ "scope_id": ["uuid", "uuid"] }
+```
+
+Response:
+
+```json
+{
+  "account-uuid": ["account.read", "account.users.read"]
+}
+```
+
+Semantics:
+
+- Returns the full account capability-name array for each requested account scope.
+- Account capabilities use the same parent-chain and MSP reflection semantics as `GET /capabilities/Account/:account_id`.
+- Account-context results still exclude `msp.*` grants.
+- Callers are responsible for checking that each requested account includes the permission they need.
 
 #### `GET /internal/admin_users/organization/:organization_id`
 

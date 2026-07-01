@@ -13,6 +13,7 @@ services:
       - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
       - USER_SERVICE_API_BASE_URL=http://user-service:80
       - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
+      - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
       - SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
     build:
       context: "./account-service"

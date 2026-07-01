@@ -5,6 +5,8 @@ Rails.application.routes.draw do
 
   get "capabilities/Organization/:organization_id", to: "capabilities#organization"
   get "capabilities/Account/:account_id", to: "capabilities#account"
+  post "capabilities/Organization", to: "capabilities#organizations"
+  post "capabilities/Account", to: "capabilities#accounts"
 
   get "can/:scope_type/:permission", to: "can#index", format: false, constraints: { permission: /[^\/]+/ }
   post "can/:scope_type/:permission", to: "can#index", format: false, constraints: { permission: /[^\/]+/ }

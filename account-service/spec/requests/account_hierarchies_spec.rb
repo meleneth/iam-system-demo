@@ -79,6 +79,28 @@ RSpec.describe "Account hierarchies", type: :request do
 end
 
 RSpec.describe "Account search", type: :request do
+  FakeFaradayResponse = Struct.new(:status, :body)
+  FakeFaradayRequest = Struct.new(:headers, :body, keyword_init: true)
+
+  it "checks account.read before returning an individual account" do
+    account = Account.create!(name: "Customer Account")
+    actor_user_id = SecureRandom.uuid
+
+    expect(User).to receive(:user_can).with(
+      actor_user_id,
+      "Account",
+      "account.read",
+      account.id
+    ).and_return(true)
+
+    get "/accounts/#{account.id}",
+        headers: { "pad-user-id" => actor_user_id },
+        as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body).to include("id" => account.id, "name" => "Customer Account")
+  end
+
   it "ignores stale MSP headers and checks normal account.read authorization" do
     account = Account.create!(name: "Customer Account")
     actor_user_id = SecureRandom.uuid
@@ -101,5 +123,27 @@ RSpec.describe "Account search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body.first).to include("id" => account.id, "name" => "Customer Account")
+  end
+
+  it "checks batched account capabilities instead of calling /can in capabilities-only mode" do
+    account_ids = [SecureRandom.uuid, SecureRandom.uuid]
+    request = nil
+    old_mode = ENV["AUTHORIZATION_CHECK_MODE"]
+    ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"
+
+    expect(Faraday).to receive(:post).with("#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/capabilities/Account") do |&block|
+      request = FakeFaradayRequest.new(headers: {})
+      block.call(request)
+      FakeFaradayResponse.new(
+        200,
+        account_ids.to_h { |account_id| [account_id, ["account.read"]] }.to_json
+      )
+    end
+
+    expect(User.user_can(actor_user_id = SecureRandom.uuid, "Account", "account.read", account_ids)).to eq(true)
+    expect(request.headers).to include("pad-user-id" => actor_user_id)
+    expect(JSON.parse(request.body)).to eq("scope_id" => account_ids)
+  ensure
+    ENV["AUTHORIZATION_CHECK_MODE"] = old_mode
   end
 end

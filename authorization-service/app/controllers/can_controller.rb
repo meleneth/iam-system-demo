@@ -1,5 +1,9 @@
 class CanController < ApplicationController
   def index
+    if ENV.fetch("AUTHORIZATION_CHECK_MODE", "can") == "capabilities"
+      return render json: { error: "/can disabled by AUTHORIZATION_CHECK_MODE=capabilities" }, status: :service_unavailable
+    end
+
     permitted = params.permit(:scope_type, :permission, scope_id: [])
     scope_type = permitted[:scope_type]
     permission = permitted[:permission]

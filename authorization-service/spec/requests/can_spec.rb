@@ -12,6 +12,7 @@ RSpec.describe "Cans", type: :request do
     let(:user_id) { SecureRandom.uuid }
     let(:msp_account_id) { SecureRandom.uuid }
     let(:customer_account_id) { SecureRandom.uuid }
+    let(:other_customer_account_id) { SecureRandom.uuid }
     let(:parent_account_id) { SecureRandom.uuid }
     let(:headers) do
       {
@@ -59,6 +60,44 @@ RSpec.describe "Cans", type: :request do
            as: :json
 
       expect(response).to have_http_status(:forbidden)
+    end
+
+    it "requires the permission on every requested account scope" do
+      CapabilityGrant.create!(
+        user_id: user_id,
+        permission: "account.users.read",
+        scope_type: "Account",
+        scope_id: customer_account_id
+      )
+      requested_account_ids = [customer_account_id, other_customer_account_id]
+      allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+      allow(Account).to receive(:with_parents_batch).with(requested_account_ids).and_return(
+        [
+          [OpenStruct.new(id: customer_account_id)],
+          [OpenStruct.new(id: other_customer_account_id)]
+        ]
+      )
+
+      post "/can/Account/account.users.read",
+           params: { scope_id: requested_account_ids },
+           headers: headers,
+           as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "rejects /can when capabilities-only authorization mode is enabled" do
+      old_mode = ENV["AUTHORIZATION_CHECK_MODE"]
+      ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"
+      post "/can/Account/account.users.read",
+           params: { scope_id: [customer_account_id] },
+           headers: headers,
+           as: :json
+
+      expect(response).to have_http_status(:service_unavailable)
+      expect(response.parsed_body).to eq("error" => "/can disabled by AUTHORIZATION_CHECK_MODE=capabilities")
+    ensure
+      ENV["AUTHORIZATION_CHECK_MODE"] = old_mode
     end
   end
 

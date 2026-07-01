@@ -10,6 +10,7 @@ services:
       - RAILS_MAX_THREADS=5
       - RAILS_MIN_THREADS=5
       - SECRET_KEY_BASE=${USER_RAILS_SECRET_KEY_BASE}
+      - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
     build:
       context: "./user-service"
     depends_on:
