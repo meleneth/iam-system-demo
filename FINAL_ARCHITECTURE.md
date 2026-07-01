@@ -104,6 +104,45 @@ Owns grants and derived authorization answers.
 
 Important: authorization-service does not cache account parent records. It calls account-service for hierarchy facts, then caches only derived authorization answers/capability arrays with TTLs.
 
+## Request Identity: `pad-user-id`
+
+`pad-user-id` is the demo's request-identity header. Every service uses it to decide who the request is acting as.
+
+In ordinary user-facing flows, `pad-user-id` is a real actor/user ID. user-management-service receives an app request such as GraphQL `as: "<user id>"`, then forwards that same actor identity to downstream services as:
+
+```text
+pad-user-id: <real actor user id>
+```
+
+Downstream data services do not trust the caller to interpret authorization locally. They call authorization-service with that same real actor ID and ask `/can` for the exact scope/action they are about to serve. This preserves actor-scoped authorization across service boundaries.
+
+There are also two special internal identities:
+
+| Header value | Meaning | Allowed use |
+| --- | --- | --- |
+| `pad-user-id: <real actor user id>` | The request is acting as that user. | Normal app and service-to-service reads. Must be authorized through grants and `/can`. |
+| `pad-user-id: IAM_SYSTEM` | Blessed internal system request. | Service-owned internal reads/projections where no real actor is being substituted. Examples: account-service asking organization-service for organization account IDs while computing account parent chains; user-management-service asking organization-service for an MSP demo page. |
+| `pad-user-id: IAM_SYSTEM_AUTH` | Narrow authorization-context request. | authorization-service asking organization-service for relationship facts needed to answer an authorization question. This exists so auth can get relationship context without becoming a general `IAM_SYSTEM` caller. |
+
+The critical rule is that a request that began as a real actor must not be converted into `IAM_SYSTEM` just to make authorization pass. The actor identity can be forwarded, and auth-service may perform its own internal fact gathering, but the final permission decision must still be about the original actor.
+
+```mermaid
+sequenceDiagram
+  participant App as App/benchmark
+  participant UMS as user-management-service
+  participant Data as data service
+  participant Auth as authorization-service
+  participant Fact as fact owner service
+
+  App->>UMS: GraphQL as: real-user-id
+  UMS->>Data: read data<br/>pad-user-id: real-user-id
+  Data->>Auth: POST /can/...<br/>pad-user-id: real-user-id
+  Auth->>Fact: relationship facts<br/>pad-user-id: IAM_SYSTEM_AUTH
+  Fact-->>Auth: facts
+  Auth-->>Data: allow/deny for real-user-id
+  Data-->>UMS: authorized data only
+```
+
 ## Authorization Model
 
 The core service-to-service authorization API is:
