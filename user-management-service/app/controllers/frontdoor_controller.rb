@@ -211,8 +211,61 @@ class FrontdoorController < ApplicationController
             }
           }
         GRAPHQL
+      },
+      'massive-fanout-100k' => {
+        id: 'massive-fanout-100k',
+        title: 'MSP fanout 100k users and groups',
+        detail: 'Org-level MSP admin view over 99,999 client organizations.',
+        query: msp_user_management_query(
+          msp_account_id: "0f418549-dc1c-554e-947d-17c3a5154857",
+          admin_user_id: "f56f5767-fad2-57c9-b279-30463d7b3b90"
+        )
+      },
+      'massive-fanout-50k' => {
+        id: 'massive-fanout-50k',
+        title: 'MSP fanout 50k users and groups',
+        detail: 'Org-level MSP admin view over 49,999 client organizations.',
+        query: msp_user_management_query(
+          msp_account_id: "3c5b62df-e65e-5bdd-9798-de7c4e53315b",
+          admin_user_id: "4418a141-eeb1-50a9-893e-f94e2266a599"
+        )
+      },
+      'massive-fanout-10k' => {
+        id: 'massive-fanout-10k',
+        title: 'MSP fanout 10k users and groups',
+        detail: 'Org-level MSP admin view over 9,999 client organizations.',
+        query: msp_user_management_query(
+          msp_account_id: "b05e3a9d-ee13-5d71-b248-beaf964c893f",
+          admin_user_id: "f3a85e16-4fea-53c0-b31a-8ac822431f9a"
+        )
       }
     }
+  end
+
+  def msp_user_management_query(msp_account_id:, admin_user_id:)
+    <<~GRAPHQL
+      {
+        mspUserManagement(mspAccountId: "#{msp_account_id}", as: "#{admin_user_id}") {
+          loading
+          loadedCount
+          totalCount
+          continuance
+          message
+          accounts {
+            id
+            users {
+              id
+              email
+              accountId
+              groups {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    GRAPHQL
   end
 
   def jaeger_links

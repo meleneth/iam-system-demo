@@ -43,4 +43,18 @@ class CapabilityGrant < ActiveResource::Base
 
     JSON.parse(response.body, symbolize_names: true)
   end
+
+  def self.capabilities(scope_type, scope_id, user_id:)
+    url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/capabilities/#{scope_type}/#{scope_id}"
+    outgoing_headers = { "pad-user-id" => user_id }
+    OpenTelemetry.propagation.inject(outgoing_headers)
+
+    response = Faraday.get(url) do |req|
+      outgoing_headers.each { |key, value| req.headers[key] = value }
+    end
+
+    raise "Failed to get #{scope_type} capabilities for #{scope_id}: #{response.status} #{response.body}" unless response.status == 200
+
+    JSON.parse(response.body)
+  end
 end

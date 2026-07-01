@@ -869,7 +869,10 @@ class DemoFixtureArtifacts
     {
       'Deep chain accountWithParents' => '/demo_queries/deep-chain',
       'Wide organization accounts' => '/demo_queries/wide-org',
-      'Dense account users and groups' => '/demo_queries/dense-account'
+      'Dense account users and groups' => '/demo_queries/dense-account',
+      'Massive fanout 100k users and groups' => '/demo_queries/massive-fanout-100k',
+      'Massive fanout 50k users and groups' => '/demo_queries/massive-fanout-50k',
+      'Massive fanout 10k users and groups' => '/demo_queries/massive-fanout-10k'
     }
   end
 

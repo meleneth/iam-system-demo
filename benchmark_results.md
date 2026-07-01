@@ -58,3 +58,19 @@ Times are `curl` `time_total` values in seconds. Lower is better. Fanout rows ar
 - `startup cold` includes service warmup costs. `cold after startup` repeats after the system is warm; for Redis-enabled runs the benchmark flushes Redis before this phase. For Redis-disabled runs there is no Redis cache to flush.
 - MSP no-cache now works by checking the actor's native MSP user-management grant directly and authorizing the requested managed-account page without Redis.
 - With full fanout page walks, Redis-on and Redis-off timings are close. The dominant cost is fetching and serializing the full user/group payload for each MSP page, not the reflected-grant lookup.
+
+## 2026-06-30 Continuation MSP Run
+
+Command shape: `RUNS=1 CACHE_WAIT_SECONDS=0 bash benchmark_demo.sh`
+
+CSV: `data/development/benchmark-runs/20260630-continuance-msp-1452/timings.csv`
+
+This run uses the restored `mspUserManagement` GraphQL field with `continuance`; there is no client-facing page-size argument. The internal MSP managed-account page window is 1,000 accounts, so the full walks are 100 pages for 100k, 50 pages for 50k, and 10 pages for 10k.
+
+| Phase | Deep | Wide | Dense | 100k MSP fanout | 50k MSP fanout | 10k MSP fanout |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| startup cold | 1.428 | 4.766 | 12.202 | 672.533 | 285.956 | 46.543 |
+| cold after Redis flush | 0.532 | 3.846 | 11.312 | 677.693 | 278.562 | 45.045 |
+| warm | 0.514 | 3.919 | 10.967 | 686.220 | 281.135 | 46.276 |
+
+All rows above returned HTTP 200. Fanout validation: 100k walked 99,999 accounts over 100 pages, 50k walked 49,999 accounts over 50 pages, and 10k walked 9,999 accounts over 10 pages.

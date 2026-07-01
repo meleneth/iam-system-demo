@@ -25,6 +25,13 @@ module Types
       argument :as, ID, required: true
     end
 
+    field :msp_user_management, Types::MspUserManagementType, null: false do
+      description "Demo view for org-level MSP user-management access."
+      argument :msp_account_id, ID, required: true
+      argument :as, ID, required: true
+      argument :continuance, String, required: false
+    end
+
     def organization(id:, as:)
       context[:as] = as
       context[:tracer] = TRACER
@@ -70,6 +77,33 @@ module Types
       dataloader.with(Sources::AccountById, as: as, otel_ctx: otel_ctx)
         .load_all(ids)
         .then { |records| records.compact }
+    end
+
+    def msp_user_management(msp_account_id:, as:, continuance: nil)
+      context[:as] = as
+      context[:tracer] = TRACER
+      context[:otel_ctx] ||= OpenTelemetry::Context.current
+
+      page = MspManagedOrganization.page(msp_account_id, continuance: continuance)
+      msp_organization_id = page["msp_organization_id"]
+      raise GraphQL::ExecutionError, "Unknown MSP account #{msp_account_id}" if msp_organization_id.blank?
+
+      capabilities = CapabilityGrant.capabilities("Organization", msp_organization_id, user_id: as)
+      unless capabilities.include?("msp.admin.users")
+        raise GraphQL::ExecutionError, "Not authorized for MSP organization #{msp_organization_id}"
+      end
+
+      total_count = page.fetch("total_count").to_i
+      account_ids = page.fetch("managed_account_ids").map(&:to_s)
+      loaded_count = [continuance.to_i + account_ids.length, total_count].min
+      {
+        loading: false,
+        loaded_count: loaded_count,
+        total_count: total_count,
+        continuance: page["continuance"],
+        message: "MSP user-management access ready. Loaded #{loaded_count} of #{total_count} accounts.",
+        accounts: account_ids.map { |account_id| { id: account_id } }
+      }
     end
 
   end

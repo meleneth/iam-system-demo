@@ -14,20 +14,10 @@ class CanController < ApplicationController
 
     case scope_type
     when "Account"
-      hierarchies = nil
-      Account.with_headers("pad-user-id" => "IAM_SYSTEM") do
-        hierarchies = Account.with_parents_batch(scope_id) # returns [[Account, Account...], ...]
-      end
-
-      checker = Authorization::AccountGrantChecker.new(
-        user_id: user_id,
-        permission: permission,
-        redis: AUTHORIZATION_CACHE
-      )
-
-      if checker.authorized_for_all?(hierarchies)
-        authorized = true
-      end
+      capability_service = Authorization::Capabilities.new(user_id: user_id)
+      requested_account_ids = Array(scope_id).map(&:to_s).uniq
+      authorized_account_ids = capability_service.account_ids_with_permission(requested_account_ids, permission)
+      authorized = requested_account_ids.all? { |account_id| authorized_account_ids.include?(account_id) }
     when "Organization"
       # No hierarchy, just one org
       authorized = CapabilityGrant.exists?(
