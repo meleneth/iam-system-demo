@@ -7,6 +7,7 @@ RSpec.describe "internal MSP managed organizations", type: :request do
   let(:client_organization_id) { SecureRandom.uuid }
   let(:account_1_id) { SecureRandom.uuid }
   let(:account_2_id) { SecureRandom.uuid }
+  let(:account_3_id) { SecureRandom.uuid }
 
   it "returns paginated account IDs managed by an MSP account" do
     create_valid_relationship!
@@ -33,6 +34,28 @@ RSpec.describe "internal MSP managed organizations", type: :request do
     second_page = response.parsed_body
     expect(first_page.fetch("managed_account_ids") + second_page.fetch("managed_account_ids")).to match_array([account_1_id, account_2_id])
     expect(second_page.fetch("continuance")).to be_nil
+  end
+
+  it "uses IAM_DEMO_BATCH_SIZE as the default and maximum page size" do
+    old_batch_size = ENV["IAM_DEMO_BATCH_SIZE"]
+    ENV["IAM_DEMO_BATCH_SIZE"] = "2"
+
+    create_valid_relationship!
+    [account_1_id, account_2_id, account_3_id].each do |account_id|
+      OrganizationAccount.create!(organization_id: client_organization_id, account_id: account_id)
+    end
+
+    get "/internal/msp_managed_organizations/#{msp_account_id}",
+        params: { limit: 100 },
+        headers: { "pad-user-id" => "IAM_SYSTEM" }
+
+    expect(response).to have_http_status(:ok)
+    page = response.parsed_body
+    expect(page.fetch("managed_account_ids").length).to eq(2)
+    expect(page.fetch("total_count")).to eq(3)
+    expect(page.fetch("continuance")).to eq("2")
+  ensure
+    ENV["IAM_DEMO_BATCH_SIZE"] = old_batch_size
   end
 
   it "rejects non-system callers" do

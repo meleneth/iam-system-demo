@@ -2,15 +2,14 @@
 
 module Internal
   class MspManagedOrganizationsController < ApplicationController
-    DEFAULT_LIMIT = 1_000
-    MAX_LIMIT = 1_000
+    DEFAULT_BATCH_SIZE = 1_000
 
     before_action :require_internal_system!
 
     def show
       msp_account_id = params.require(:msp_account_id)
       offset = params.fetch(:continuance, 0).to_i
-      limit = params.fetch(:limit, DEFAULT_LIMIT).to_i.clamp(1, MAX_LIMIT)
+      limit = params.fetch(:limit, batch_size).to_i.clamp(1, batch_size)
 
       relationship = MspManagedOrganization.find_by(msp_account_id: msp_account_id)
       return render json: empty_page(msp_account_id) unless relationship
@@ -30,6 +29,10 @@ module Internal
     end
 
     private
+
+    def batch_size
+      [ENV.fetch("IAM_DEMO_BATCH_SIZE", DEFAULT_BATCH_SIZE).to_i, 1].max
+    end
 
     def require_internal_system!
       return true if request.headers["HTTP_PAD_USER_ID"] == "IAM_SYSTEM"

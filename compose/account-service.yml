@@ -14,6 +14,7 @@ services:
       - USER_SERVICE_API_BASE_URL=http://user-service:80
       - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
       - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
+      - IAM_DEMO_BATCH_SIZE=${IAM_DEMO_BATCH_SIZE:-1000}
       - SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
     build:
       context: "./account-service"
