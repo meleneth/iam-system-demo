@@ -10,11 +10,12 @@ require 'securerandom'
 # id=arn:aws:sns:us-east-1:000000000000:user_seed
 MAX_QUEUE_BEFORE_WAIT_FOR_DRAIN = 10_000
 DEFAULT_PROGRESS_INTERVAL = 1_000
+DEFAULT_USER_COUNT = 1_000_000
 STANDARD_FIXTURE_USERS_PER_ACCOUNT = 20
 LARGE_MANIFEST_SAMPLE_LIMIT = 500
 
 class DemoUserSeeder
-  def initialize(count: 1000, queue_url:, include_fixtures: true, dry_run: false, output_dir: nil, random_seed: nil)
+  def initialize(count: DEFAULT_USER_COUNT, queue_url:, include_fixtures: true, dry_run: false, output_dir: nil, random_seed: nil)
     @count = count
     @queue_url = queue_url
     @include_fixtures = include_fixtures
@@ -1008,7 +1009,7 @@ end
 if $PROGRAM_NAME == __FILE__
   queue_url = ENV.fetch('USER_SEED_QUEUE_URL', 'http://eventstream:4566/000000000000/user-seed')
   DemoUserSeeder.new(
-    count: ENV.fetch('USER_COUNT', 2_000_000).to_i,
+    count: ENV.fetch('USER_COUNT', DEFAULT_USER_COUNT).to_i,
     queue_url: queue_url,
     include_fixtures: ENV.fetch('DEMO_SKIP_FIXTURES', '0') != '1',
     dry_run: ENV.fetch('DEMO_DRY_RUN', '0') == '1',
