@@ -86,6 +86,28 @@ RSpec.describe "Cans", type: :request do
       expect(response).to have_http_status(:forbidden)
     end
 
+    it "intentionally authorizes an empty account collection" do
+      expect(Account).not_to receive(:with_parents_batch)
+
+      post "/can/Account/account.users.read",
+           params: { scope_id: [] },
+           headers: headers,
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "rejects malformed account IDs without a downstream hierarchy request" do
+      expect(Account).not_to receive(:with_parents_batch)
+
+      post "/can/Account/account.users.read",
+           params: { scope_id: ["not-a-uuid"] },
+           headers: headers,
+           as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
     it "rejects /can when capabilities-only authorization mode is enabled" do
       old_mode = ENV["AUTHORIZATION_CHECK_MODE"]
       ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"

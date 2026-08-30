@@ -299,4 +299,107 @@ RSpec.describe Authorization::Capabilities do
     expect(reflected_service.account_ids_with_permission([target_id], permission)).to be_empty
     expect(context_client.contexts).to be_nil
   end
+
+  it "rejects malformed account IDs without calling downstream services" do
+    expect(Account).not_to receive(:with_parents_batch)
+
+    expect(service.account_ids_with_permission(["not-a-uuid"], "account.users.read")).to be_empty
+    expect(redis.pipelines).to be_empty
+  end
+
+  it "applies account grants downward but never upward or sideways" do
+    permission = "account.users.read"
+    root_id = SecureRandom.uuid
+    granted_child_id = SecureRandom.uuid
+    grandchild_id = SecureRandom.uuid
+    sibling_id = SecureRandom.uuid
+    hierarchies = {
+      root_id => [OpenStruct.new(id: root_id, parent_account_id: nil)],
+      granted_child_id => [
+        OpenStruct.new(id: root_id, parent_account_id: nil),
+        OpenStruct.new(id: granted_child_id, parent_account_id: root_id)
+      ],
+      grandchild_id => [
+        OpenStruct.new(id: root_id, parent_account_id: nil),
+        OpenStruct.new(id: granted_child_id, parent_account_id: root_id),
+        OpenStruct.new(id: grandchild_id, parent_account_id: granted_child_id)
+      ],
+      sibling_id => [
+        OpenStruct.new(id: root_id, parent_account_id: nil),
+        OpenStruct.new(id: sibling_id, parent_account_id: root_id)
+      ]
+    }
+    requested_ids = [root_id, granted_child_id, grandchild_id, sibling_id]
+    CapabilityGrant.create!(user_id: user_id, permission: permission, scope_type: "Account", scope_id: granted_child_id)
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with(requested_ids).and_return(
+      requested_ids.reverse.map { |account_id| hierarchies.fetch(account_id) }
+    )
+
+    expect(service.account_ids_with_permission(requested_ids, permission)).to eq(
+      Set[granted_child_id, grandchild_id]
+    )
+  end
+
+  it "isolates cached decisions by actor and permission" do
+    account_id = SecureRandom.uuid
+    other_user_id = SecureRandom.uuid
+    read_permission = "account.users.read"
+    write_permission = "account.users.create"
+    CapabilityGrant.create!(user_id: user_id, permission: read_permission, scope_type: "Account", scope_id: account_id)
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with([account_id]).and_return(
+      [[OpenStruct.new(id: account_id, parent_account_id: nil)]]
+    )
+
+    expect(described_class.new(user_id: user_id, redis: redis).account_ids_with_permission([account_id], read_permission)).to eq(Set[account_id])
+    expect(described_class.new(user_id: other_user_id, redis: redis).account_ids_with_permission([account_id], read_permission)).to be_empty
+    expect(described_class.new(user_id: user_id, redis: redis).account_ids_with_permission([account_id], write_permission)).to be_empty
+
+    expect(redis.sets.map(&:first)).to contain_exactly(
+      "can:#{user_id}:Account:#{read_permission}:#{account_id}",
+      "can:#{other_user_id}:Account:#{read_permission}:#{account_id}",
+      "can:#{user_id}:Account:#{write_permission}:#{account_id}"
+    )
+  end
+
+  it "matches a depth-walk oracle over generated trees and grants" do
+    random = Random.new(12_345)
+    account_ids = Array.new(24) { SecureRandom.uuid }
+    parent_by_id = { account_ids.first => nil }
+    account_ids.drop(1).each_with_index do |account_id, index|
+      parent_by_id[account_id] = account_ids[random.rand(0..index)]
+    end
+    hierarchy_for = lambda do |target_id|
+      ids = []
+      current_id = target_id
+      while current_id
+        ids.unshift(current_id)
+        current_id = parent_by_id.fetch(current_id)
+      end
+      ids.each_with_index.map do |account_id, index|
+        OpenStruct.new(id: account_id, parent_account_id: index.zero? ? nil : ids[index - 1])
+      end
+    end
+    granted_ids = account_ids.sample(7, random: random).to_set
+    permission = "account.users.read"
+    granted_ids.each do |account_id|
+      CapabilityGrant.create!(user_id: user_id, permission: permission, scope_type: "Account", scope_id: account_id)
+    end
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch) do |requested_ids|
+      requested_ids.reverse.map { |account_id| hierarchy_for.call(account_id) }
+    end
+    generated_service = described_class.new(user_id: user_id, redis: IamDemo::NullRedisCache.new)
+
+    30.times do
+      requested_ids = account_ids.sample(random.rand(1..8), random: random)
+      requested_ids << requested_ids.first if random.rand(2).zero?
+      expected = requested_ids.to_set.select do |account_id|
+        hierarchy_for.call(account_id).any? { |account| granted_ids.include?(account.id) }
+      end.to_set
+
+      expect(generated_service.account_ids_with_permission(requested_ids.shuffle(random: random), permission)).to eq(expected)
+    end
+  end
 end

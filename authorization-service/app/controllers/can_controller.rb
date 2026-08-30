@@ -21,6 +21,7 @@ class CanController < ApplicationController
       capability_service = Authorization::Capabilities.new(user_id: user_id)
       requested_account_ids = Array(scope_id).map(&:to_s).uniq
       authorized_account_ids = capability_service.account_ids_with_permission(requested_account_ids, permission)
+      # An empty collection requires no account authority and is intentionally allowed.
       authorized = requested_account_ids.all? { |account_id| authorized_account_ids.include?(account_id) }
     when "Organization"
       # No hierarchy, just one org

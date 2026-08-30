@@ -7,6 +7,7 @@ module Authorization
   class Capabilities
     TTL_SECONDS = 300
     MAX_ACCOUNT_HIERARCHY_DEPTH = 100
+    UUID_PATTERN = /\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/i
 
     def initialize(user_id:, redis: AUTHORIZATION_CACHE, account_context_client: AccountContextClient.new)
       @user_id = user_id
@@ -40,17 +41,19 @@ module Authorization
     def account_ids_with_permission(account_ids, permission)
       account_ids = Array(account_ids).map(&:to_s).uniq
       return Set.new if account_ids.empty?
+      valid_account_ids = account_ids.select { |account_id| valid_account_id?(account_id) }
+      return Set.new if valid_account_ids.empty?
 
       redis_enabled = redis_enabled?
-      cached_values = read_account_permission_cache(account_ids, permission, redis_enabled: redis_enabled)
-      cached_results = account_ids.each_with_object(Set.new) do |account_id, authorized|
+      cached_values = read_account_permission_cache(valid_account_ids, permission, redis_enabled: redis_enabled)
+      cached_results = valid_account_ids.each_with_object(Set.new) do |account_id, authorized|
         authorized << account_id if cached_values[account_id] == "true"
       end
-      unresolved_account_ids = account_ids.select { |account_id| cached_values[account_id].nil? }
+      unresolved_account_ids = valid_account_ids.select { |account_id| cached_values[account_id].nil? }
       IamDemo::CacheMetrics.record(
         cache: "account_permission",
         outcome: "hit",
-        count: account_ids.size - unresolved_account_ids.size,
+        count: valid_account_ids.size - unresolved_account_ids.size,
         redis_enabled: redis_enabled
       )
       IamDemo::CacheMetrics.record(
@@ -102,6 +105,10 @@ module Authorization
     end
 
     private
+
+    def valid_account_id?(account_id)
+      UUID_PATTERN.match?(account_id)
+    end
 
     def read_account_permission_cache(account_ids, permission, redis_enabled:)
       return {} unless redis_enabled
@@ -168,6 +175,8 @@ module Authorization
     end
 
     def account_hierarchy_ids(account_id)
+      return [] unless valid_account_id?(account_id.to_s)
+
       account_hierarchy_ids_for([account_id.to_s]).fetch(account_id.to_s, [])
     end
 
