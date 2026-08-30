@@ -293,14 +293,14 @@ rerun, and stable trace artifacts exist for citation.
 
 ## Part 4: Redis Cache, per service
 
-Status: blocking implementation cleanup and controlled cache evidence
+Status: blocking invalidation work and controlled cache evidence
 
 ### Why this work is needed
 
-The current article describes `Authorization::AccountGrantChecker` and its
+The article originally described `Authorization::AccountGrantChecker` and its
 `user_grants:<user_id>:<permission>` Redis set with pipelined `SISMEMBER`
-checks. That class still exists and has unit tests, but no production path calls
-it. The live `/can` controller delegates to
+checks. That class had unit tests, but no production path called it. The live
+`/can` controller delegates to
 `Authorization::Capabilities#account_ids_with_permission` instead.
 
 The live implementation has a different cache shape:
@@ -309,30 +309,37 @@ The live implementation has a different cache shape:
 can:<user_id>:Account:<permission>:<account_id>
 ```
 
-It resolves cache misses with set-based database and hierarchy work, but its
-Redis `GET` and `SET` operations currently occur in ordinary Ruby loops. The
-article must not claim that the live authorization cache path is pipelined until
-the implementation and evidence make that true.
+Before the implementation cleanup, it resolved cache misses with set-based
+database and hierarchy work while its Redis `GET` and `SET` operations occurred
+in ordinary Ruby loops. The article could not accurately claim that the live
+authorization cache path was pipelined at that revision.
 
-### Required implementation and cleanup
+Implementation update: `AccountGrantChecker` was removed as dead code. The live
+`Capabilities#account_ids_with_permission` path now pipelines multi-account
+reads and computed-miss writes, preserves positive and negative entries, and
+falls back to authoritative computation when Redis pipelines fail. Focused
+tests cover mixed hits/misses, duplicate and empty inputs, and pipeline failure.
+Concurrent cold-request behavior and event-driven invalidation remain open.
 
-- Decide whether `AccountGrantChecker` remains a supported implementation.
-  Remove it if it is dead, or wire and test it explicitly if it still serves an
-  intended runtime mode. Do not leave it as an attractive but unused article
-  target.
-- Pipeline the live authorization cache reads and writes in
+### Completed implementation cleanup
+
+- Removed the dead `AccountGrantChecker` implementation and its isolated tests.
+- Pipelined the live authorization cache reads and writes in
   `Capabilities#account_ids_with_permission`, while preserving:
   - positive and negative cache entries
   - user, scope type, permission, and account isolation
   - Redis-enabled and Redis-disabled behavioral equivalence
   - all-or-nothing authorization semantics at the `/can` boundary
-- Add focused tests that assert one Redis pipeline for a multi-account read and
+- Added focused tests that assert one Redis pipeline for a multi-account read and
   one pipeline for writing computed misses, rather than one Redis round trip per
   account.
-- Verify mixed hit/miss behavior, duplicate account IDs, empty inputs, partial
-  Redis failure, and concurrent cold requests.
-- Keep `GLOBAL_IAM_DEMO_USE_REDIS=true|false` capable of exercising equivalent
+- Verified mixed hit/miss behavior, duplicate account IDs, empty inputs, and
+  Redis pipeline failure fallback.
+- Kept `GLOBAL_IAM_DEMO_USE_REDIS=true|false` capable of exercising equivalent
   live paths for controlled comparison.
+
+Concurrent cold-request behavior remains to be verified with the controlled
+workload.
 
 ### Cache inventory to verify
 

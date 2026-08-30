@@ -100,61 +100,51 @@ The service also exposes a DB-native count endpoint in [`organization-service/ap
 - Redis for repeated membership expansion,
 - batch-friendly service calls for counts.
 
-## 3) The authorization service caches grants as Redis sets
+## 3) The authorization service caches derived decisions
 
-The authorization service uses Redis in a different way. It is not caching a single object response. It is caching a set of allowed scope IDs per user and permission.
+The authorization service does not cache remote Account objects. For the live multi-account `/can` path, it caches one derived boolean decision per actor, scope type, permission, and account.
 
 The Redis client lives in [`authorization-service/config/initializers/authorization_cache.rb`](https://github.com/meleneth/iam-system-demo/blob/main/authorization-service/config/initializers/authorization_cache.rb).
 
-The main logic is in [`authorization-service/lib/authorization/account_grant_checker.rb`](https://github.com/meleneth/iam-system-demo/blob/main/authorization-service/lib/authorization/account_grant_checker.rb).
+The live logic is in [`authorization-service/lib/authorization/capabilities.rb`](https://github.com/meleneth/iam-system-demo/blob/main/authorization-service/lib/authorization/capabilities.rb).
 
 ### Cache fill on miss
 
-`cached_user_grants(user_id, permission)` does a DB lookup only when the Redis set does not already exist:
+Each decision uses this key shape and a five-minute TTL:
 
-```ruby
-key = "user_grants:#{user_id}:#{permission}"
-unless AUTHORIZATION_CACHE.exists?(key)
-  scope_ids = CapabilityGrant.where(
-    user_id: user_id,
-    permission: permission,
-    scope_type: "Account"
-  ).pluck(:scope_id)
-  AUTHORIZATION_CACHE.sadd(key, scope_ids) unless scope_ids.empty?
-  AUTHORIZATION_CACHE.expire(key, 300)
-end
+```text
+can:<user_id>:Account:<permission>:<account_id>
 ```
 
-That means the expensive relational query is paid once per TTL window, and the common case becomes set membership against Redis.
+Both positive and negative results are cached. A cached denial is therefore distinguishable from a cache miss.
 
 ### Pipelined membership checks
 
-The checker then evaluates many account IDs at once:
+The live path reads all requested decisions in one Redis pipeline:
 
 ```ruby
-values = @redis.pipelined do |pipe|
-  account_ids.each { |id| pipe.sismember(@user_grants_key, id) }
+values = @redis.pipelined do |pipeline|
+  account_ids.each do |account_id|
+    pipeline.get(account_permission_cache_key(permission, account_id))
+  end
 end
 ```
 
-That is a crucial optimization. Instead of one network round trip per account, the service sends a batch of membership checks in one Redis round trip.
+After resolving misses from account hierarchies and native or reflected grants, it writes the computed decisions in one more pipeline. Mixed hit/miss requests write only the misses. If Redis is unavailable, authorization falls back to authoritative hierarchy and grant computation rather than changing the decision.
 
-### Hierarchy-aware pruning
+### Set-based hierarchy resolution
 
-`authorized_for_all?(hierarchies)` does not blindly walk every account in every hierarchy. It checks the current head of each hierarchy, drops the ones that are authorized, and only walks deeper into the hierarchies that still need to be resolved.
+`account_ids_with_permission(account_ids, permission)` fetches the unresolved account hierarchies as a batch, unions their scope IDs, queries matching grants as sets, and returns the requested account IDs that are authorized.
 
-That makes the cost proportional to how quickly the system finds a match:
+The controller preserves all-or-nothing `/can` semantics:
 
-- if the user already has the right grant near the top, the check ends quickly,
-- if not, the algorithm trims one level and retries only for the remaining paths.
+- a grant on an ancestor applies downward to its descendants,
+- a child grant does not grant access upward or sideways,
+- every requested account must appear in the authorized result.
 
-The controller in [`authorization-service/app/controllers/can_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/authorization-service/app/controllers/can_controller.rb) ties this to the account hierarchy lookup:
+The controller in [`authorization-service/app/controllers/can_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/authorization-service/app/controllers/can_controller.rb) ties the decision to the real actor propagated in `pad-user-id`.
 
-1. fetch the account hierarchy,
-2. build the grant checker,
-3. ask whether all requested scopes are authorized.
-
-The `IAM_SYSTEM` header bypass is important too. Internal service-to-service flows can skip the permission check entirely when the request is already trusted.
+`IAM_SYSTEM` is used only for the narrow internal hierarchy lookup needed to assemble authorization context. It is never substituted for the real actor on the app-facing authorization decision.
 
 ## 4) How the pieces combine
 
