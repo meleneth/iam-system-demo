@@ -76,8 +76,12 @@ class GroupUsersController < ApplicationController
     group_ids = Array(group_users).map(&:group_id).map(&:to_s).uniq
     return if group_ids.empty?
 
-    account_ids = Group.where(id: group_ids).distinct.pluck(:account_id).map(&:to_s)
-    return if account_ids.empty?
+    owning_groups = Group.where(id: group_ids).pluck(:id, :account_id)
+    resolved_group_ids = owning_groups.map { |group_id, _account_id| group_id.to_s }
+    missing_group_ids = group_ids - resolved_group_ids
+    raise "group memberships reference missing groups: #{missing_group_ids.join(', ')}" if missing_group_ids.any?
+
+    account_ids = owning_groups.map { |_group_id, account_id| account_id.to_s }.uniq
 
     if User.user_can(user_id, "Account", "account.users.read", account_ids)
       return

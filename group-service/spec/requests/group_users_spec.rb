@@ -44,5 +44,17 @@ RSpec.describe "/group_users", type: :request do
 
       expect(response).to have_http_status(:ok)
     end
+
+    it "fails closed when a membership has no owning group" do
+      orphan = GroupUser.create!(group_id: SecureRandom.uuid, user_id: SecureRandom.uuid)
+      expect(User).not_to receive(:user_can)
+
+      expect do
+        post "/group_users/search",
+             params: { id: [group_user.id, orphan.id] },
+             headers: { "pad-user-id" => actor_user_id },
+             as: :json
+      end.to raise_error(RuntimeError, /group memberships reference missing groups/)
+    end
   end
 end
