@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-COMPOSE=(docker compose --env-file development.env -f development-compose.yml -f development-overrides.yml)
+set -a
+source development.env
+set +a
+
+COMPOSE=(./dc_dev)
 DB_DIRS=(
   data/development/user-db
   data/development/account-db
@@ -9,6 +13,7 @@ DB_DIRS=(
   data/development/organization-db
   data/development/group-db
 )
+DEMO_FIXTURE_OUTPUT_DIR="${USER_MANAGEMENT_DEMO_FIXTURE_OUTPUT_PATH:-./data/development/demo-fixtures}"
 DB_SERVICES=(
   user-db
   account-db
@@ -74,6 +79,13 @@ run_db_prepare() {
   done
 }
 
+repair_demo_fixture_output_dir() {
+  echo "Repairing demo fixture output directory..."
+  mkdir -p "$DEMO_FIXTURE_OUTPUT_DIR" 2>/dev/null || true
+  "${COMPOSE[@]}" run --rm --user root user-management-service sh -c \
+    'mkdir -p /rails/tmp/demo-fixtures/latest && chown -R 1000:1000 /rails/tmp/demo-fixtures && chmod -R a+rwX /rails/tmp/demo-fixtures'
+}
+
 echo "Stopping development stack..."
 "${COMPOSE[@]}" down --remove-orphans
 
@@ -81,6 +93,8 @@ echo "Deleting development database directories..."
 for dir in "${DB_DIRS[@]}"; do
   rm -rf "$dir"
 done
+
+repair_demo_fixture_output_dir
 
 echo "Starting database services..."
 "${COMPOSE[@]}" up -d "${DB_SERVICES[@]}"

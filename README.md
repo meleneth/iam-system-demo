@@ -19,15 +19,15 @@ Every account will belong to an Organization.  Organization-service has a Organi
 
 [`./dc_test`](https://github.com/meleneth/iam-system-demo/blob/main/dc_test), [`./dc_dev`](https://github.com/meleneth/iam-system-demo/blob/main/dc_dev), and [`./dc_prod`](https://github.com/meleneth/iam-system-demo/blob/main/dc_prod) are docker compose helpers
 
-    ./dc_test build
+    ./dc_dev build
 
-    ./dc_test up -d
+    ./dc_dev up -d
 
 makes 1 million users, 3 hours on my box
 
-    ./dc_test run user-management-service bin/rails runner scripts/demo_user_seeder.rb
+    ./dc_dev run user-management-service bin/rails runner scripts/demo_user_seeder.rb
 
-    ./dc_test run account-service bin/rails runner scripts/account_cte_query.rb
+    ./dc_dev run account-service bin/rails runner scripts/account_cte_query.rb
 
 User seeder SQS message format:
 

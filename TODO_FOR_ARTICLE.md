@@ -290,3 +290,180 @@ least:
 Part 3 is unblocked when the current set-based implementation has been audited,
 the missing semantic tests pass, the controlled auth-mode benchmark has been
 rerun, and stable trace artifacts exist for citation.
+
+## Part 4: Redis Cache, per service
+
+Status: blocking implementation cleanup and controlled cache evidence
+
+### Why this work is needed
+
+The current article describes `Authorization::AccountGrantChecker` and its
+`user_grants:<user_id>:<permission>` Redis set with pipelined `SISMEMBER`
+checks. That class still exists and has unit tests, but no production path calls
+it. The live `/can` controller delegates to
+`Authorization::Capabilities#account_ids_with_permission` instead.
+
+The live implementation has a different cache shape:
+
+```text
+can:<user_id>:Account:<permission>:<account_id>
+```
+
+It resolves cache misses with set-based database and hierarchy work, but its
+Redis `GET` and `SET` operations currently occur in ordinary Ruby loops. The
+article must not claim that the live authorization cache path is pipelined until
+the implementation and evidence make that true.
+
+### Required implementation and cleanup
+
+- Decide whether `AccountGrantChecker` remains a supported implementation.
+  Remove it if it is dead, or wire and test it explicitly if it still serves an
+  intended runtime mode. Do not leave it as an attractive but unused article
+  target.
+- Pipeline the live authorization cache reads and writes in
+  `Capabilities#account_ids_with_permission`, while preserving:
+  - positive and negative cache entries
+  - user, scope type, permission, and account isolation
+  - Redis-enabled and Redis-disabled behavioral equivalence
+  - all-or-nothing authorization semantics at the `/can` boundary
+- Add focused tests that assert one Redis pipeline for a multi-account read and
+  one pipeline for writing computed misses, rather than one Redis round trip per
+  account.
+- Verify mixed hit/miss behavior, duplicate account IDs, empty inputs, partial
+  Redis failure, and concurrent cold requests.
+- Keep `GLOBAL_IAM_DEMO_USE_REDIS=true|false` capable of exercising equivalent
+  live paths for controlled comparison.
+
+### Cache inventory to verify
+
+Document and test the three service-owned derived-result caches currently in
+the demo:
+
+- Account Service:
+  - key: `account_with_parents:<account_id>`
+  - value: the requested Account and its ancestor chain
+  - TTL: 300 seconds
+  - batched Redis reads/writes through a pipeline
+  - invalidation registry: `org_cachekeys:<organization_id>`
+- Organization Service:
+  - key: `account_ids_by_organization:<organization_id>`
+  - value: account-ID membership list, never remote Account objects
+  - TTL: 300 seconds
+  - batched multi-organization Redis reads/writes through a pipeline
+- Authorization Service:
+  - key: `capabilities:<user_id>:<scope_type>:<scope_id>` for complete
+    capability arrays
+  - key: `can:<user_id>:Account:<permission>:<account_id>` for narrow boolean
+    decisions
+  - TTL: 300 seconds for both
+  - live multi-account `/can` cache operations must be pipelined before the
+    article presents that optimization as complete
+
+Confirm that the inventory matches the final live revision. The article should
+say that services cache derived results from data they own, not make the broader
+and inaccurate claim that every object-owning service caches its objects.
+
+### Invalidation subtask
+
+- Define mutation events for account hierarchy, organization membership, and
+  capability-grant changes.
+- Add workers owned by the affected caching services that consume those events
+  and force-expire the relevant cache entries.
+- Use the existing `org_cachekeys:<organization_id>` registry where appropriate
+  and add equivalent targeting/indexing where a mutation affects multiple
+  authorization cache keys.
+- Test that mutation followed by event consumption removes stale positive and
+  negative decisions and that the next read rebuilds from the source of truth.
+- Preserve the 300-second TTL as a safety bound, not as the primary coherence
+  mechanism.
+
+### Controlled evidence for the article
+
+- Run the same organization-wide User Management workload with Redis disabled,
+  cold, and warm.
+- Hold fixture, actor, authorization mode, retrieval mode, server process model,
+  and batch size constant.
+- Record wall time, HTTP outcome, Redis command/round-trip counts by cache,
+  cache hits and misses, database queries, downstream requests, and stable
+  Jaeger trace IDs or exports.
+- Show which multiplier each cache contains:
+  - repeated ancestry computation
+  - repeated organization-membership expansion
+  - repeated authorization computation for the same user/account/permission
+    contexts
+- Use fixed-revision source permalinks in the article. Do not link to `main`.
+
+### Completion gate
+
+Part 4 is unblocked when the dead/live authorization-cache discrepancy is
+resolved, live multi-account cache operations are demonstrably pipelined,
+cache behavior and invalidation tests pass, the controlled disabled/cold/warm
+comparison has been captured, and the article can cite a fixed source revision.
+
+## Part 5: Smart APIs
+
+Status: blocking GraphQL hierarchy batching fix
+
+### Hidden hierarchy N+1
+
+Account Service already exposes the collection-shaped hierarchy endpoint used
+by `Account.with_parents_batch(account_ids)`:
+
+```text
+GET /accounts_with_parents?account_ids[]=...
+```
+
+The endpoint passes the complete ID set through the pipelined ancestry cache and
+the set-based recursive CTE. Authorization Service uses it in
+`Authorization::Capabilities#account_hierarchy_ids_for`, and a User Management
+controller also uses it for a multi-account request.
+
+Two User Management GraphQL paths bypass it:
+
+- `Sources::AccountsWithParentsById#fetch` loops over its Dataloader keys and
+  calls `Account.with_parents` once per key.
+- `Resolvers::AccountHierarchiesResolver#resolve` maps requested IDs through
+  individual `Account.with_parents` calls.
+
+This recreates a cross-network N+1 even though the batch endpoint already
+exists. Worse, `AccountsWithParentsById` names its trace span
+`Account.with_parents_batch(<count>)` while issuing the individual calls, so the
+instrumentation currently describes work that did not happen.
+
+### Required implementation
+
+- Replace both per-ID GraphQL loops with one
+  `Account.with_parents_batch(unique_account_ids)` call per GraphQL batch or
+  resolver invocation.
+- Preserve input ordering and duplicate-key behavior when mapping the batched
+  response back to GraphQL/Dataloader results.
+- Define and test behavior for missing IDs, partial responses, reordered
+  downstream responses, empty input, and Account Service failure.
+- Verify actor/header and OpenTelemetry context propagation on the one batched
+  request.
+- Make trace span names describe the operation actually executed. Add an
+  attribute for requested unique ID count and downstream request count if the
+  tracing conventions support it.
+- Remove stale comments such as “Prefer a batched endpoint if you have it”; the
+  endpoint exists and should be the required path.
+
+### Tests and evidence
+
+- Add unit tests proving each GraphQL path makes exactly one downstream Account
+  Service hierarchy request for multiple account IDs.
+- Assert result equivalence with the former serial path for a bounded fixture,
+  including overlapping ancestor chains and duplicate requested IDs.
+- Add a request or integration test that exercises the GraphQL field through the
+  schema rather than testing only the source class in isolation.
+- Capture before/after Jaeger traces or exported spans showing N downstream
+  `GET /account_with_parents/:account_id` requests becoming one
+  `GET /accounts_with_parents?account_ids[]=...` request.
+- Verify the final article diagrams and fixed-revision source links against the
+  corrected implementation.
+
+### Completion gate
+
+Part 5 is unblocked when both GraphQL hierarchy paths use the batch endpoint,
+ordering and failure semantics are tested, instrumentation truthfully describes
+the downstream operation, and preserved trace evidence demonstrates one network
+request for a multi-account hierarchy load.
