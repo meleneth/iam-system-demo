@@ -1,4 +1,6 @@
 class AccountsController < ApplicationController
+  MAX_ACCOUNT_HIERARCHY_DEPTH = 100
+
   before_action :set_account, only: %i[ show update destroy ]
 
   # GET /accounts
@@ -218,18 +220,20 @@ class AccountsController < ApplicationController
       WITH RECURSIVE roots(root_id, organization_id, seed_ids) AS (
         VALUES #{placeholders.join(",\n               ")}
       ),
-      account_ancestry(root_id, organization_id, id, parent_account_id, name, level) AS (
-        SELECT roots.root_id, roots.organization_id, accounts.id, accounts.parent_account_id, accounts.name, 0 AS level
+      account_ancestry(root_id, organization_id, id, parent_account_id, name, level, path) AS (
+        SELECT roots.root_id, roots.organization_id, accounts.id, accounts.parent_account_id, accounts.name, 0 AS level, ARRAY[accounts.id]::uuid[] AS path
         FROM roots
         INNER JOIN accounts ON accounts.id = roots.root_id
 
         UNION ALL
 
-        SELECT account_ancestry.root_id, account_ancestry.organization_id, parents.id, parents.parent_account_id, parents.name, account_ancestry.level + 1
+        SELECT account_ancestry.root_id, account_ancestry.organization_id, parents.id, parents.parent_account_id, parents.name, account_ancestry.level + 1, account_ancestry.path || parents.id
         FROM account_ancestry
         INNER JOIN roots ON roots.root_id = account_ancestry.root_id
         INNER JOIN accounts parents ON parents.id = account_ancestry.parent_account_id
         WHERE parents.id = ANY(roots.seed_ids)
+          AND NOT parents.id = ANY(account_ancestry.path)
+          AND account_ancestry.level + 1 < #{MAX_ACCOUNT_HIERARCHY_DEPTH}
       )
       SELECT root_id, organization_id, id, parent_account_id, name, level
       FROM account_ancestry

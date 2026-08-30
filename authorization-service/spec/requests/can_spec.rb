@@ -35,8 +35,8 @@ RSpec.describe "Cans", type: :request do
       allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
       allow(Account).to receive(:with_parents_batch).with([customer_account_id]).and_return(
         [[
-          OpenStruct.new(id: parent_account_id),
-          OpenStruct.new(id: customer_account_id)
+          OpenStruct.new(id: parent_account_id, parent_account_id: nil),
+          OpenStruct.new(id: customer_account_id, parent_account_id: parent_account_id)
         ]]
       )
 

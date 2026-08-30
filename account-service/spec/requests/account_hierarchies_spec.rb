@@ -76,6 +76,31 @@ RSpec.describe "Account hierarchies", type: :request do
       ]
     )
   end
+
+  it "bounds cyclic account hierarchies inside the recursive query" do
+    first = Account.create!(name: "First")
+    second = Account.create!(name: "Second", parent_account_id: first.id)
+    first.update_column(:parent_account_id, second.id)
+    seed_ids = [first.id, second.id].map(&:to_s)
+    organization = Struct.new(:id).new(organization_id)
+
+    allow(OrganizationAccount).to receive(:with_headers).and_yield
+    allow(OrganizationAccount).to receive(:account_ids_for_organizations_by_account_ids).with(
+      [first.id.to_s]
+    ).and_return(
+      first.id.to_s => { organization: organization, account_ids: seed_ids }
+    )
+
+    post "/accounts_with_parents",
+         params: { account_ids: [first.id] },
+         headers: { "pad-user-id" => "IAM_SYSTEM" },
+         as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.first.map { |account| account.fetch("id") }).to eq(
+      [second.id, first.id].map(&:to_s)
+    )
+  end
 end
 
 RSpec.describe "Account search", type: :request do

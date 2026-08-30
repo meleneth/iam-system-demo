@@ -6,6 +6,7 @@ require "set"
 module Authorization
   class Capabilities
     TTL_SECONDS = 300
+    MAX_ACCOUNT_HIERARCHY_DEPTH = 100
 
     def initialize(user_id:, redis: AUTHORIZATION_CACHE, account_context_client: AccountContextClient.new)
       @user_id = user_id
@@ -81,8 +82,9 @@ module Authorization
           end
         end
 
+      valid_account_ids = unresolved_account_ids.select { |account_id| hierarchy_by_account_id.fetch(account_id).any? }
       reflected_msp_account_ids_with_permission(
-        unresolved_account_ids,
+        valid_account_ids,
         hierarchy_by_account_id,
         permission
       ).each do |account_id|
@@ -170,17 +172,48 @@ module Authorization
     end
 
     def account_hierarchy_ids_for(account_ids)
+      requested_ids = Array(account_ids).map(&:to_s).uniq
       hierarchies = nil
       Account.with_headers("pad-user-id" => "IAM_SYSTEM") do
-        hierarchies = Account.with_parents_batch(account_ids)
+        hierarchies = Account.with_parents_batch(requested_ids)
       end
 
-      account_ids.zip(Array(hierarchies)).to_h do |account_id, hierarchy|
-        [account_id, Array(hierarchy).map { |account| account.id.to_s }]
+      requested_id_lookup = requested_ids.index_with(true)
+      invalid_targets = Set.new
+      indexed = Array(hierarchies).each_with_object({}) do |hierarchy, by_target|
+        hierarchy = Array(hierarchy)
+        target_id = hierarchy.last&.id&.to_s
+        next unless requested_id_lookup.key?(target_id)
+
+        if by_target.key?(target_id) || !valid_account_hierarchy?(hierarchy, target_id)
+          invalid_targets << target_id
+          by_target.delete(target_id)
+          next
+        end
+
+        by_target[target_id] = hierarchy.map { |account| account.id.to_s }
+      end
+
+      requested_ids.to_h do |account_id|
+        [account_id, invalid_targets.include?(account_id) ? [] : indexed.fetch(account_id, [])]
+      end
+    end
+
+    def valid_account_hierarchy?(hierarchy, target_id)
+      return false if hierarchy.empty? || hierarchy.size > MAX_ACCOUNT_HIERARCHY_DEPTH
+
+      hierarchy_ids = hierarchy.map { |account| account.id.to_s }
+      return false unless hierarchy_ids.last == target_id && hierarchy_ids.uniq.size == hierarchy_ids.size
+      return false unless hierarchy.first.parent_account_id.blank?
+
+      hierarchy.each_cons(2).all? do |ancestor, descendant|
+        descendant.parent_account_id.to_s == ancestor.id.to_s
       end
     end
 
     def reflected_msp_account_capabilities(account_id, hierarchy_ids)
+      return [] if hierarchy_ids.empty?
+
       msp_organization_ids = CapabilityGrant
         .where(user_id: @user_id, scope_type: "Organization", permission: "msp.admin.users")
         .pluck(:scope_id)
@@ -220,6 +253,8 @@ module Authorization
     end
 
     def reflected_msp_account_ids_with_permission(account_ids, hierarchy_by_account_id, permission)
+      return Set.new if account_ids.empty?
+
       msp_organization_ids = CapabilityGrant
         .where(user_id: @user_id, scope_type: "Organization", permission: "msp.admin.users")
         .pluck(:scope_id)

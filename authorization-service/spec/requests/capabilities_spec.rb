@@ -42,9 +42,9 @@ RSpec.describe "Capabilities", type: :request do
       allow(Account).to receive(:with_parents_batch).with([target_account_id]).and_return(
         [
           [
-            OpenStruct.new(id: root_account_id),
-            OpenStruct.new(id: parent_account_id),
-            OpenStruct.new(id: target_account_id)
+            OpenStruct.new(id: root_account_id, parent_account_id: nil),
+            OpenStruct.new(id: parent_account_id, parent_account_id: root_account_id),
+            OpenStruct.new(id: target_account_id, parent_account_id: parent_account_id)
           ]
         ]
       )

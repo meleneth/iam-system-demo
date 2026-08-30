@@ -124,7 +124,10 @@ RSpec.describe Authorization::Capabilities do
 
     allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with([client_target_account_id]).and_return(
-      [[OpenStruct.new(id: client_root_account_id), OpenStruct.new(id: client_target_account_id)]]
+      [[
+        OpenStruct.new(id: client_root_account_id, parent_account_id: nil),
+        OpenStruct.new(id: client_target_account_id, parent_account_id: client_root_account_id)
+      ]]
     )
 
     expect(service.for_account(client_target_account_id)).to eq(["account.users.read", "do.some.mcguffin"])
@@ -205,5 +208,95 @@ RSpec.describe Authorization::Capabilities do
     failing_service = described_class.new(user_id: user_id, redis: FailingCapabilitiesRedis.new)
 
     expect(failing_service.account_ids_with_permission([account_id], permission)).to eq(Set[account_id])
+  end
+
+  it "maps reordered hierarchy responses by their target account IDs" do
+    permission = "account.users.read"
+    account_ids = [SecureRandom.uuid, SecureRandom.uuid]
+    account_ids.each do |account_id|
+      CapabilityGrant.create!(user_id: user_id, permission: permission, scope_type: "Account", scope_id: account_id)
+    end
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with(account_ids).and_return(
+      account_ids.reverse.map { |account_id| [OpenStruct.new(id: account_id, parent_account_id: nil)] }
+    )
+
+    expect(service.account_ids_with_permission(account_ids, permission)).to eq(account_ids.to_set)
+  end
+
+  it "denies missing and duplicated hierarchy targets" do
+    permission = "account.users.read"
+    present_id = SecureRandom.uuid
+    missing_id = SecureRandom.uuid
+    duplicated_id = SecureRandom.uuid
+    [present_id, missing_id, duplicated_id].each do |account_id|
+      CapabilityGrant.create!(user_id: user_id, permission: permission, scope_type: "Account", scope_id: account_id)
+    end
+    requested_ids = [present_id, missing_id, duplicated_id]
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with(requested_ids).and_return(
+      [
+        [OpenStruct.new(id: duplicated_id, parent_account_id: nil)],
+        [OpenStruct.new(id: present_id, parent_account_id: nil)],
+        [OpenStruct.new(id: duplicated_id, parent_account_id: nil)]
+      ]
+    )
+
+    expect(service.account_ids_with_permission(requested_ids, permission)).to eq(Set[present_id])
+  end
+
+  it "denies malformed, cyclic, and unexpectedly deep hierarchies" do
+    permission = "account.users.read"
+    malformed_id = SecureRandom.uuid
+    cyclic_id = SecureRandom.uuid
+    deep_id = SecureRandom.uuid
+    malformed_root_id = SecureRandom.uuid
+    cycle_root_id = SecureRandom.uuid
+    deep_ids = Array.new(described_class::MAX_ACCOUNT_HIERARCHY_DEPTH) { SecureRandom.uuid } + [deep_id]
+    deep_hierarchy = deep_ids.each_with_index.map do |id, index|
+      OpenStruct.new(id: id, parent_account_id: index.zero? ? nil : deep_ids[index - 1])
+    end
+    requested_ids = [malformed_id, cyclic_id, deep_id]
+    requested_ids.each do |account_id|
+      CapabilityGrant.create!(user_id: user_id, permission: permission, scope_type: "Account", scope_id: account_id)
+    end
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with(requested_ids).and_return(
+      [
+        [
+          OpenStruct.new(id: malformed_root_id, parent_account_id: nil),
+          OpenStruct.new(id: malformed_id, parent_account_id: SecureRandom.uuid)
+        ],
+        [
+          OpenStruct.new(id: cycle_root_id, parent_account_id: nil),
+          OpenStruct.new(id: cyclic_id, parent_account_id: cycle_root_id),
+          OpenStruct.new(id: cycle_root_id, parent_account_id: cyclic_id),
+          OpenStruct.new(id: cyclic_id, parent_account_id: cycle_root_id)
+        ],
+        deep_hierarchy
+      ]
+    )
+
+    expect(service.account_ids_with_permission(requested_ids, permission)).to be_empty
+  end
+
+  it "does not reflect MSP grants onto an invalid hierarchy target" do
+    permission = "account.users.read"
+    msp_organization_id = SecureRandom.uuid
+    msp_account_id = SecureRandom.uuid
+    target_id = SecureRandom.uuid
+    context_client = FakeAccountContextClient.new(valid_msp_account_id: msp_account_id)
+    reflected_service = described_class.new(
+      user_id: user_id,
+      redis: IamDemo::NullRedisCache.new,
+      account_context_client: context_client
+    )
+    CapabilityGrant.create!(user_id: user_id, permission: "msp.admin.users", scope_type: "Organization", scope_id: msp_organization_id)
+    CapabilityGrant.create!(user_id: user_id, permission: permission, scope_type: "Account", scope_id: msp_account_id)
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with([target_id]).and_return([])
+
+    expect(reflected_service.account_ids_with_permission([target_id], permission)).to be_empty
+    expect(context_client.contexts).to be_nil
   end
 end
