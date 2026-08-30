@@ -4,20 +4,40 @@ require "securerandom"
 
 RSpec.describe Authorization::Capabilities do
   class FakeCapabilitiesRedis
-    attr_reader :sets
+    attr_reader :sets, :pipelines
 
     def initialize
       @values = {}
       @sets = []
+      @pipelines = []
+      @active_pipeline = nil
+    end
+
+    def seed(key, value)
+      @values[key] = value
+    end
+
+    def pipelined
+      operations = []
+      @active_pipeline = operations
+      yield self
+      @pipelines << operations
+      operations.map { |operation| operation.fetch(:result) }
+    ensure
+      @active_pipeline = nil
     end
 
     def get(key)
-      @values[key]
+      result = @values[key]
+      @active_pipeline << { command: :get, key: key, result: result } if @active_pipeline
+      result
     end
 
     def set(key, value, ex:)
       @sets << [key, value, ex]
       @values[key] = value
+      @active_pipeline << { command: :set, key: key, value: value, ex: ex, result: "OK" } if @active_pipeline
+      "OK"
     end
   end
 
@@ -44,6 +64,16 @@ RSpec.describe Authorization::Capabilities do
           }
         end
       }
+    end
+  end
+
+  class FailingCapabilitiesRedis
+    def redis_enabled?
+      true
+    end
+
+    def pipelined
+      raise Redis::BaseError, "cache unavailable"
     end
   end
 
@@ -99,5 +129,81 @@ RSpec.describe Authorization::Capabilities do
 
     expect(service.for_account(client_target_account_id)).to eq(["account.users.read", "do.some.mcguffin"])
     expect(context_client.contexts.map { |context| context.fetch(:msp_account_id) }).to contain_exactly(msp_account_1_id, msp_account_2_id)
+  end
+
+  it "pipelines multi-account permission cache reads and computed writes" do
+    permission = "account.users.read"
+    account_ids = [SecureRandom.uuid, SecureRandom.uuid]
+    CapabilityGrant.create!(
+      user_id: user_id,
+      permission: permission,
+      scope_type: "Account",
+      scope_id: account_ids.first
+    )
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with(account_ids).and_return(
+      account_ids.map { |account_id| [OpenStruct.new(id: account_id)] }
+    )
+
+    expect(service.account_ids_with_permission(account_ids, permission)).to eq(Set[account_ids.first])
+
+    expect(redis.pipelines.map { |operations| operations.map { |operation| operation.fetch(:command) } }).to eq(
+      [%i[get get], %i[set set]]
+    )
+    expect(redis.sets).to contain_exactly(
+      ["can:#{user_id}:Account:#{permission}:#{account_ids.first}", "true", 300],
+      ["can:#{user_id}:Account:#{permission}:#{account_ids.last}", "false", 300]
+    )
+  end
+
+  it "uses positive and negative cache hits while computing only misses" do
+    permission = "account.users.read"
+    positive_id = SecureRandom.uuid
+    negative_id = SecureRandom.uuid
+    missing_id = SecureRandom.uuid
+    redis.seed("can:#{user_id}:Account:#{permission}:#{positive_id}", "true")
+    redis.seed("can:#{user_id}:Account:#{permission}:#{negative_id}", "false")
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with([missing_id]).and_return(
+      [[OpenStruct.new(id: missing_id)]]
+    )
+
+    result = service.account_ids_with_permission(
+      [positive_id, negative_id, missing_id, positive_id],
+      permission
+    )
+
+    expect(result).to eq(Set[positive_id])
+    expect(redis.pipelines.first.map { |operation| operation.fetch(:key) }).to eq(
+      [positive_id, negative_id, missing_id].map { |account_id| "can:#{user_id}:Account:#{permission}:#{account_id}" }
+    )
+    expect(redis.pipelines.last.map { |operation| operation.fetch(:key) }).to eq(
+      ["can:#{user_id}:Account:#{permission}:#{missing_id}"]
+    )
+  end
+
+  it "does not access Redis or account hierarchy data for empty input" do
+    expect(Account).not_to receive(:with_parents_batch)
+
+    expect(service.account_ids_with_permission([], "account.users.read")).to be_empty
+    expect(redis.pipelines).to be_empty
+  end
+
+  it "falls back to authoritative computation when Redis pipelines fail" do
+    permission = "account.users.read"
+    account_id = SecureRandom.uuid
+    CapabilityGrant.create!(
+      user_id: user_id,
+      permission: permission,
+      scope_type: "Account",
+      scope_id: account_id
+    )
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with([account_id]).and_return(
+      [[OpenStruct.new(id: account_id)]]
+    )
+    failing_service = described_class.new(user_id: user_id, redis: FailingCapabilitiesRedis.new)
+
+    expect(failing_service.account_ids_with_permission([account_id], permission)).to eq(Set[account_id])
   end
 end

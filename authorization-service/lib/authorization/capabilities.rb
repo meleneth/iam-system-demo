@@ -40,31 +40,23 @@ module Authorization
       account_ids = Array(account_ids).map(&:to_s).uniq
       return Set.new if account_ids.empty?
 
-      cached_results = Set.new
-      unresolved_account_ids = []
-      if redis_enabled?
-        account_ids.each do |account_id|
-          raw = @redis.get(account_permission_cache_key(permission, account_id))
-          if raw.present?
-            cached_results << account_id if raw == "true"
-          else
-            unresolved_account_ids << account_id
-          end
-        end
-      else
-        unresolved_account_ids = account_ids
+      redis_enabled = redis_enabled?
+      cached_values = read_account_permission_cache(account_ids, permission, redis_enabled: redis_enabled)
+      cached_results = account_ids.each_with_object(Set.new) do |account_id, authorized|
+        authorized << account_id if cached_values[account_id] == "true"
       end
+      unresolved_account_ids = account_ids.select { |account_id| cached_values[account_id].nil? }
       IamDemo::CacheMetrics.record(
         cache: "account_permission",
         outcome: "hit",
         count: account_ids.size - unresolved_account_ids.size,
-        redis_enabled: redis_enabled?
+        redis_enabled: redis_enabled
       )
       IamDemo::CacheMetrics.record(
         cache: "account_permission",
         outcome: "miss",
         count: unresolved_account_ids.size,
-        redis_enabled: redis_enabled?
+        redis_enabled: redis_enabled
       )
 
       authorized = cached_results.dup
@@ -97,16 +89,46 @@ module Authorization
         permissions_by_account_id[account_id] << permission
       end
 
-      permissions_by_account_id.each do |account_id, permissions|
+      computed_results = permissions_by_account_id.to_h do |account_id, permissions|
         permitted = permissions.include?(permission)
         authorized << account_id if permitted
-        @redis.set(account_permission_cache_key(permission, account_id), permitted.to_s, ex: TTL_SECONDS) if redis_enabled?
+        [account_id, permitted]
       end
+      write_account_permission_cache(computed_results, permission, redis_enabled: redis_enabled)
 
       authorized
     end
 
     private
+
+    def read_account_permission_cache(account_ids, permission, redis_enabled:)
+      return {} unless redis_enabled
+
+      values = @redis.pipelined do |pipeline|
+        account_ids.each do |account_id|
+          pipeline.get(account_permission_cache_key(permission, account_id))
+        end
+      end
+      account_ids.zip(values).to_h
+    rescue Redis::BaseError
+      {}
+    end
+
+    def write_account_permission_cache(results, permission, redis_enabled:)
+      return unless redis_enabled
+
+      @redis.pipelined do |pipeline|
+        results.each do |account_id, permitted|
+          pipeline.set(
+            account_permission_cache_key(permission, account_id),
+            permitted.to_s,
+            ex: TTL_SECONDS
+          )
+        end
+      end
+    rescue Redis::BaseError
+      nil
+    end
 
     def cached(scope_type:, scope_id:)
       unless redis_enabled?
