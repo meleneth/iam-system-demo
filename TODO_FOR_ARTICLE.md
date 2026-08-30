@@ -300,7 +300,7 @@ rerun, and stable trace artifacts exist for citation.
 
 ## Part 4: Redis Cache, per service
 
-Status: blocking invalidation work and controlled cache evidence
+Status: blocking controlled cache evidence
 
 ### Why this work is needed
 
@@ -326,7 +326,9 @@ Implementation update: `AccountGrantChecker` was removed as dead code. The live
 reads and computed-miss writes, preserves positive and negative entries, and
 falls back to authoritative computation when Redis pipelines fail. Focused
 tests cover mixed hits/misses, duplicate and empty inputs, and pipeline failure.
-Concurrent cold-request behavior and event-driven invalidation remain open.
+Concurrent cold-request behavior remains to be measured. Event-driven
+invalidation is deliberately outside the demo scope and remains an article
+limitation.
 
 ### Completed implementation cleanup
 
@@ -370,26 +372,20 @@ the demo:
   - key: `can:<user_id>:Account:<permission>:<account_id>` for narrow boolean
     decisions
   - TTL: 300 seconds for both
-  - live multi-account `/can` cache operations must be pipelined before the
-    article presents that optimization as complete
+  - live multi-account `/can` cache reads and computed-miss writes are pipelined
 
 Confirm that the inventory matches the final live revision. The article should
 say that services cache derived results from data they own, not make the broader
 and inaccurate claim that every object-owning service caches its objects.
 
-### Invalidation subtask
+### Explicit non-goal: event-driven invalidation
 
-- Define mutation events for account hierarchy, organization membership, and
-  capability-grant changes.
-- Add workers owned by the affected caching services that consume those events
-  and force-expire the relevant cache entries.
-- Use the existing `org_cachekeys:<organization_id>` registry where appropriate
-  and add equivalent targeting/indexing where a mutation affects multiple
-  authorization cache keys.
-- Test that mutation followed by event consumption removes stale positive and
-  negative decisions and that the next read rebuilds from the source of truth.
-- Preserve the 300-second TTL as a safety bound, not as the primary coherence
-  mechanism.
+Event-driven invalidation for account hierarchy, organization membership, and
+capability-grant changes is not implemented and is not required for this demo or
+the article evidence. The articles should call this out directly as a production
+requirement. The implemented 300-second TTL is the demo's stale-data bound; the
+existing `org_cachekeys:<organization_id>` registry demonstrates possible
+targeting but does not imply that invalidation workers exist.
 
 ### Controlled evidence for the article
 
@@ -411,12 +407,13 @@ and inaccurate claim that every object-owning service caches its objects.
 
 Part 4 is unblocked when the dead/live authorization-cache discrepancy is
 resolved, live multi-account cache operations are demonstrably pipelined,
-cache behavior and invalidation tests pass, the controlled disabled/cold/warm
-comparison has been captured, and the article can cite a fixed source revision.
+cache behavior tests pass, the controlled disabled/cold/warm comparison has
+been captured, and the article can cite a fixed source revision while clearly
+documenting TTL-only coherence as a demo limitation.
 
 ## Part 5: Smart APIs
 
-Status: blocking failure-path verification and trace evidence
+Status: blocking trace evidence
 
 ### Hidden hierarchy N+1
 
@@ -446,9 +443,11 @@ instrumentation described work that did not happen.
 
 Implementation update: both GraphQL paths now use one batched hierarchy call,
 map responses by requested target ID, preserve duplicates and caller order, and
-report truthful trace attributes. Model and schema-level tests cover reordered,
-missing, duplicate, and empty results. Explicit Account Service failure and
-captured trace evidence remain outstanding.
+report truthful trace attributes. Model and schema-level tests cover the real
+root-to-target response contract, reordered, missing, duplicate, and empty
+results, Account Service failure propagation, actor headers on both Account and
+User requests, and OpenTelemetry context restoration. Captured trace evidence
+remains outstanding.
 
 ### Required implementation
 
