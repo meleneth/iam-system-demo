@@ -49,6 +49,20 @@ class Account < ActiveResource::Base
     end
   end
 
+  def self.with_parents_batch_ordered(account_ids)
+    requested_ids = account_ids.map(&:to_s)
+    unique_ids = requested_ids.uniq
+    return [] if unique_ids.empty?
+    requested_id_lookup = unique_ids.index_with(true)
+
+    hierarchies_by_id = with_parents_batch(unique_ids).each_with_object({}) do |hierarchy, indexed|
+      target_id = hierarchy.first&.id&.to_s
+      indexed[target_id] = hierarchy if requested_id_lookup.key?(target_id)
+    end
+
+    requested_ids.map { |account_id| hierarchies_by_id.fetch(account_id, []) }
+  end
+
   def self.search(params)
     raw = connection.post(
       "/accounts/search",

@@ -13,8 +13,7 @@ module Resolvers
 
       hierarchies = []
       Account.with_headers('pad-user-id' => as) do
-        # Swap to your batch endpoint when ready
-        hierarchies = ids.map { |i| Account.with_parents(i) }
+        hierarchies = Account.with_parents_batch_ordered(ids)
       end
 
       # Preload users for *all* accounts across all hierarchies

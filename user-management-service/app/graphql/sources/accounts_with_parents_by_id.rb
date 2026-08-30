@@ -11,17 +11,17 @@ module Sources
 
     def fetch(keys)
       OpenTelemetry::Context.with_current(@otel_ctx) do
-        trace("Account.with_parents_batch(#{keys.size})") do
-          results_by_key = {}
+        trace("Account.with_parents_batch") do |span|
+          span.set_attribute("iam.requested_unique_id_count", keys.map(&:to_s).uniq.size)
+          span.set_attribute("iam.downstream_request_count", keys.empty? ? 0 : 1)
 
+          results = []
           with_headers do
             Account.with_headers('pad-user-id' => @as) do
-              # Prefer a batched endpoint if you have it:
-              keys.each { |k| results_by_key[k] = Array(Account.with_parents(k)) }
+              results = Account.with_parents_batch_ordered(keys)
             end
           end
-
-          keys.map { |k| results_by_key[k] || [] }
+          results
         end
       end
     end
