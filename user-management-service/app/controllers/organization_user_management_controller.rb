@@ -5,6 +5,9 @@ require "base64"
 class OrganizationUserManagementController < ApplicationController
   ACCOUNT_PARTITION_SIZE = 5000
   VISIBLE_PARTITION_LABEL = "server-fixed"
+  RETRIEVAL_MODES = %w[serial batched].freeze
+
+  class InvalidRetrievalMode < StandardError; end
 
   def show
     permitted = params.permit(:organization_id, :as)
@@ -76,6 +79,7 @@ class OrganizationUserManagementController < ApplicationController
       loading: false,
       actor_user_id: @actor_user_id,
       organization_id: @organization_id,
+      retrieval_mode: retrieval_mode,
       total_account_count: total_account_count,
       partition_account_count: account_ids.length,
       accounts: account_ids.map { |account_id| accounts_by_id[account_id] || { "id" => account_id, "name" => nil, "parent_account_id" => nil } },
@@ -93,7 +97,7 @@ class OrganizationUserManagementController < ApplicationController
     return [] if account_ids.empty?
 
     User.with_headers(service_headers) do
-      User.search(account_id: account_ids).map { |user| resource_attributes(user) }
+      retrieve_by_join_key(User, :account_id, account_ids).map { |user| resource_attributes(user) }
     end
   end
 
@@ -101,7 +105,7 @@ class OrganizationUserManagementController < ApplicationController
     return [] if account_ids.empty?
 
     Group.with_headers(service_headers) do
-      Group.search(account_id: account_ids).map { |group| resource_attributes(group) }
+      retrieve_by_join_key(Group, :account_id, account_ids).map { |group| resource_attributes(group) }
     end
   end
 
@@ -109,7 +113,7 @@ class OrganizationUserManagementController < ApplicationController
     return [] if user_ids.empty?
 
     GroupUser.with_headers(service_headers) do
-      GroupUser.search(user_id: user_ids).map { |group_user| resource_attributes(group_user) }
+      retrieve_by_join_key(GroupUser, :user_id, user_ids).map { |group_user| resource_attributes(group_user) }
     end
   end
 
@@ -117,7 +121,12 @@ class OrganizationUserManagementController < ApplicationController
     return [] if account_ids.empty?
 
     Account.with_headers(service_headers) do
-      Account.search(id: account_ids).map { |account| resource_attributes(account) }
+      accounts = if serial_retrieval?
+        account_ids.map { |account_id| Account.find(account_id) }
+      else
+        Account.search(id: account_ids)
+      end
+      accounts.map { |account| resource_attributes(account) }
     end
   rescue ActiveResource::ClientError, ActiveResource::ServerError, RuntimeError
     []
@@ -125,6 +134,23 @@ class OrganizationUserManagementController < ApplicationController
 
   def service_headers
     { "pad-user-id" => @actor_user_id }
+  end
+
+  def retrieve_by_join_key(resource_class, join_key, ids)
+    return resource_class.search(join_key => ids) unless serial_retrieval?
+
+    ids.flat_map { |id| resource_class.search(join_key => [id]) }
+  end
+
+  def serial_retrieval?
+    retrieval_mode == "serial"
+  end
+
+  def retrieval_mode
+    mode = ENV.fetch("IAM_DEMO_RETRIEVAL_MODE", "batched")
+    return mode if RETRIEVAL_MODES.include?(mode)
+
+    raise InvalidRetrievalMode, "IAM_DEMO_RETRIEVAL_MODE must be serial or batched, got #{mode.inspect}"
   end
 
   def resource_attributes(resource)
