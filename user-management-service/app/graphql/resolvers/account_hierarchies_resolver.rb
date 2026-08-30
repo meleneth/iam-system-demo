@@ -19,7 +19,7 @@ module Resolvers
       # Preload users for *all* accounts across all hierarchies
       account_ids = hierarchies.flatten.map(&:id).uniq
       users = []
-      Account.with_headers('pad-user-id' => as) do
+      User.with_headers('pad-user-id' => as) do
         users = account_ids.each_slice(ACCOUNT_ID_FETCH_CHUNK_SIZE).flat_map do |ids|
           User.search(account_id: ids)
         end

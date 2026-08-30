@@ -7,11 +7,19 @@ class AccountBatchHierarchiesTest < ActiveSupport::TestCase
     parent = Account.new(id: "parent")
     sibling = Account.new(id: "sibling")
 
-    Account.stub(:with_parents_batch, [[sibling], [child, parent]]) do
+    Account.stub(:with_parents_batch, [[sibling], [parent, child]]) do
       result = Account.with_parents_batch_ordered(["child", "sibling", "child"])
 
-      assert_equal [["child", "parent"], ["sibling"], ["child", "parent"]],
+      assert_equal [["parent", "child"], ["sibling"], ["parent", "child"]],
         result.map { |hierarchy| hierarchy.map(&:id) }
+    end
+  end
+
+  test "returns an empty hierarchy for duplicate target responses" do
+    target = Account.new(id: "target")
+
+    Account.stub(:with_parents_batch, [[target], [target]]) do
+      assert_equal [[]], Account.with_parents_batch_ordered(["target"])
     end
   end
 

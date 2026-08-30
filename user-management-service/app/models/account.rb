@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 # app/models/account.rb
 class Account < ActiveResource::Base
   self.site = ENV.fetch("ACCOUNT_SERVICE_API_BASE_URL", "http://account-service:80")
@@ -55,12 +57,22 @@ class Account < ActiveResource::Base
     return [] if unique_ids.empty?
     requested_id_lookup = unique_ids.index_with(true)
 
+    duplicate_ids = Set.new
     hierarchies_by_id = with_parents_batch(unique_ids).each_with_object({}) do |hierarchy, indexed|
-      target_id = hierarchy.first&.id&.to_s
-      indexed[target_id] = hierarchy if requested_id_lookup.key?(target_id)
+      target_id = hierarchy.last&.id&.to_s
+      next unless requested_id_lookup.key?(target_id)
+
+      if indexed.key?(target_id)
+        duplicate_ids << target_id
+        indexed.delete(target_id)
+      elsif !duplicate_ids.include?(target_id)
+        indexed[target_id] = hierarchy
+      end
     end
 
-    requested_ids.map { |account_id| hierarchies_by_id.fetch(account_id, []) }
+    requested_ids.map do |account_id|
+      duplicate_ids.include?(account_id) ? [] : hierarchies_by_id.fetch(account_id, [])
+    end
   end
 
   def self.search(params)
