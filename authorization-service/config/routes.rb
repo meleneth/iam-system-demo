@@ -3,8 +3,6 @@ Rails.application.routes.draw do
 
   get "internal/admin_users/organization/:organization_id", to: "internal/admin_users#organization"
 
-  resources :capability_grants, only: %i[index show]
-
   get "capabilities/Organization/:organization_id", to: "capabilities#organization"
   get "capabilities/Account/:account_id", to: "capabilities#account"
   post "capabilities/Organization", to: "capabilities#organizations"
