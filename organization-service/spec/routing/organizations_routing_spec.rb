@@ -2,8 +2,8 @@ require "rails_helper"
 
 RSpec.describe OrganizationsController, type: :routing do
   describe "routing" do
-    it "routes to #index" do
-      expect(get: "/organizations").to route_to("organizations#index")
+    it "does not route to #index" do
+      expect(get: "/organizations").not_to be_routable
     end
 
     it "routes to #show" do
