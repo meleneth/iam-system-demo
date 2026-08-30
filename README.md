@@ -29,6 +29,34 @@ makes 1 million users, 3 hours on my box
 
     ./dc_dev run account-service bin/rails runner scripts/account_cte_query.rb
 
+### Controlled organization retrieval modes
+
+The full-organization User Management partition supports two behaviorally
+equivalent downstream retrieval shapes:
+
+```text
+IAM_DEMO_RETRIEVAL_MODE=serial|batched
+```
+
+`serial` deliberately performs one downstream lookup at a time. `batched` uses
+the collection/search APIs. The actor remains the real `pad-user-id` in both
+modes; the switch never substitutes `IAM_SYSTEM`.
+
+Recreate User Management Service after changing the mode, because Compose
+passes it into the service environment:
+
+```bash
+IAM_DEMO_RETRIEVAL_MODE=serial ./dc_dev up -d --force-recreate user-management-service
+IAM_DEMO_RETRIEVAL_MODE=serial FOCUSED_ORGANIZATION_ONLY=1 RUNS=1 COLD_ONLY=1 CACHE_WAIT_SECONDS=0 ./benchmark_demo.sh
+
+IAM_DEMO_RETRIEVAL_MODE=batched ./dc_dev up -d --force-recreate user-management-service
+IAM_DEMO_RETRIEVAL_MODE=batched FOCUSED_ORGANIZATION_ONLY=1 RUNS=1 COLD_ONLY=1 CACHE_WAIT_SECONDS=0 ./benchmark_demo.sh
+```
+
+Use the same authorization, Redis, batch-size, fixture, and server settings for
+both runs. Each benchmark output directory contains `metadata.json` with those
+settings and `timings.csv` with the retrieval mode on every row.
+
 User seeder SQS message format:
 
     {

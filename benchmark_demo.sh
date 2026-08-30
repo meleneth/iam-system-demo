@@ -10,6 +10,7 @@ INCLUDE_MSP_100K="${INCLUDE_MSP_100K:-1}"
 INCLUDE_MSP_50K="${INCLUDE_MSP_50K:-1}"
 INCLUDE_MSP_10K="${INCLUDE_MSP_10K:-1}"
 COLD_ONLY="${COLD_ONLY:-0}"
+FOCUSED_ORGANIZATION_ONLY="${FOCUSED_ORGANIZATION_ONLY:-0}"
 REDIS_CACHE_SERVICES="${REDIS_CACHE_SERVICES:-accountcache authcache groupcache orgcache}"
 MSP_READY_ATTEMPTS="${MSP_READY_ATTEMPTS:-120}"
 MSP_READY_SLEEP_SECONDS="${MSP_READY_SLEEP_SECONDS:-1}"
@@ -22,6 +23,31 @@ GRAFANA_ANNOTATIONS_ENABLED="${GRAFANA_ANNOTATIONS_ENABLED:-1}"
 USER_MANAGEMENT_BASE_URL="${USER_MANAGEMENT_BASE_URL:-http://localhost:7500}"
 JAEGER_BASE_URL="${JAEGER_BASE_URL:-http://localhost:11160}"
 
+configured_env_value() {
+  local name="$1"
+  local fallback="$2"
+  local current_value="${!name:-}"
+  if [[ -n "$current_value" ]]; then
+    echo "$current_value"
+    return
+  fi
+
+  if [[ -f development.env ]]; then
+    awk -F= -v name="$name" -v fallback="$fallback" '$1 == name { print $2; found = 1 } END { if (!found) print fallback }' development.env
+  else
+    echo "$fallback"
+  fi
+}
+
+RETRIEVAL_MODE="$(configured_env_value IAM_DEMO_RETRIEVAL_MODE batched)"
+AUTHORIZATION_MODE="$(configured_env_value AUTHORIZATION_CHECK_MODE can)"
+BATCH_SIZE="$(configured_env_value IAM_DEMO_BATCH_SIZE 1000)"
+
+if [[ ! "$RETRIEVAL_MODE" =~ ^(serial|batched)$ ]]; then
+  echo "IAM_DEMO_RETRIEVAL_MODE must be serial or batched, got: $RETRIEVAL_MODE" >&2
+  exit 1
+fi
+
 if [[ ! -f "$MANIFEST" ]]; then
   echo "Missing fixture manifest: $MANIFEST" >&2
   echo "Run the demo seeder first, then rerun this script." >&2
@@ -31,6 +57,7 @@ fi
 mkdir -p "$OUT_DIR/graphql"
 RESULTS="$OUT_DIR/timings.csv"
 URLS="$OUT_DIR/urls.md"
+METADATA="$OUT_DIR/metadata.json"
 
 configured_redis_toggle() {
   if [[ -n "${GLOBAL_IAM_DEMO_USE_REDIS:-}" ]]; then
@@ -148,7 +175,7 @@ curl_time() {
     printf '{}\n' > "$output_file"
     echo "curl failed for $phase,$label with exit $curl_exit; see $output_file.curl_error" >&2
   fi
-  echo "$phase,$label,$method,$url,$result,$output_file," | tee -a "$RESULTS"
+  echo "$phase,$RETRIEVAL_MODE,$label,$method,$url,$result,$output_file," | tee -a "$RESULTS"
 }
 
 write_graphql_body() {
@@ -258,6 +285,7 @@ fanout_50k_msp_account="$(json_get massive_fanout_50k targets.msp_account_id)"
 fanout_50k_admin="$(json_get_or massive_fanout_50k targets.top_level_admin_user_id targets.admin_user_id)"
 fanout_10k_msp_account="$(json_get massive_fanout_10k targets.msp_account_id)"
 fanout_10k_admin="$(json_get_or massive_fanout_10k targets.top_level_admin_user_id targets.admin_user_id)"
+organization_partition_url="$USER_MANAGEMENT_BASE_URL/organization_user_management/partition?organization_id=$wide_org&as=$wide_admin&frame_id=benchmark-partition-root"
 
 deep_query="$OUT_DIR/graphql/deep_chain.graphql"
 wide_query="$OUT_DIR/graphql/wide_org.graphql"
@@ -338,6 +366,7 @@ cat > "$URLS" <<URLS
 ## User-Management Pages
 
 - App root: $USER_MANAGEMENT_BASE_URL/
+- Full-organization User Management partition: $organization_partition_url
 - Deep chain account page, experimental expansion probe: $USER_MANAGEMENT_BASE_URL/accounts/$deep_leaf?as=$deep_admin
 - Branching tree account page, experimental expansion probe: $USER_MANAGEMENT_BASE_URL/accounts/$branch_leaf?as=$branch_admin
 - Dense account page, experimental expansion probe: $USER_MANAGEMENT_BASE_URL/accounts/$dense_account?as=$dense_admin
@@ -366,9 +395,21 @@ cat > "$URLS" <<URLS
 
 - Timing CSV: $RESULTS
 - Response bodies: $OUT_DIR
+- Run metadata: $METADATA
 URLS
 
-echo "phase,label,method,url,http_code,time_total,size_download,response_file,notes" > "$RESULTS"
+echo "phase,retrieval_mode,label,method,url,http_code,time_total,size_download,response_file,notes" > "$RESULTS"
+
+ruby -rjson -e '
+  puts JSON.pretty_generate({
+    retrieval_mode: ARGV[0],
+    authorization_mode: ARGV[1],
+    redis_enabled: ARGV[2],
+    batch_size: ARGV[3].to_i,
+    manifest: ARGV[4],
+    focused_organization_only: ARGV[5] == "1"
+  })
+' "$RETRIEVAL_MODE" "$AUTHORIZATION_MODE" "$(configured_redis_toggle)" "$BATCH_SIZE" "$MANIFEST" "$FOCUSED_ORGANIZATION_ONLY" > "$METADATA"
 
 run_msp_fanout_walk() {
   local phase="$1"
@@ -400,7 +441,7 @@ run_msp_fanout_walk() {
     final_response="$OUT_DIR/${phase}-${request_label}.json"
     local row
     row="$(tail -n 1 "$RESULTS")"
-    IFS=, read -r _ _ _ _ last_http_code page_time page_download _ _ <<< "$row"
+    IFS=, read -r _ _ _ _ _ last_http_code page_time page_download _ _ <<< "$row"
 
     total_time="$(ruby -e 'puts ARGV.map(&:to_f).sum' "$total_time" "$page_time")"
     total_download=$((total_download + page_download))
@@ -461,7 +502,7 @@ run_msp_fanout_walk() {
     notes="$notes stop=$stop_reason"
   fi
 
-  echo "$phase,${label}_full_walk_$run,POST,$USER_MANAGEMENT_BASE_URL/graphql,$last_http_code,$total_time,$total_download,$final_response,$notes" | tee -a "$RESULTS"
+  echo "$phase,$RETRIEVAL_MODE,${label}_full_walk_$run,POST,$USER_MANAGEMENT_BASE_URL/graphql,$last_http_code,$total_time,$total_download,$final_response,$notes" | tee -a "$RESULTS"
   grafana_annotate "$phase $label run $run finished: $notes" "benchmark,fanout,$phase,$label"
 }
 
@@ -473,6 +514,11 @@ run_phase() {
 
   for run in $(seq 1 "$RUNS"); do
     grafana_annotate "$phase run $run started" "benchmark,run,$phase"
+    curl_time "$phase" "organization_user_management_partition_$run" GET "$organization_partition_url"
+    if [[ "$FOCUSED_ORGANIZATION_ONLY" == "1" ]]; then
+      grafana_annotate "$phase run $run finished" "benchmark,run,$phase,retrieval-$RETRIEVAL_MODE"
+      continue
+    fi
     curl_time "$phase" "web_root_$run" GET "$USER_MANAGEMENT_BASE_URL/"
     curl_time "$phase" "graphql_deep_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$deep_body"
     curl_time "$phase" "graphql_wide_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$wide_body"
@@ -501,6 +547,7 @@ run_phase() {
 echo "Writing benchmark output to $OUT_DIR"
 echo "URLs: $URLS"
 echo "Timings: $RESULTS"
+echo "Metadata: $METADATA"
 grafana_annotate "benchmark started: $OUT_DIR" "benchmark,lifecycle"
 
 run_phase "startup_cold"

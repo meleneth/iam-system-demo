@@ -6,7 +6,7 @@ the demo itself.
 
 ## Part 2: Multiple Object Retrieval
 
-Status: blocking article completion
+Status: blocking controlled benchmark and trace evidence
 
 ### Why this experiment is needed
 
@@ -28,6 +28,13 @@ experimental account routes are not a controlled comparison for the current
 organization-wide workload.
 
 ### Required implementation
+
+Implementation update: the full-organization partition now supports
+`IAM_DEMO_RETRIEVAL_MODE=serial|batched`, passes the setting through Compose,
+reports the mode in its payload, and has a bounded equivalence test covering
+accounts, users, groups, memberships, actor propagation, and downstream call
+shape. The focused benchmark entry point and run metadata are implemented; the
+controlled runs remain outstanding.
 
 - Add an explicit runtime retrieval switch, provisionally:
 
@@ -409,7 +416,7 @@ comparison has been captured, and the article can cite a fixed source revision.
 
 ## Part 5: Smart APIs
 
-Status: blocking GraphQL hierarchy batching fix
+Status: blocking failure-path verification and trace evidence
 
 ### Hidden hierarchy N+1
 
@@ -425,17 +432,23 @@ the set-based recursive CTE. Authorization Service uses it in
 `Authorization::Capabilities#account_hierarchy_ids_for`, and a User Management
 controller also uses it for a multi-account request.
 
-Two User Management GraphQL paths bypass it:
+Two User Management GraphQL paths previously bypassed it:
 
 - `Sources::AccountsWithParentsById#fetch` loops over its Dataloader keys and
   calls `Account.with_parents` once per key.
 - `Resolvers::AccountHierarchiesResolver#resolve` maps requested IDs through
   individual `Account.with_parents` calls.
 
-This recreates a cross-network N+1 even though the batch endpoint already
-exists. Worse, `AccountsWithParentsById` names its trace span
-`Account.with_parents_batch(<count>)` while issuing the individual calls, so the
-instrumentation currently describes work that did not happen.
+That revision recreated a cross-network N+1 even though the batch endpoint
+already existed. Worse, `AccountsWithParentsById` named its trace span
+`Account.with_parents_batch(<count>)` while issuing the individual calls, so its
+instrumentation described work that did not happen.
+
+Implementation update: both GraphQL paths now use one batched hierarchy call,
+map responses by requested target ID, preserve duplicates and caller order, and
+report truthful trace attributes. Model and schema-level tests cover reordered,
+missing, duplicate, and empty results. Explicit Account Service failure and
+captured trace evidence remain outstanding.
 
 ### Required implementation
 
