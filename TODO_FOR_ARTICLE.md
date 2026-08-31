@@ -486,3 +486,179 @@ Part 5 is unblocked when both GraphQL hierarchy paths use the batch endpoint,
 ordering and failure semantics are tested, instrumentation truthfully describes
 the downstream operation, and preserved trace evidence demonstrates one network
 request for a multi-account hierarchy load.
+
+## Supporting cleanup: batching and concurrency controls
+
+Status: implementation cleanup; no standalone article
+
+The Async Madness article has been removed from the case-study spine. Bounded
+concurrency remains an implementation detail of the GraphQL/Dataloader path,
+and the legacy Accounts controller still needs removal, but neither justifies a
+separate numbered article.
+
+### Runtime controls
+
+The live GraphQL `Sources::AccountById` implementation currently hardcodes:
+
+```ruby
+CHUNK_SIZE = 200
+MAX_CONCURRENCY = 4
+```
+
+`IAM_DEMO_BATCH_SIZE` is already passed into User Management by Compose, but
+this source does not consume it. There is also no environment control that
+turns concurrent chunk retrieval on or off. `IAM_DEMO_RETRIEVAL_MODE` selects
+serial versus batched object retrieval for the organization-wide controller; it
+does not distinguish sequential batches from concurrent batches.
+
+- Replace the hardcoded GraphQL chunk size with a validated, bounded value read
+  from `IAM_DEMO_BATCH_SIZE`, with a documented default.
+- Add an explicit defaulted concurrency control, provisionally:
+
+  ```text
+  IAM_DEMO_ASYNC=true|false
+  IAM_DEMO_MAX_CONCURRENCY=4
+  ```
+
+- When async is disabled, preserve batching but execute chunks sequentially.
+  Do not make “async off” fall back to one-record-per-request behavior.
+- Validate zero, negative, non-numeric, and unreasonably large values rather
+  than allowing `each_slice` or worker creation to fail unpredictably.
+- Pass the controls through Compose, benchmark metadata, reproduction commands,
+  and trace attributes.
+- Add tests for serial retrieval, batched-sequential retrieval, and
+  batched-concurrent retrieval with equivalent results.
+
+### Remove the historical Accounts controller
+
+`UserManagementService::AccountsController` is legacy code, but it is not
+currently unused. The following routes still point to it:
+
+```text
+GET /accounts/:id
+GET /slow_accounts/:id
+GET /slowest_accounts/:id
+GET /debug
+```
+
+The normal account page is linked from the front door and exercised by
+`benchmark_demo.sh`; the slow routes are documented as comparison/debug views.
+Its `fetch_accounts_async` method hardcodes five-ID chunks and creates one Async
+task per chunk without a concurrency bound.
+
+These pages no longer provide enough value to justify maintaining a second,
+less representative retrieval and concurrency implementation. The
+organization-wide User Management workload and its runtime retrieval controls
+are now the canonical reproduction surface. Preserve historical source through
+Git and article evidence rather than keeping the old paths executable.
+
+- Remove `UserManagementService::AccountsController`.
+- Remove all four routes listed above and any route helpers that become unused.
+- Remove the controller's Account view and any assets used only by that view.
+- Remove front-door links and fixture links that navigate to the legacy account
+  page.
+- Remove README and `FINAL_ARCHITECTURE.md` references to the comparison/debug
+  endpoints.
+- Remove the account-page probes and result labels from `benchmark_demo.sh`.
+- Remove tests, helpers, and dependencies used only by this controller,
+  including the direct `async` dependency if no supported runtime path still
+  requires it.
+- Confirm that the organization-wide User Management page, GraphQL demo
+  queries, focused retrieval benchmark, and seed fixture links remain intact.
+- Preserve historically useful slow-path snippets, commit references, and trace
+  artifacts for the articles before deleting live code if they are not already
+  recoverable from fixed Git revisions.
+
+### Completion gate
+
+This cleanup is complete when chunk size and concurrency are controlled by validated
+defaulted environment settings, batched-sequential and batched-concurrent modes
+are behaviorally equivalent and measurable, and the legacy Accounts controller
+and its complete route/UI/documentation/benchmark surface have been removed.
+
+## Part 6: GraphQL and Dataloader
+
+Status: blocking Dataloader consistency and request-shape audit
+
+### Why this audit is needed
+
+The article currently claims that nested GraphQL fields use Dataloader sources
+and collapse the result to roughly one downstream request for Accounts, Users,
+Groups, and GroupUsers. The live implementation is uneven:
+
+- `OrganizationType#accounts` manually retrieves organization membership and
+  chunks Account requests instead of using a Dataloader source.
+- `Sources::OrgAccountsCount` is a Dataloader source, but its client method
+  explicitly rejects more than one organization ID.
+- `UsersCountByAccount`, `GroupsCountByAccount`, and `OrgAccountsCount` accept an
+  `as:` actor argument but do not apply it with `with_headers`; the instance
+  variable is otherwise unused.
+- `UsersByAccountId` and `GroupsByUserId` batch logical keys but split them into
+  multiple downstream requests at hardcoded 200-ID boundaries.
+- `GroupsByUserId` necessarily has two dependent stages: load GroupUser rows,
+  then load the referenced Group rows. It is not literally one request for the
+  entire nested relationship.
+- The article's “Known Unevenness” example says
+  `AccountsWithParentsById` iterates per key, but Part 5 fixed that path to use
+  one batch hierarchy request.
+
+Dataloader collects logical field loads; it does not guarantee one network
+request unless each source preserves that batch shape when calling downstream
+services.
+
+### Required implementation audit
+
+- Add or adopt an Account-by-ID source for `OrganizationType#accounts` so
+  Account requests from organization fields participate in the same Dataloader
+  batch as other Account loads where GraphQL execution permits it.
+- Decide whether organization-account counts need true multi-organization
+  batching. If so, add a collection-shaped Organization Service endpoint and
+  make `OrgAccountsCount#fetch` issue one request for all collected keys. If the
+  schema can only request one organization here, remove misleading Dataloader
+  machinery and document the actual bounded shape.
+- Apply `pad-user-id` explicitly in every source that accepts `as:`. Remove
+  unused actor arguments only where the downstream endpoint is intentionally
+  actor-independent.
+- Make all source chunk sizes consume the validated Part 6 batch-size setting
+  rather than defining unrelated hardcoded constants.
+- Specify failure behavior per source: fail the GraphQL field/request, return
+  `nil`, or return a partial collection. Do not silently mix policies.
+- Verify output ordering, duplicate keys, missing records, and authorization
+  denial for every source.
+- Remove stale comments and generated scaffold commentary from resolvers and
+  schema classes where it obscures the actual contract.
+
+### Article and diagram requirements
+
+- Add a real GraphQL query and variables from the demo fixtures; the current
+  article contains empty “this query / these variables” placeholders.
+- Diagram GraphQL's two phases separately:
+  - logical field resolutions collected by Dataloader
+  - actual downstream REST requests after chunking and dependent stages
+- Use formulas or measured counts rather than “one request” when cardinality
+  exceeds the configured batch size.
+- Show that GroupUser retrieval must precede Group retrieval because the first
+  response supplies the Group IDs for the second request.
+- Explain that Dataloader preserves batching opportunities created by the REST
+  APIs; it does not repair a source that loops over keys.
+- Replace the stale `AccountsWithParentsById` warning with any unevenness that
+  remains after this audit.
+
+### Tests and evidence
+
+- Add source-level tests asserting downstream request counts, actor headers,
+  ordering, duplicates, missing records, and failure behavior.
+- Add schema-level tests for a representative nested organization query.
+- Capture request counts and Jaeger traces for a result below and above the
+  configured batch size.
+- Verify the trace shows each dependent stage and does not label multiple
+  network calls as one batch operation.
+- Use fixed-revision source permalinks in the final article.
+
+### Completion gate
+
+Part 6 is unblocked when every claimed Dataloader source has an explicit and
+tested downstream request shape, actor propagation is correct, hardcoded chunk
+sizes are removed, the representative nested query has preserved trace/request
+evidence, and the article describes actual chunk and dependency cardinality
+rather than promising one request per object type.
