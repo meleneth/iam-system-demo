@@ -52,6 +52,15 @@ if [[ ! "$RETRIEVAL_MODE" =~ ^(serial|batched)$ ]]; then
   exit 1
 fi
 
+if [[ ! "$BATCH_SIZE" =~ ^[0-9]+$ ]] || (( 10#$BATCH_SIZE < 1 || 10#$BATCH_SIZE > 10000 )); then
+  echo "IAM_DEMO_BATCH_SIZE must be an integer between 1 and 10000" >&2
+  exit 1
+fi
+if [[ ! "$CACHE_WAIT_SECONDS" =~ ^[0-9]+$ ]] || (( CACHE_WAIT_SECONDS > 0 && CACHE_WAIT_SECONDS <= 300 )); then
+  echo "CACHE_WAIT_SECONDS must be 0 (skip) or greater than the 300-second cache TTL" >&2
+  exit 1
+fi
+
 if [[ ! -f "$MANIFEST" ]]; then
   echo "Missing fixture manifest: $MANIFEST" >&2
   echo "Run the demo seeder first, then rerun this script." >&2
@@ -187,7 +196,7 @@ curl_time() {
   [[ "$url" == *"/graphql" ]] && kind="graphql"
   [[ "$url" == *"/organization_user_management/partition?"* ]] && kind="partition"
   local notes
-  notes="$(ruby scripts/benchmark_response.rb "$output_file" "$http_code" "$curl_exit" "$kind" "$trace_id" "$trace_file")"
+  notes="$(ruby scripts/benchmark_response.rb "$output_file" "$http_code" "$curl_exit" "$kind" "$trace_id" "$trace_file" "$RETRIEVAL_MODE" "$BATCH_SIZE")"
   [[ "$notes" == outcome=ok* ]] || RUN_FAILED=1
   printf '%s\t%s\t%s\n' "$trace_id" "$parent_id" "$trace_file" >> "$TRACE_PENDING"
   notes="$notes trace_id=$trace_id"

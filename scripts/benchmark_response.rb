@@ -42,9 +42,13 @@ module BenchmarkResponse
 end
 
 if $PROGRAM_NAME == __FILE__
-  path, http_code, curl_exit, kind, trace_id, trace_file = ARGV
+  path, http_code, curl_exit, kind, trace_id, trace_file, expected_mode, expected_batch_size = ARGV
   result = BenchmarkResponse.inspect_response(path, http_code: http_code.to_i, curl_exit: curl_exit.to_i,
     partition: kind == "partition", graphql: kind == "graphql")
+  if kind == "partition" && result["outcome"] == "ok" && expected_mode &&
+      (result["retrieval_mode"] != expected_mode || result["batch_size"] != expected_batch_size.to_i)
+    result.merge!("outcome" => "configuration_mismatch", "error" => "Running partition settings differ from benchmark settings")
+  end
   result.merge!("trace_id" => trace_id, "trace_file" => trace_file) if trace_id
   File.write("#{path}.result.json", JSON.pretty_generate(result) + "\n")
   puts "outcome=#{result.fetch('outcome')} curl_exit=#{curl_exit}"

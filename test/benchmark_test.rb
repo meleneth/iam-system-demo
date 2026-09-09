@@ -87,6 +87,13 @@ class BenchmarkTest < Minitest::Test
     end
   end
 
+  def test_rejects_running_partition_settings_that_differ_from_metadata
+    rows = run_benchmark("IAM_DEMO_BATCH_SIZE" => "2", "COLD_ONLY" => "1", "RUNS" => "1")
+    refute @status.success?
+    sample = rows.find { |row| row["label"].end_with?("page_1") }
+    assert_includes sample["notes"], "outcome=configuration_mismatch"
+  end
+
   def test_keeps_timeout_duration_and_body_and_exits_unsuccessfully
     rows = run_benchmark("FAKE_TIMEOUT" => "1", "COLD_ONLY" => "1", "RUNS" => "1")
     refute @status.success?
