@@ -91,6 +91,7 @@ Rails.application.configure do
   config.hosts << "user-management-service"
   config.hosts << "thinktank.sectorfour"
   config.hosts << "moxie.sectorfour"
-  config.hosts << "localhost:7500"
-  config.hosts << "127.0.0.1:7500"
+  config.hosts << "localhost"
+  config.hosts << "127.0.0.1"
+
 end

@@ -86,4 +86,6 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   config.hosts << "organization-service"
+  config.hosts << "localhost"
+  config.hosts << "127.0.0.1"
 end
