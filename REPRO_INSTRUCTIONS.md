@@ -239,3 +239,20 @@ Keep the complete output directory as the article evidence artifact.
 ./dc_test run --rm --no-deps -v "$PWD:/workspace" -w /workspace \
   user-management-service ruby test/archive_trace_test.rb
 ```
+
+### Refresh database statistics after seeding
+
+Queue count reaching zero remains the seed-readiness convention. Before running
+benchmarks, update planner statistics with:
+
+```bash
+./analyze_databases.sh       # development stack, via ./dc_dev
+./analyze_databases.sh test  # test stack, via ./dc_test
+./analyze_databases.sh prod  # production stack, via ./dc_prod
+```
+
+The script discovers PostgreSQL services (`*-db` and `*-db-*`) from the selected
+wrapper configuration and runs `ANALYZE` on every connectable non-template
+database, including any queue/cache/cable databases in those containers. It stops
+on database errors. Run it after inserts have drained and outside measured
+requests; it updates statistics without deleting data or flushing Redis.
