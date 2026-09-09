@@ -1,7 +1,6 @@
 # app/graphql/sources/users_by_account_id.rb
 module Sources
   class UsersByAccountId < BaseSource
-    ACCOUNT_ID_FETCH_CHUNK_SIZE = 200
 
     # keys: [account_id]
     # result: [Array<User>] per account_id
@@ -19,7 +18,7 @@ module Sources
           with_headers do
             request_headers = { 'pad-user-id' => @as }
             User.with_headers(request_headers) do
-              users = keys.each_slice(ACCOUNT_ID_FETCH_CHUNK_SIZE).flat_map do |account_ids|
+              users = keys.each_slice(IamDemo.batch_size).flat_map do |account_ids|
                 User.search(account_id: account_ids)
               end
               users.each { |u| grouped[u.account_id] << u }

@@ -2,7 +2,6 @@
 
 module Internal
   class MspManagedOrganizationsController < ApplicationController
-    DEFAULT_BATCH_SIZE = 1_000
 
     before_action :require_internal_system!
 
@@ -31,7 +30,7 @@ module Internal
     private
 
     def batch_size
-      [ENV.fetch("IAM_DEMO_BATCH_SIZE", DEFAULT_BATCH_SIZE).to_i, 1].max
+      IamDemo.batch_size
     end
 
     def require_internal_system!

@@ -178,3 +178,14 @@ Reset development data completely:
 ./dc_dev down
 bash reset_dev_databases.sh
 ```
+
+### Retrieval batch size
+
+`IAM_DEMO_BATCH_SIZE` controls outbound retrieval chunks and organization/MSP
+partition sizes. It defaults to `1000`; valid values are integers from `1` through
+`10000`. Invalid values fail explicitly. Recreate affected services through
+`./dc_dev up -d` after changing the setting. GraphQL Account, User, GroupUser,
+Group, hierarchy, and count loads use this setting, including the front-door
+lookups and legacy account probes. Serial retrieval still sends one key per call.
+Large Account/hierarchy/count collections use JSON POST bodies to avoid URL size
+limits. Account-source concurrency remains bounded at four workers.

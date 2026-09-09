@@ -1,8 +1,6 @@
 # app/graphql/sources/groups_by_user_id.rb
 module Sources
   class GroupsByUserId < BaseSource
-    USER_ID_FETCH_CHUNK_SIZE = 200
-    GROUP_ID_FETCH_CHUNK_SIZE = 200
 
     # keys: [user_id]
     # result: [Array<Group>] per user_id
@@ -21,11 +19,11 @@ module Sources
             request_headers = { 'pad-user-id' => @as }
             GroupUser.with_headers(request_headers) do
               Group.with_headers(request_headers) do
-                gus = keys.each_slice(USER_ID_FETCH_CHUNK_SIZE).flat_map do |user_ids|
+                gus = keys.each_slice(IamDemo.batch_size).flat_map do |user_ids|
                   GroupUser.search(user_id: user_ids)
                 end
                 group_ids = gus.map(&:group_id).uniq
-                groups = group_ids.each_slice(GROUP_ID_FETCH_CHUNK_SIZE).flat_map do |ids|
+                groups = group_ids.each_slice(IamDemo.batch_size).flat_map do |ids|
                   Group.search(id: ids)
                 end
                 groups_by_id = groups.index_by(&:id)

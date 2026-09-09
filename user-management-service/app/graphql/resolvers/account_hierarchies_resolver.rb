@@ -1,7 +1,6 @@
 # app/graphql/resolvers/account_hierarchies_resolver.rb
 module Resolvers
   class AccountHierarchiesResolver < GraphQL::Schema::Resolver
-    ACCOUNT_ID_FETCH_CHUNK_SIZE = 200
 
     type [[Types::AccountType]], null: false
 
@@ -20,7 +19,7 @@ module Resolvers
       account_ids = hierarchies.flatten.map(&:id).uniq
       users = []
       User.with_headers('pad-user-id' => as) do
-        users = account_ids.each_slice(ACCOUNT_ID_FETCH_CHUNK_SIZE).flat_map do |ids|
+        users = account_ids.each_slice(IamDemo.batch_size).flat_map do |ids|
           User.search(account_id: ids)
         end
       end

@@ -3,7 +3,6 @@
 require "base64"
 
 class OrganizationUserManagementController < ApplicationController
-  ACCOUNT_PARTITION_SIZE = 5000
   VISIBLE_PARTITION_LABEL = "server-fixed"
   RETRIEVAL_MODES = %w[serial batched].freeze
 
@@ -48,7 +47,7 @@ class OrganizationUserManagementController < ApplicationController
   def organization_partition(cursor)
     account_ids = organization_account_ids
     index = cursor&.fetch("index", 0).to_i
-    partition_account_ids = account_ids.slice(index, ACCOUNT_PARTITION_SIZE) || []
+    partition_account_ids = account_ids.slice(index, IamDemo.batch_size) || []
     next_index = index + partition_account_ids.length
 
     {
@@ -81,6 +80,7 @@ class OrganizationUserManagementController < ApplicationController
       actor_user_id: @actor_user_id,
       organization_id: @organization_id,
       retrieval_mode: retrieval_mode,
+      batch_size: IamDemo.batch_size,
       total_account_count: total_account_count,
       partition_account_count: account_ids.length,
       accounts: account_ids.map { |account_id| accounts_by_id.fetch(account_id) },
@@ -125,7 +125,7 @@ class OrganizationUserManagementController < ApplicationController
       accounts = if serial_retrieval?
         account_ids.map { |account_id| Account.find(account_id) }
       else
-        Account.search(id: account_ids)
+        account_ids.each_slice(IamDemo.batch_size).flat_map { |ids| Account.search(id: ids) }
       end
       returned_ids = accounts.map { |account| account.id.to_s }
       unless returned_ids.sort == account_ids.map(&:to_s).sort
@@ -140,9 +140,8 @@ class OrganizationUserManagementController < ApplicationController
   end
 
   def retrieve_by_join_key(resource_class, join_key, ids)
-    return resource_class.search(join_key => ids) unless serial_retrieval?
-
-    ids.flat_map { |id| resource_class.search(join_key => [id]) }
+    size = serial_retrieval? ? 1 : IamDemo.batch_size
+    ids.each_slice(size).flat_map { |slice| resource_class.search(join_key => slice) }
   end
 
   def serial_retrieval?

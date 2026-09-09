@@ -127,7 +127,7 @@ class FrontdoorController < ApplicationController
 
   def user_counts_for(account_ids)
     User.with_headers("pad-user-id" => @admin_user_id) do
-      account_ids.each_slice(500).each_with_object({}) do |ids, counts|
+      account_ids.each_slice(IamDemo.batch_size).each_with_object({}) do |ids, counts|
         counts.merge!(User.users_count(ids).transform_keys(&:to_s))
       end
     end
@@ -135,7 +135,7 @@ class FrontdoorController < ApplicationController
 
   def fetch_accounts_for(account_ids)
     Account.with_headers("pad-user-id" => @admin_user_id) do
-      account_ids.each_slice(100).flat_map { |ids| Account.where(id: ids).to_a }.index_by { |account| account.id.to_s }
+      account_ids.each_slice(IamDemo.batch_size).flat_map { |ids| Account.search(id: ids) }.index_by { |account| account.id.to_s }
     end
   end
 

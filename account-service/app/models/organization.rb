@@ -26,7 +26,7 @@ class Organization < ActiveResource::Base
   def accounts
     account_ids = organization_accounts.map(&:account_id)
     accounts = []
-    account_ids.each_slice(5).map do |group|
+    account_ids.each_slice(IamDemo.batch_size).map do |group|
       accounts.concat(Account.where(id: group).to_a)
     end
     accounts

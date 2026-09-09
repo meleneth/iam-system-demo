@@ -5,8 +5,6 @@ module Sources
   class AccountById < GraphQL::Dataloader::Source
     TRACER = OpenTelemetry.tracer_provider.tracer("sources.account_by_id", "1.0.0")
 
-    # tune these per backend limits
-    CHUNK_SIZE      = 200
     MAX_CONCURRENCY = 4       # 1 = sequential; increase cautiously
 
     def initialize(as:, otel_ctx:)
@@ -22,8 +20,9 @@ module Sources
           span.set_attribute("account.requested", wanted_ids.size)
           span.set_attribute("account.unique", uniq_ids.size)
 
-          chunks = uniq_ids.each_slice(CHUNK_SIZE).to_a
+          chunks = uniq_ids.each_slice(IamDemo.batch_size).to_a
           span.set_attribute("account.chunks", chunks.size)
+          span.set_attribute("iam.batch_size", IamDemo.batch_size)
 
           # Collect Account objects from all chunks
           parent_ctx = OpenTelemetry::Context.current
@@ -76,16 +75,15 @@ module Sources
       results
     end
 
-    # Fetch a single chunk via the batch endpoint; fall back to where(id: [...])
+    # POST keeps large configured batches out of the request URL.
     def fetch_one_chunk(slice_ids, parent_ctx)
       OpenTelemetry::Context.with_current(parent_ctx) do
         TRACER.in_span("AccountById.fetch_chunk") do |span|
           span.set_attribute("chunk.size", slice_ids.size)
-          raw = nil
           headers_override = {"pad-user-id" => @as}
           OpenTelemetry.propagation.inject(headers_override)
           Account.with_headers(headers_override) do
-            Array(Account.where(id: slice_ids).to_a)
+            Array(Account.search(id: slice_ids))
           end
         end
       end

@@ -66,15 +66,16 @@ class User < ActiveResource::Base
 
   def self.users_count(account_ids)
     account_ids = Array(account_ids)
-    query_string = URI.encode_www_form(account_ids.map { |id| ["account_id[]", id] })
 
-    url = "#{Env::USER_SERVICE_API_BASE_URL}/accounts/users/counts?#{query_string}"
+    url = "#{Env::USER_SERVICE_API_BASE_URL}/accounts/users/counts"
 
     outgoing_headers = headers.dup
     OpenTelemetry.propagation.inject(outgoing_headers)
 
-    response = Faraday.get(url) do |req|
+    response = Faraday.post(url) do |req|
       outgoing_headers.each { |key, value| req.headers[key] = value }
+      req.headers["Content-Type"] = "application/json"
+      req.body = { account_id: account_ids }.to_json
     end
 
     raise "Error getting Account's User counts" unless response.status == 200

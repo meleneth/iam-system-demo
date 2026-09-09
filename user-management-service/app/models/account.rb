@@ -39,15 +39,15 @@ class Account < ActiveResource::Base
   end
 
   def self.with_parents_batch(account_ids)
-    query_string = URI.encode_www_form(account_ids.map { |id| ['account_ids[]', id] })
-    path = "/accounts_with_parents.json?#{query_string}"
-
-    raw = connection.get(path, headers)
-    data = ActiveSupport::JSON.decode(raw.body)
-
-    # Expecting: [[account1_attrs, parent1_attrs...], [...], ...]
-    data.map do |account_group|
-      account_group.map { |attrs| new(attrs) }
+    Array(account_ids).each_slice(IamDemo.batch_size).flat_map do |ids|
+      raw = connection.post(
+        "/accounts_with_parents",
+        { account_ids: ids }.to_json,
+        headers.merge("Accept" => "application/json", "Content-Type" => "application/json")
+      )
+      ActiveSupport::JSON.decode(raw.body).map do |account_group|
+        account_group.map { |attrs| new(attrs) }
+      end
     end
   end
 

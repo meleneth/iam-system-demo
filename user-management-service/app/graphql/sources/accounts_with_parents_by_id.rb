@@ -13,7 +13,8 @@ module Sources
       OpenTelemetry::Context.with_current(@otel_ctx) do
         trace("Account.with_parents_batch") do |span|
           span.set_attribute("iam.requested_unique_id_count", keys.map(&:to_s).uniq.size)
-          span.set_attribute("iam.downstream_request_count", keys.empty? ? 0 : 1)
+          span.set_attribute("iam.downstream_request_count", (keys.map(&:to_s).uniq.size.to_f / IamDemo.batch_size).ceil)
+          span.set_attribute("iam.batch_size", IamDemo.batch_size)
 
           results = []
           with_headers do

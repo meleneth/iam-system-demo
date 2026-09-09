@@ -9,7 +9,13 @@ module Sources
     end
 
     def fetch(account_ids)
-      map = Group.groups_count(account_ids)
+      map = OpenTelemetry::Context.with_current(@otel_ctx) do
+        Group.with_headers("pad-user-id" => @as) do
+          account_ids.each_slice(IamDemo.batch_size).each_with_object({}) do |ids, counts|
+            counts.merge!(Group.groups_count(ids))
+          end
+        end
+      end
       account_ids.map { |id| (map[id.to_sym] || 0).to_i }
     end
   end

@@ -4,9 +4,9 @@ require "minitest/mock"
 class RetrievalFailuresTest < ActiveSupport::TestCase
   test "a failed concurrent account chunk fails the complete load" do
     source = account_source
-    keys = (1..201).map(&:to_s)
+    keys = (1..(IamDemo.batch_size + 1)).map(&:to_s)
     fetch = lambda do |ids, _context|
-      raise ActiveResource::ServerError.new(Net::HTTPInternalServerError.new("1.1", "500", "failed")) if ids.include?("201")
+      raise ActiveResource::ServerError.new(Net::HTTPInternalServerError.new("1.1", "500", "failed")) if ids.include?(keys.last)
       ids.map { |id| Account.new(id: id) }
     end
     source.stub(:fetch_one_chunk, fetch) do

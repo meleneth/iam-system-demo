@@ -115,11 +115,11 @@ class AccountsController < ApplicationController
     parent_ctx = OpenTelemetry::Context.current
 
     @organization_accounts = Async do |task|
-      account_ids.each_slice(5).map do |group|
+      account_ids.each_slice(IamDemo.batch_size).map do |group|
         task.async do
           OpenTelemetry::Context.with_current(parent_ctx) do
             TRACER.in_span("Account.fetch_group[#{group.first}-#{group.last}]") do
-              Account.where(id: group).to_a
+              Account.search(id: group)
             end
           end
         end
@@ -131,12 +131,12 @@ class AccountsController < ApplicationController
     parent_ctx = OpenTelemetry::Context.current
 
     @organization_accounts = Async do |task|
-      account_ids.each_slice(5).map do |group|
+      account_ids.each_slice(IamDemo.batch_size).map do |group|
         task.async do
           OpenTelemetry::Context.with_current(parent_ctx) do
             TRACER.in_span("Account.fetch_group[#{group.first}-#{group.last}]") do
               Account.with_headers('pad-user-id' => @as_user_id) do
-                Account.where(id: group).to_a
+                Account.search(id: group)
               end
             end
           end

@@ -6,6 +6,8 @@ Rails.application.routes.draw do
     to: "users_counts#index",
     as: :users_counts
 
+  post "/accounts/users/counts", to: "users_counts#index"
+
   post "/graphql", to: "graphql#execute"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
