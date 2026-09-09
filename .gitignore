@@ -3,3 +3,5 @@ loki/*
 !loki/loki-config.yaml
 promtail/*
 !promtail/promtail-config.yaml
+
+/reports/raw/

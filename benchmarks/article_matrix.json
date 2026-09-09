@@ -1,0 +1,22 @@
+{
+  "runs": 3,
+  "cases": [
+    {"id":"smoke-hierarchies","driver":"hierarchies","redis":"false","auth":"can","retrieval":"batched","batch_size":1000,"runs":1,"experiment":"cte","depths":"1,5","smoke":true},
+    {"id":"smoke-organization","driver":"organization","fixture":"deep_chain","redis":"false","auth":"can","retrieval":"batched","batch_size":1000,"runs":1,"smoke":true},
+    {"id":"hierarchies-redis-off","driver":"hierarchies","redis":"false","auth":"can","retrieval":"batched","batch_size":1000},
+    {"id":"hierarchies-cache","driver":"hierarchies","redis":"true","auth":"can","retrieval":"batched","batch_size":1000},
+    {"id":"retrieval-deep-serial","driver":"organization","fixture":"deep_chain","redis":"false","auth":"capabilities","retrieval":"serial","batch_size":1000},
+    {"id":"retrieval-deep-batched","driver":"organization","fixture":"deep_chain","redis":"false","auth":"capabilities","retrieval":"batched","batch_size":1000},
+    {"id":"retrieval-wide-serial","driver":"organization","fixture":"wide_org","redis":"false","auth":"capabilities","retrieval":"serial","batch_size":1000},
+    {"id":"retrieval-wide-batched","driver":"organization","fixture":"wide_org","redis":"false","auth":"capabilities","retrieval":"batched","batch_size":1000},
+    {"id":"auth-wide-can","driver":"organization","fixture":"wide_org","redis":"false","auth":"can","retrieval":"batched","batch_size":1000},
+    {"id":"auth-sparse-capabilities","driver":"organization","fixture":"sparse_enterprise","redis":"false","auth":"capabilities","retrieval":"batched","batch_size":1000},
+    {"id":"auth-sparse-can","driver":"organization","fixture":"sparse_enterprise","redis":"false","auth":"can","retrieval":"batched","batch_size":1000},
+    {"id":"cache-wide-can","driver":"organization","fixture":"wide_org","redis":"true","auth":"can","retrieval":"batched","batch_size":1000},
+    {"id":"cache-dense-can","driver":"organization","fixture":"dense_account","redis":"true","auth":"can","retrieval":"batched","batch_size":1000},
+    {"id":"graphql-redis-off-b10000","driver":"full","redis":"false","auth":"can","retrieval":"batched","batch_size":10000},
+    {"id":"graphql-cache-b10000","driver":"full","redis":"true","auth":"can","retrieval":"batched","batch_size":10000},
+    {"id":"graphql-cache-b1000","driver":"full","redis":"true","auth":"can","retrieval":"batched","batch_size":1000,"fanout_100k":false,"fanout_50k":false},
+    {"id":"graphql-cache-b200","driver":"full","redis":"true","auth":"can","retrieval":"batched","batch_size":200,"fanout_100k":false,"fanout_50k":false}
+  ]
+}
