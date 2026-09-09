@@ -2,6 +2,7 @@
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 ruby scripts/check_stack_ports.rb
+ruby scripts/check_production_config.rb
 mkdir -p data/production/demo-fixtures
 apps=(user-service account-service authorization-service organization-service group-service user-management-service)
 if [[ "${SKIP_BUILD:-0}" != 1 ]]; then

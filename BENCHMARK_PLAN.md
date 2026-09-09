@@ -1,6 +1,11 @@
 # Article evidence collection plan
 
-Status: production setup validated on 2026-09-09: all 46 services booted, all seven
+Status: the 2026-09-09 collection was cancelled during seeding after finding missing
+group workers. Production application databases were dropped and containers stopped.
+The fixture manifest left on disk is stale and must not be used for collection.
+The configuration audit below is static; a fresh seed and live smoke gates are still required.
+
+Historical setup validation (before the missing workers were fixed): production setup validated on 2026-09-09: all 46 services booted, all seven
 application health endpoints returned HTTP 200 in production mode, and tooling
 tests passed through `./dc_test` (21 tests, 82 assertions). Cross-stack validation
 found no collisions among 92 published port bindings. Seed workers and optional
@@ -63,10 +68,14 @@ its schemas and applications without resetting any existing data:
 
 ```bash
 ./prepare_prod.sh
-./dc_prod up -d organization-create-service-worker-1 organization-create-service-worker-2 account-create-service-worker-1 account-create-service-worker-2 user-create-service-worker-1 user-create-service-worker-2 grants-create-service-worker-01 grants-create-service-worker-02
+./seed_workers.sh prod start
 ./dc_prod run --rm --no-deps -e USER_COUNT=2000000 -e DEMO_PROGRESS_INTERVAL=10000 user-management-service bin/rails runner scripts/demo_user_seeder.rb
-./dc_prod stop organization-create-service-worker-1 organization-create-service-worker-2 account-create-service-worker-1 account-create-service-worker-2 user-create-service-worker-1 user-create-service-worker-2 grants-create-service-worker-01 grants-create-service-worker-02
+./seed_workers.sh prod stop
 ```
+
+`./seed_workers.sh prod start` first checks production/dev service parity, queue
+consumer coverage, and production database settings, then discovers all seed
+workers from the resolved production configuration. `stop` stops that same set.
 
 Run seeding once, only when preparing the dataset. The seeder waits for queues to
 drain and writes `data/production/demo-fixtures/latest/fixture_manifest.json`.

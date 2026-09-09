@@ -124,3 +124,6 @@ include:
 - path: "./compose/group-db-queue.yml"
   project_directory: "./"
   env_file: "./production.env"
+- path: "./compose/groups-create-queue-worker.yml"
+  project_directory: "./"
+  env_file: "./production.env"
