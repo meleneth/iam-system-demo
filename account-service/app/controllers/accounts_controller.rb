@@ -39,10 +39,13 @@ class AccountsController < ApplicationController
   # GET /with_parent_accounts
   def accounts_with_parents
     pad_user_id = request.headers['HTTP_PAD_USER_ID']
-    raise "Access denied to non system user" unless pad_user_id == "IAM_SYSTEM"
-
     account_ids = params.permit(account_ids: [])[:account_ids]
     raise ActionController::BadRequest, "account_ids must be an array" unless account_ids.is_a?(Array)
+    unless pad_user_id == "IAM_SYSTEM"
+      unless pad_user_id.present? && User.user_can(pad_user_id, "Account", "account.read", account_ids.map(&:to_s).uniq)
+        return render json: { error: "forbidden" }, status: :forbidden
+      end
+    end
     results = fetch_accounts_with_parents(account_ids)
     render json: results
   end

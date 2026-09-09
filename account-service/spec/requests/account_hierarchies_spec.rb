@@ -77,6 +77,22 @@ RSpec.describe "Account hierarchies", type: :request do
     )
   end
 
+  it "authorizes the real actor for the complete batch before looking up hierarchies" do
+    ids = [SecureRandom.uuid, SecureRandom.uuid]
+    expect(User).to receive(:user_can).with("actor", "Account", "account.read", ids).and_return(true)
+    expect_any_instance_of(AccountsController).to receive(:fetch_accounts_with_parents).with(ids).and_return([])
+    post "/accounts_with_parents", params: { account_ids: ids }, headers: { "pad-user-id" => "actor" }, as: :json
+    expect(response).to have_http_status(:ok)
+  end
+
+  it "denies the entire batch without reading hierarchies when the actor lacks access" do
+    ids = [SecureRandom.uuid, SecureRandom.uuid]
+    expect(User).to receive(:user_can).with("actor", "Account", "account.read", ids).and_return(false)
+    expect_any_instance_of(AccountsController).not_to receive(:fetch_accounts_with_parents)
+    post "/accounts_with_parents", params: { account_ids: ids }, headers: { "pad-user-id" => "actor" }, as: :json
+    expect(response).to have_http_status(:forbidden)
+  end
+
   it "bounds cyclic account hierarchies inside the recursive query" do
     first = Account.create!(name: "First")
     second = Account.create!(name: "Second", parent_account_id: first.id)
