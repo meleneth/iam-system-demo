@@ -256,3 +256,27 @@ wrapper configuration and runs `ANALYZE` on every connectable non-template
 database, including any queue/cache/cable databases in those containers. It stops
 on database errors. Run it after inserts have drained and outside measured
 requests; it updates statistics without deleting data or flushing Redis.
+
+### Planned console collection and hierarchy comparisons
+
+The complete multiuser/no-X collection procedure, paired case matrix, smoke gates,
+and resume rules are in [BENCHMARK_PLAN.md](BENCHMARK_PLAN.md). Preview with
+`./collect_article_evidence.sh --plan`; run it only after preparing the host for
+measurement. `COLLECTION_DIR` selects the resumable evidence directory.
+
+For a standalone hierarchy comparison against the currently configured stack:
+
+```bash
+GLOBAL_IAM_DEMO_USE_REDIS=false AUTHORIZATION_CHECK_MODE=can \
+  IAM_DEMO_BATCH_SIZE=1000 EXPERIMENT=all RUNS=3 ./benchmark_hierarchies.sh
+```
+
+`EXPERIMENT=cte` compares repeated parent reads with a single hierarchy request;
+`EXPERIMENT=batch` compares individual hierarchy requests with collection calls.
+Both use real fixture actors and check returned parent chains. The batch endpoint
+now authorizes real actors for the complete requested set before returning data;
+its existing IAM_SYSTEM internal path remains intact. No actor is promoted to an
+internal identity for the benchmark.
+
+Service-owned Redis caches use logical database **1**. The benchmark flushes that
+database explicitly; `REDIS_CACHE_DB` defaults to `1` for standalone drivers.

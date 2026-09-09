@@ -1,0 +1,182 @@
+# Article evidence collection plan
+
+Status: drivers implemented and unit/request tests validated; **the actual suite
+has not started**. Run from a text console after switching to multiuser/no-X mode.
+The first two cases are live smoke gates; both must pass before measured cases.
+
+## What this run covers
+
+The runnable matrix is [`benchmarks/article_matrix.json`](benchmarks/article_matrix.json).
+The launcher is [`collect_article_evidence.sh`](collect_article_evidence.sh).
+It runs cases sequentially, with no competing benchmark clients or seed workers.
+It starts only the required databases, caches, telemetry, and application services.
+Stop any separately running seed workers or other benchmark jobs before starting.
+
+| Case group | Comparison / workload | Settings held constant |
+| --- | --- | --- |
+| Smoke gates | Depth 1/5 hierarchy comparisons; full deep-chain organization | Real fixture actor, `/can`, Redis off, batch 1000, one repetition |
+| CTE | Parent-by-parent GET versus one hierarchy GET, depths 1/5/10/25 | Identical targets and actor, `/can`, Redis off |
+| Smart APIs | Individual hierarchy GETs versus JSON POST batches | Same target set and actor; deep chain: 1/8/25 targets, wide org: 1/8/251 targets |
+| Hierarchy cache | Repeat hierarchy comparisons cold and warm | Same targets, actor, `/can`, batch 1000 |
+| Retrieval | Serial versus batched, deep and wide organizations | Same actor, capabilities mode, Redis off, batch 1000 |
+| Authorization | Capabilities versus `/can`, wide and sparse organizations | Batched retrieval, same actor, Redis off, batch 1000 |
+| Application cache | Wide and dense organization partitions, cold versus warm | `/can`, batched retrieval, batch 1000 |
+| GraphQL scale | Deep, wide, dense, MSP 10k/50k/100k | `/can`, batch 10000; Redis disabled and independently cold/warm |
+| GraphQL chunk boundaries | Batch 200 versus 1000 versus 10000 | `/can`, same deep/wide/dense and MSP 10k queries, cold/warm |
+
+There are 17 launcher cases. Each measured case has three repetitions per
+applicable mode/phase. The hierarchy driver alternates mode order between
+repetitions. Three repetitions support descriptive median/range comparisons;
+**do not publish p95/p99 or saturation-throughput claims from this matrix**.
+GraphQL Account concurrency stays fixed at four workers. No server-model or
+concurrent-client comparison is implied.
+
+The 25-level fixture has 25 accounts and 500 users; the wide fixture has 251
+accounts and 5,020 users; dense has one account and 20,000 users; sparse has 401
+accounts and 8,020 users. MSP fixtures span many client organizations and are
+reported separately from single-organization growth.
+
+The CTE comparison measures actor-authorized end-to-end requests. It includes
+organization membership and authorization work; it is **not isolated SQL execution
+time**. Part 5 also includes the authorization-call reduction produced by a batch
+API. Returned IDs and parent links are checked against the fixture in both modes.
+Actor identity is never changed to IAM_SYSTEM to obtain a successful sample.
+
+## Run from multiuser/no-X mode
+
+Save work before leaving the graphical session. From a text console, switch modes
+using your normal host procedure, then start a tmux session so collection can
+survive a terminal disconnect:
+
+```bash
+cd ~/code/iam-system-demo
+tmux new -s iam-article
+export COLLECTION_DIR="$PWD/reports/raw/article-no-x-$(date -u +%Y%m%dT%H%M%SZ)"
+printf '%s\n' "$COLLECTION_DIR" > /tmp/iam-article-collection-path
+set -o pipefail
+./collect_article_evidence.sh 2>&1 | tee /tmp/iam-article-launch.log
+```
+
+Detach with Ctrl-B, D. Reattach with `tmux attach -t iam-article`. The launcher
+prints the active case. `attempt-*/run.log` contains that driver's progress.
+No browser, X session, or Grafana UI is needed. Docker access must already work
+for your console user; avoid running the whole collection with sudo, which would
+make its output root-owned.
+
+Before a full run, preview without starting services:
+
+```bash
+./collect_article_evidence.sh --plan
+```
+
+To run only the two live smoke gates first, while keeping the same collection:
+
+```bash
+CASE_IDS=smoke-hierarchies,smoke-organization ./collect_article_evidence.sh
+# Inspect results, then run the remaining cases:
+SKIP_BUILD=1 ./collect_article_evidence.sh
+```
+
+Only use `SKIP_BUILD=1` after building this exact revision with the launcher.
+The default invocation builds the six application images, starts infrastructure,
+runs database ANALYZE, and recreates application services for each case's settings.
+It waits for readiness and verifies running batch/auth/cache/retrieval settings.
+Application images, process IDs and non-secret runtime settings are captured.
+
+The default manifest is
+`data/development/demo-fixtures/latest/fixture_manifest.json`; override `MANIFEST`
+only deliberately. Queue count reaching zero remains sufficient seed readiness.
+No reseeding or database reconciliation is part of this run. ANALYZE updates
+planner statistics outside measured requests. Source revision, matrix and manifest
+hashes must remain unchanged throughout a collection.
+
+## Isolation, failures and timing
+
+- Redis caches use **database 1**. Cold samples flush DB 1 in accountcache,
+  authcache, orgcache and groupcache before each complete workload. No flush occurs
+  between continuation pages. Redis-off cases make one measured phase per run.
+- Warm samples receive a separate priming request/walk immediately beforehand.
+  Do not mix prime rows into measured results. Cold means cold derived-result
+  caches, not cold PostgreSQL buffer caches or newly started Ruby processes.
+- Every organization/MSP walk follows continuations. Archive all pages; do not
+  present one page as the complete organization.
+- Serial retrieval has a 180-second **per-request** deadline; other requests use
+  600 seconds. Hierarchy comparisons use a 600-second sample budget under the
+  launcher. Keep timeout observations censored at the applicable bound. Whole
+  multi-page walks can exceed one request's deadline.
+- Non-smoke failures are retained as observations; the suite continues to later
+  cases and `completed.json` records `success: false`. A completed suite is not a
+  claim that every case succeeded. The final `collection_status.json` lists failed
+  cases and the launcher exits nonzero if any remain. HTTP, GraphQL, equivalence and missing-trace
+  failures must be classified separately before article use.
+- Smoke failure stops the suite. Investigate it before continuing. A deployment,
+  authorization or telemetry failure is not useful performance evidence.
+- Trace polling is outside measured requests and continuation walks. Each
+  hierarchy sample shares one trace ID across its direct HTTP requests; initiating
+  context is external to the services. Other benchmark requests have individual
+  trace IDs, linked from their result sidecars.
+- Exporting large paginated workloads can take substantial time. Allow an extended
+  unattended window rather than assuming a fixed completion time. The launcher
+  never changes timeouts or silently reduces cardinality to make a case pass.
+
+## Stop, resume and retry
+
+Use Ctrl-C in the attached tmux session to interrupt a run. Confirm the child
+benchmark process has exited before restarting. Do not stop databases or clear
+caches underneath another active sample.
+
+```bash
+export COLLECTION_DIR="$(cat /tmp/iam-article-collection-path)"
+SKIP_BUILD=1 ./collect_article_evidence.sh
+```
+
+Completed cases are skipped. Interrupted cases get a new `attempt-NNN` directory;
+previous bodies, traces and logs remain intact. A collection lock prevents two
+launchers using the same directory concurrently. Do not run separate collections
+against the same stack simultaneously.
+
+To retry recorded failures without deleting evidence:
+
+```bash
+RETRY_FAILED=1 SKIP_BUILD=1 ./collect_article_evidence.sh
+```
+
+Use `CASE_IDS=id1,id2` to target a subset. A changed source revision, fixture or
+matrix requires a **new** `COLLECTION_DIR`; never merge unlike configurations into
+one labeled comparison. The launcher leaves the final profile running for
+inspection. Restore normal development settings afterward with `./dc_dev up -d`
+from a shell without benchmark environment overrides.
+
+## Artifacts and analysis
+
+Raw artifacts are excluded from Git under `reports/raw/`; preserve this directory
+on disk and back it up before changing datasets or cleaning the workspace.
+
+```text
+collection.json                 revision, input hashes, CPU/memory/session details
+matrix.json                     exact requested case matrix
+fixture_manifest.json           copied fixture identities
+build.log / startup.log / analyze.log
+<case>/completed.json            final attempt and success/failure
+<case>/attempt-NNN/
+  runtime.json / images.json     actual service configuration and images
+  startup.log / run.log / status.json
+  timings.csv / metadata.json
+  response bodies and result JSON
+  traces/*.json                  main-harness Jaeger JSON and status files
+  <hierarchy-sample>/             driver result, requests, responses, trace JSON
+```
+
+Before article publication, summarize paired successful observations by fixture,
+actor, mode, cache phase and batch size. Report median and range, bytes, outcome,
+request counts and trace IDs. Preserve failures separately. Count HTTP server
+spans by service and distinguish them from client spans. Label database/Redis
+span counts as instrumentation counts unless verified to correspond one-to-one
+with physical queries/commands/round trips. Settled trace counts and parent links
+are useful checks, not proof that no spans were dropped.
+
+The million-user generation article still needs preserved ingestion-duration,
+worker and resource evidence from a generation run. This read-only collection
+cannot recover those historical measurements. LocalStack/Goaws comparison claims
+also require independent historical evidence or a separately approved experiment.
+No data regeneration, worker scaling or queue-product comparison is included here.
