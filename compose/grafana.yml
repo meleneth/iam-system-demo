@@ -10,8 +10,9 @@ services:
     - GF_SECURITY_ADMIN_PASSWORD=admin
     - GF_SECURITY_DISABLE_INITIAL_ADMIN_PASSWORD_CHANGE=true
     volumes:
-    - "./data/test/grafana:/var/lib/grafana"
+    - "grafana-storage:/var/lib/grafana"
     - "./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources"
     - "./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards"
     - "./grafana/dashboards:/var/lib/grafana/dashboards"
-    user: "${HOST_UID}:${HOST_GID}"
+volumes:
+  grafana-storage:
