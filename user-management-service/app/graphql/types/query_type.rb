@@ -63,10 +63,6 @@ module Types
 
         record
       end
-    rescue ActiveResource::ForbiddenAccess
-      # Option A (quiet): return nil
-      nil
-      # Option B (loud): raise GraphQL::ExecutionError, "Not authorized"
     end
 
     def accounts(ids:, as:)
@@ -76,7 +72,6 @@ module Types
       context[:otel_ctx] = otel_ctx
       dataloader.with(Sources::AccountById, as: as, otel_ctx: otel_ctx)
         .load_all(ids)
-        .then { |records| records.compact }
     end
 
     def msp_user_management(msp_account_id:, as:, continuance: nil)

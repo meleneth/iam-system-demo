@@ -9,8 +9,10 @@ class UserManagementServiceSchema < GraphQL::Schema
   #use GraphQL::Execution::Interpreter
   #use GraphQL::Analysis::AST
 
-  # Optional: consistent nil on not found from field resolvers
-  rescue_from(ActiveResource::ResourceNotFound) { nil }
+  # Missing or denied downstream records must remain visible to callers.
+  rescue_from(ActiveResource::ResourceNotFound, ActiveResource::ForbiddenAccess) do |error|
+    raise GraphQL::ExecutionError, "Downstream request failed: #{error.class.name}"
+  end
 
   # GraphQL-Ruby calls this when something goes wrong while running a query:
   def self.type_error(err, context)

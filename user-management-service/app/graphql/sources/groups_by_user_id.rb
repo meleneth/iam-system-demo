@@ -31,9 +31,10 @@ module Sources
                 groups_by_id = groups.index_by(&:id)
 
                 gus.each do |gu|
-                  if (g = groups_by_id[gu.group_id])
-                    groups_by_user[gu.user_id] << g
+                  group = groups_by_id.fetch(gu.group_id) do
+                    raise GraphQL::ExecutionError, "Group Service omitted a group referenced by a membership"
                   end
+                  groups_by_user[gu.user_id] << group
                 end
               end
             end

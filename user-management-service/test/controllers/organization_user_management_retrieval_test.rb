@@ -42,6 +42,47 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
     ENV["IAM_DEMO_RETRIEVAL_MODE"] = old_mode
   end
 
+  test "account failures propagate in both retrieval modes including after serial progress" do
+    old_mode = ENV["IAM_DEMO_RETRIEVAL_MODE"]
+    controller = OrganizationUserManagementController.new
+    %w[serial batched].each do |mode|
+      ENV["IAM_DEMO_RETRIEVAL_MODE"] = mode
+      [ActiveResource::ForbiddenAccess, ActiveResource::ServerError, RuntimeError].each do |error_class|
+        calls = 0
+        fetch = lambda do |*|
+          calls += 1
+          if mode == "serial" && calls == 1
+            Account.new(id: ACCOUNT_IDS.first)
+          else
+            raise error_class.new(nil)
+          end
+        end
+        Account.stub(:find, fetch) do
+          Account.stub(:search, fetch) do
+            assert_raises(error_class) { controller.send(:accounts_for, ACCOUNT_IDS) }
+          end
+        end
+      end
+    end
+  ensure
+    ENV["IAM_DEMO_RETRIEVAL_MODE"] = old_mode
+  end
+
+  test "batched account reads reject incomplete and unexpected results" do
+    old_mode = ENV["IAM_DEMO_RETRIEVAL_MODE"]
+    ENV["IAM_DEMO_RETRIEVAL_MODE"] = "batched"
+    controller = OrganizationUserManagementController.new
+    [[], [ACCOUNT_IDS.first], [ACCOUNT_IDS.first, ACCOUNT_IDS.first], [ACCOUNT_IDS.first, "other"]].each do |ids|
+      Account.stub(:search, ids.map { |id| Account.new(id: id) }) do
+        assert_raises(OrganizationUserManagementController::IncompleteResponse) do
+          controller.send(:accounts_for, ACCOUNT_IDS)
+        end
+      end
+    end
+  ensure
+    ENV["IAM_DEMO_RETRIEVAL_MODE"] = old_mode
+  end
+
   private
 
   def payload_for(mode)

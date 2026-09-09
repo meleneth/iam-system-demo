@@ -8,6 +8,7 @@ class OrganizationUserManagementController < ApplicationController
   RETRIEVAL_MODES = %w[serial batched].freeze
 
   class InvalidRetrievalMode < StandardError; end
+  class IncompleteResponse < StandardError; end
 
   def show
     permitted = params.permit(:organization_id, :as)
@@ -69,8 +70,8 @@ class OrganizationUserManagementController < ApplicationController
     group_users = group_users_for(users.map { |user| user.fetch("id") })
     group_names_by_id = groups.index_by { |group| group.fetch("id") }
     groups_by_user_id = group_users.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |group_user, memo|
-      group = group_names_by_id[group_user.fetch("group_id")]
-      memo[group_user.fetch("user_id")] << group if group
+      group = group_names_by_id.fetch(group_user.fetch("group_id"))
+      memo[group_user.fetch("user_id")] << group
     end
     accounts_by_id = accounts_for(account_ids).index_by { |account| account.fetch("id") }
 
@@ -82,11 +83,11 @@ class OrganizationUserManagementController < ApplicationController
       retrieval_mode: retrieval_mode,
       total_account_count: total_account_count,
       partition_account_count: account_ids.length,
-      accounts: account_ids.map { |account_id| accounts_by_id[account_id] || { "id" => account_id, "name" => nil, "parent_account_id" => nil } },
+      accounts: account_ids.map { |account_id| accounts_by_id.fetch(account_id) },
       users: users.map do |user|
-        account = accounts_by_id[user.fetch("account_id").to_s]
+        account = accounts_by_id.fetch(user.fetch("account_id").to_s)
         user.merge(
-          "account" => account || { "id" => user.fetch("account_id").to_s, "name" => nil, "parent_account_id" => nil },
+          "account" => account,
           "groups" => groups_by_user_id[user.fetch("id").to_s] || []
         )
       end
@@ -126,10 +127,12 @@ class OrganizationUserManagementController < ApplicationController
       else
         Account.search(id: account_ids)
       end
+      returned_ids = accounts.map { |account| account.id.to_s }
+      unless returned_ids.sort == account_ids.map(&:to_s).sort
+        raise IncompleteResponse, "Account Service returned an incomplete or unexpected account set"
+      end
       accounts.map { |account| resource_attributes(account) }
     end
-  rescue ActiveResource::ClientError, ActiveResource::ServerError, RuntimeError
-    []
   end
 
   def service_headers

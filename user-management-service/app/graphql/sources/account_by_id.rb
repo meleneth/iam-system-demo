@@ -31,12 +31,13 @@ module Sources
           records = fetch_chunks(chunks, parent_ctx)
 
           by_id = Array(records).index_by { |acc| acc.id.to_s }
-          wanted_ids.map { |id| by_id[id] } # align to original order (nils OK)
+          unless records.map { |account| account.id.to_s }.sort == uniq_ids.sort
+            raise GraphQL::ExecutionError, "Account Service returned an incomplete or unexpected account set"
+          end
+          wanted_ids.map { |id| by_id.fetch(id) }
         end
       end
-    rescue => e
-      OpenTelemetry.logger&.warn("AccountById.fetch error: #{e.class}: #{e.message}")
-      keys.map { nil }
+
     end
 
     private
@@ -52,6 +53,7 @@ module Sources
       workers = [chunks.size, MAX_CONCURRENCY].min
       mutex   = Mutex.new
       results = []
+      errors = Queue.new
 
       threads = Array.new(workers) do |i|
         Thread.new do
@@ -61,8 +63,7 @@ module Sources
                 recs = fetch_one_chunk(slice, parent_ctx)
                 mutex.synchronize { results.concat(recs) }
               rescue => e
-                OpenTelemetry.logger&.warn("chunk failed: #{e.class}: #{e.message}")
-                # continue; failed chunk contributes no records
+                errors << e
               end
             end
           end
@@ -70,6 +71,8 @@ module Sources
       end
 
       threads.each(&:join)
+      raise errors.pop unless errors.empty?
+
       results
     end
 
