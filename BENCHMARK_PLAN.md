@@ -1,7 +1,11 @@
 # Article evidence collection plan
 
-Status: drivers implemented and unit/request tests validated; **the actual suite
-has not started**. Run from a text console after switching to multiuser/no-X mode.
+Status: production setup validated on 2026-09-09: all 46 services booted, all seven
+application health endpoints returned HTTP 200 in production mode, and tooling
+tests passed through `./dc_test` (21 tests, 82 assertions). Cross-stack validation
+found no collisions among 92 published port bindings. Seed workers and optional
+monitoring were stopped after setup validation. **Production article fixtures
+still need seeding, and the actual suite has not started**. Run from a text console after switching to multiuser/no-X mode.
 The first two cases are live smoke gates; both must pass before measured cases.
 
 ## What this run covers
@@ -42,6 +46,39 @@ time**. Part 5 also includes the authorization-call reduction produced by a batc
 API. Returned IDs and parent links are checked against the fixture in both modes.
 Actor identity is never changed to IAM_SYSTEM to obtain a successful sample.
 
+## Production preparation (before the measured run)
+
+Grafana now uses a project-specific named volume; existing bind-mounted test
+Grafana data remains on disk but is no longer used by the stack.
+
+The launcher and both drivers default to `BENCHMARK_STACK=prod`, use `./dc_prod`
+(project `gp`), and read ports from `production.env`. The app is on port 7501,
+account-service on 11360, and Jaeger on 11290. Every measured application must
+report `RAILS_ENV=production`; the launcher checks this before sending samples.
+For a deliberate development run, set `BENCHMARK_STACK=dev` and use a separate
+collection directory. Never point a production run at the development manifest.
+
+Production has separate databases and initially has no article fixtures. Prepare
+its schemas and applications without resetting any existing data:
+
+```bash
+./prepare_prod.sh
+./dc_prod up -d organization-create-service-worker-1 organization-create-service-worker-2 account-create-service-worker-1 account-create-service-worker-2 user-create-service-worker-1 user-create-service-worker-2 grants-create-service-worker-01 grants-create-service-worker-02
+./dc_prod run --rm --no-deps -e USER_COUNT=2000000 -e DEMO_PROGRESS_INTERVAL=10000 user-management-service bin/rails runner scripts/demo_user_seeder.rb
+./dc_prod stop organization-create-service-worker-1 organization-create-service-worker-2 account-create-service-worker-1 account-create-service-worker-2 user-create-service-worker-1 user-create-service-worker-2 grants-create-service-worker-01 grants-create-service-worker-02
+```
+
+Run seeding once, only when preparing the dataset. The seeder waits for queues to
+drain and writes `data/production/demo-fixtures/latest/fixture_manifest.json`.
+The measured launcher does not seed. It starts all 20 production PostgreSQL
+services and runs `./analyze_databases.sh prod` before collection; the earlier
+development ANALYZE does not apply to production. UMS keeps its production SQLite
+storage in a persistent volume. Tests continue to run through `./dc_test`.
+
+`ruby scripts/check_stack_ports.rb` resolves all three Compose stacks and rejects
+conflicting published ports, including wildcard host bindings. All three stacks
+can coexist; stop unrelated workloads for clean benchmark measurements.
+
 ## Run from multiuser/no-X mode
 
 Save work before leaving the graphical session. From a text console, switch modes
@@ -51,6 +88,7 @@ survive a terminal disconnect:
 ```bash
 cd ~/code/iam-system-demo
 tmux new -s iam-article
+export BENCHMARK_STACK=prod
 export COLLECTION_DIR="$PWD/reports/raw/article-no-x-$(date -u +%Y%m%dT%H%M%SZ)"
 printf '%s\n' "$COLLECTION_DIR" > /tmp/iam-article-collection-path
 set -o pipefail
@@ -84,7 +122,7 @@ It waits for readiness and verifies running batch/auth/cache/retrieval settings.
 Application images, process IDs and non-secret runtime settings are captured.
 
 The default manifest is
-`data/development/demo-fixtures/latest/fixture_manifest.json`; override `MANIFEST`
+`data/production/demo-fixtures/latest/fixture_manifest.json`; override `MANIFEST`
 only deliberately. Queue count reaching zero remains sufficient seed readiness.
 No reseeding or database reconciliation is part of this run. ANALYZE updates
 planner statistics outside measured requests. Source revision, matrix and manifest
@@ -144,7 +182,7 @@ RETRY_FAILED=1 SKIP_BUILD=1 ./collect_article_evidence.sh
 Use `CASE_IDS=id1,id2` to target a subset. A changed source revision, fixture or
 matrix requires a **new** `COLLECTION_DIR`; never merge unlike configurations into
 one labeled comparison. The launcher leaves the final profile running for
-inspection. Restore normal development settings afterward with `./dc_dev up -d`
+inspection. Restore normal development settings afterward with `./dc_prod up -d`
 from a shell without benchmark environment overrides.
 
 ## Artifacts and analysis

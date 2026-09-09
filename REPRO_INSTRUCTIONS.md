@@ -1,6 +1,8 @@
 # Repro Instructions
 
-These commands use the development stack through `./dc_dev`.
+These commands use the development stack through `./dc_dev`. Set
+`export BENCHMARK_STACK=dev` when using the benchmark drivers with this guide.
+The article collection defaults to production; see [BENCHMARK_PLAN.md](BENCHMARK_PLAN.md).
 
 ## Build And Start
 
