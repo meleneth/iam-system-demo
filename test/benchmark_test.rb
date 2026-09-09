@@ -17,7 +17,11 @@ class BenchmarkTest < Minitest::Test
       { name: name, organization_id: "org", targets: { leaf_account_id: "leaf", root_account_id: "root", account_id: "account", msp_account_id: "msp", admin_user_id: "actor" } }
     end
     File.write(File.join(@dir, "manifest.json"), JSON.generate(fixtures: fixtures))
-    File.write(File.join(@dir, "dc_dev"), "#!/bin/sh\necho flush >> events.log\n")
+    File.write(File.join(@dir, "dc_dev"), <<~'STUB')
+      #!/bin/sh
+      [ "$5" = "-n" ] && [ "$6" = "1" ] || exit 2
+      echo flush >> events.log
+    STUB
     FileUtils.chmod(0755, File.join(@dir, "dc_dev"))
     File.write(File.join(@dir, "bin/curl"), <<~'STUB')
       #!/usr/bin/env ruby

@@ -14,6 +14,7 @@ INCLUDE_MSP_50K="${INCLUDE_MSP_50K:-1}"
 INCLUDE_MSP_10K="${INCLUDE_MSP_10K:-1}"
 COLD_ONLY="${COLD_ONLY:-0}"
 FOCUSED_ORGANIZATION_ONLY="${FOCUSED_ORGANIZATION_ONLY:-0}"
+REDIS_CACHE_DB="${REDIS_CACHE_DB:-1}"
 REDIS_CACHE_SERVICES="${REDIS_CACHE_SERVICES:-accountcache authcache groupcache orgcache}"
 MSP_READY_ATTEMPTS="${MSP_READY_ATTEMPTS:-120}"
 MSP_READY_SLEEP_SECONDS="${MSP_READY_SLEEP_SECONDS:-1}"
@@ -125,7 +126,7 @@ flush_redis_caches() {
 
   echo "Flushing Redis cache DBs through ./dc_dev..."
   for service in $REDIS_CACHE_SERVICES; do
-    ./dc_dev exec -T "$service" redis-cli FLUSHDB >/dev/null
+    ./dc_dev exec -T "$service" redis-cli -n "$REDIS_CACHE_DB" FLUSHDB >/dev/null
     echo "  flushed $service"
   done
 }
