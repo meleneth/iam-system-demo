@@ -14,15 +14,11 @@ module Types
     end
 
     def accounts
-      # We want to load all accounts for this org
-      OrganizationAccount.with_headers("pad-user-id" => context[:as]) do
-        org_accounts = OrganizationAccount.find(:all, params: {organization_id: object.id})
-        Account.with_headers("pad-user-id" => context[:as]) do
-          org_accounts.map(&:account_id).each_slice(IamDemo.batch_size).flat_map do |account_ids|
-            Account.search(id: account_ids)
-          end
-        end
+      account_ids = OrganizationAccount.with_headers("pad-user-id" => context[:as]) do
+        OrganizationAccount.find(:all, params: { organization_id: object.id }).map(&:account_id)
       end
+      dataloader.with(Sources::AccountById, as: context[:as],
+        otel_ctx: context[:otel_ctx] || OpenTelemetry::Context.current).load_all(account_ids)
     end
   end
 end

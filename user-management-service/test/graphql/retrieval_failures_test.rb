@@ -50,6 +50,18 @@ class RetrievalFailuresTest < ActiveSupport::TestCase
     end
   end
 
+  test "organization GraphQL fields reject incomplete account collections" do
+    Organization.stub(:find, Organization.new(id: "org")) do
+      links = %w[a b].map { |id| OrganizationAccount.new(account_id: id) }
+      OrganizationAccount.stub(:find, links) do
+        Account.stub(:search, [Account.new(id: "a")]) do
+          result = UserManagementServiceSchema.execute('{ organization(id: "org", as: "actor") { accounts { id } } }').to_h
+          assert result["errors"].present?, result.inspect
+        end
+      end
+    end
+  end
+
   private
 
   def account_source
