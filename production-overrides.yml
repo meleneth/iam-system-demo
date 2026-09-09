@@ -31,7 +31,7 @@ services:
     - CACHE_DATABASE_URL=${USER_DB_CACHE_DATABASE_URL}
     - DATABASE_URL=${USER_DB_DATABASE_URL}
     - QUEUE_DATABASE_URL=${USER_DB_QUEUE_DATABASE_URL}
-    - SECRET_KEY_BASE="${USER_SECRET_KEY_BASE}"
+    - SECRET_KEY_BASE=${USER_RAILS_SECRET_KEY_BASE}
     - RAILS_ENV=production
     - RAILS_MAX_THREADS=5
     - RAILS_MIN_THREADS=5
@@ -63,12 +63,37 @@ services:
     - CACHE_DATABASE_URL=${ACCOUNT_DB_CACHE_DATABASE_URL}
     - DATABASE_URL=${ACCOUNT_DB_DATABASE_URL}
     - QUEUE_DATABASE_URL=${ACCOUNT_DB_QUEUE_DATABASE_URL}
-    - SECRET_KEY_BASE="${ACCOUNT_SECRET_KEY_BASE}"
+    - SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
     - RAILS_ENV=production
     - RAILS_MAX_THREADS=5
     - RAILS_MIN_THREADS=5
     ports:
     - "${ACCOUNT_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      account-db:
+        condition: service_healthy
+        restart: true
+      account-db-cache:
+        condition: service_healthy
+        restart: true
+      account-db-cable:
+        condition: service_healthy
+        restart: true
+      account-db-queue:
+        condition: service_healthy
+        restart: true
+  account-auth-service:
+    environment:
+    - CABLE_DATABASE_URL=${ACCOUNT_DB_CABLE_DATABASE_URL}
+    - CACHE_DATABASE_URL=${ACCOUNT_DB_CACHE_DATABASE_URL}
+    - DATABASE_URL=${ACCOUNT_DB_DATABASE_URL}
+    - QUEUE_DATABASE_URL=${ACCOUNT_DB_QUEUE_DATABASE_URL}
+    - SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
+    - RAILS_ENV=production
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    ports:
+    - "${ACCOUNT_AUTH_SERVICE_WEB_PORT}:3000"
     depends_on:
       account-db:
         condition: service_healthy
@@ -95,7 +120,7 @@ services:
     - CACHE_DATABASE_URL=${AUTHZ_DB_CACHE_DATABASE_URL}
     - DATABASE_URL=${AUTHZ_DB_DATABASE_URL}
     - QUEUE_DATABASE_URL=${AUTHZ_DB_QUEUE_DATABASE_URL}
-    - SECRET_KEY_BASE="${AUTHORIZATION_SECRET_KEY_BASE}"
+    - SECRET_KEY_BASE=${AUTHORIZATION_RAILS_SECRET_KEY_BASE}
     - RAILS_ENV=production
     - RAILS_MAX_THREADS=5
     - RAILS_MIN_THREADS=5
@@ -126,7 +151,7 @@ services:
     - CABLE_DATABASE_URL=${ORGANIZATION_DB_CABLE_DATABASE_URL}
     - CACHE_DATABASE_URL=${ORGANIZATION_DB_CACHE_DATABASE_URL}
     - DATABASE_URL=${ORGANIZATION_DB_DATABASE_URL}
-    - SECRET_KEY_BASE="${ORGANIZATION_SECRET_KEY_BASE}"
+    - SECRET_KEY_BASE=${ORGANIZATION_RAILS_SECRET_KEY_BASE}
     - QUEUE_DATABASE_URL=${ORGANIZATION_DB_QUEUE_DATABASE_URL}
     - RAILS_ENV=production
     - RAILS_MAX_THREADS=5
@@ -239,6 +264,7 @@ services:
     - "${GROUP_DB_POSTGRES_PORT}:5432"
   group-service:
     environment:
+    - SECRET_KEY_BASE=${GROUP_RAILS_SECRET_KEY_BASE}
     - CABLE_DATABASE_URL=${GROUP_DB_CABLE_DATABASE_URL}
     - CACHE_DATABASE_URL=${GROUP_DB_CACHE_DATABASE_URL}
     - DATABASE_URL=${GROUP_DB_DATABASE_URL}
@@ -283,3 +309,69 @@ services:
     ports:
     - "${GROUP_DB_QUEUE_POSTGRES_PORT}:5432"
 
+  user-management-service:
+    environment:
+      USER_MANAGEMENT_WEB_PORT: ${USER_MANAGEMENT_WEB_PORT}
+      ACCOUNT_SERVICE_WEB_PORT: ${ACCOUNT_SERVICE_WEB_PORT}
+      ORGANIZATION_SERVICE_WEB_PORT: ${ORGANIZATION_SERVICE_WEB_PORT}
+      USER_SERVICE_WEB_PORT: ${USER_SERVICE_WEB_PORT}
+      GROUP_SERVICE_WEB_PORT: ${GROUP_SERVICE_WEB_PORT}
+      AUTHORIZATION_SERVICE_WEB_PORT: ${AUTHORIZATION_SERVICE_WEB_PORT}
+      RAILS_ENV: production
+      RAILS_MAX_THREADS: 5
+      RAILS_MIN_THREADS: 5
+    volumes:
+      - "${USER_MANAGEMENT_DEMO_FIXTURE_OUTPUT_PATH}:/rails/tmp/demo-fixtures"
+      - user-management-storage:/rails/storage
+  organization-create-service-worker-1:
+    environment:
+      RAILS_ENV: production
+      CACHE_DATABASE_URL: ${ORGANIZATION_DB_CACHE_DATABASE_URL}
+      CABLE_DATABASE_URL: ${ORGANIZATION_DB_CABLE_DATABASE_URL}
+      QUEUE_DATABASE_URL: ${ORGANIZATION_DB_QUEUE_DATABASE_URL}
+  organization-create-service-worker-2:
+    environment:
+      RAILS_ENV: production
+      CACHE_DATABASE_URL: ${ORGANIZATION_DB_CACHE_DATABASE_URL}
+      CABLE_DATABASE_URL: ${ORGANIZATION_DB_CABLE_DATABASE_URL}
+      QUEUE_DATABASE_URL: ${ORGANIZATION_DB_QUEUE_DATABASE_URL}
+  account-create-service-worker-1:
+    environment:
+      RAILS_ENV: production
+      CACHE_DATABASE_URL: ${ACCOUNT_DB_CACHE_DATABASE_URL}
+      CABLE_DATABASE_URL: ${ACCOUNT_DB_CABLE_DATABASE_URL}
+      QUEUE_DATABASE_URL: ${ACCOUNT_DB_QUEUE_DATABASE_URL}
+  account-create-service-worker-2:
+    environment:
+      RAILS_ENV: production
+      CACHE_DATABASE_URL: ${ACCOUNT_DB_CACHE_DATABASE_URL}
+      CABLE_DATABASE_URL: ${ACCOUNT_DB_CABLE_DATABASE_URL}
+      QUEUE_DATABASE_URL: ${ACCOUNT_DB_QUEUE_DATABASE_URL}
+  user-create-service-worker-1:
+    environment:
+      RAILS_ENV: production
+      CACHE_DATABASE_URL: ${USER_DB_CACHE_DATABASE_URL}
+      CABLE_DATABASE_URL: ${USER_DB_CABLE_DATABASE_URL}
+      QUEUE_DATABASE_URL: ${USER_DB_QUEUE_DATABASE_URL}
+  user-create-service-worker-2:
+    environment:
+      RAILS_ENV: production
+      CACHE_DATABASE_URL: ${USER_DB_CACHE_DATABASE_URL}
+      CABLE_DATABASE_URL: ${USER_DB_CABLE_DATABASE_URL}
+      QUEUE_DATABASE_URL: ${USER_DB_QUEUE_DATABASE_URL}
+  grants-create-service-worker-01:
+    environment:
+      ACCOUNT_SERVICE_API_BASE_URL: http://account-auth-service:80
+      RAILS_ENV: production
+      CACHE_DATABASE_URL: ${AUTHZ_DB_CACHE_DATABASE_URL}
+      CABLE_DATABASE_URL: ${AUTHZ_DB_CABLE_DATABASE_URL}
+      QUEUE_DATABASE_URL: ${AUTHZ_DB_QUEUE_DATABASE_URL}
+  grants-create-service-worker-02:
+    environment:
+      ACCOUNT_SERVICE_API_BASE_URL: http://account-auth-service:80
+      RAILS_ENV: production
+      CACHE_DATABASE_URL: ${AUTHZ_DB_CACHE_DATABASE_URL}
+      CABLE_DATABASE_URL: ${AUTHZ_DB_CABLE_DATABASE_URL}
+      QUEUE_DATABASE_URL: ${AUTHZ_DB_QUEUE_DATABASE_URL}
+volumes:
+  user-management-storage:
