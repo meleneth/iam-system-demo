@@ -132,8 +132,11 @@ class HierarchyComparison
   end
 end
 
+require_relative "benchmark_environment"
+
 if $PROGRAM_NAME == __FILE__
-  manifest_path = ENV.fetch("MANIFEST", "data/development/demo-fixtures/latest/fixture_manifest.json")
+  ENV.update(BenchmarkEnvironment.values)
+  manifest_path = ENV.fetch("MANIFEST")
   manifest = JSON.parse(File.read(manifest_path))
   out = ENV.fetch("OUT_DIR", "reports/raw/hierarchies-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}")
   FileUtils.mkdir_p(out)
@@ -172,7 +175,7 @@ if $PROGRAM_NAME == __FILE__
     cases.each do |label, fixture, ids, modes|
       actor = fixture.fetch("targets").fetch("top_level_admin_user_id")
       expected = ids.to_h { |id| [id, HierarchyComparison.expected_chain(fixture, id)] }
-      runner = HierarchyComparison.new(base_url: ENV.fetch("ACCOUNT_SERVICE_BASE_URL", "http://localhost:11230"),
+      runner = HierarchyComparison.new(base_url: ENV.fetch("ACCOUNT_SERVICE_BASE_URL"),
         actor: actor, batch_size: batch_size, timeout: Float(ENV.fetch("REQUEST_TIMEOUT_SECONDS", "120")))
       phases.each do |phase|
         runs.times do |run|
@@ -181,7 +184,7 @@ if $PROGRAM_NAME == __FILE__
             directory = File.join(out, "#{label}-#{phase}-#{run + 1}-#{mode}")
             if phase == "cold"
               %w[accountcache authcache orgcache groupcache].each do |service|
-                raise "Cache flush failed" unless system("./dc_dev", "exec", "-T", service, "redis-cli", "-n", ENV.fetch("REDIS_CACHE_DB", "1"), "FLUSHDB", out: File::NULL)
+                raise "Cache flush failed" unless system(ENV.fetch("BENCHMARK_WRAPPER"), "exec", "-T", service, "redis-cli", "-n", ENV.fetch("REDIS_CACHE_DB", "1"), "FLUSHDB", out: File::NULL)
               end
             elsif phase == "warm"
               prime = runner.measure(mode: mode, target_ids: ids, expected: expected, directory: directory + "-prime")
@@ -190,7 +193,7 @@ if $PROGRAM_NAME == __FILE__
             end
             result = runner.measure(mode: mode, target_ids: ids, expected: expected, directory: directory)
             if ENV.fetch("ARCHIVE_TRACES", "1") == "1"
-              archive = TraceArchive.new(base_url: ENV.fetch("JAEGER_BASE_URL", "http://localhost:11160"),
+              archive = TraceArchive.new(base_url: ENV.fetch("JAEGER_BASE_URL"),
                 timeout: Float(ENV.fetch("TRACE_EXPORT_TIMEOUT_SECONDS", "60"))).archive(
                   trace_id: result.fetch(:trace_id), parent_id: result.fetch(:initiating_span_id), output: File.join(directory, "trace.json"))
               result[:trace_status] = archive.fetch(:status)

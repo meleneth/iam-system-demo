@@ -5,8 +5,10 @@ require_relative "../scripts/collect_article_evidence"
 
 class ArticleCollectionTest < Minitest::Test
   class FakeCollection < ArticleCollection
-    attr_reader :executed
+    attr_reader :executed, :commands
     def initialize(out, fail_smoke: false, revision: "test")
+      @commands = []
+      @stack_env = BenchmarkEnvironment.values
       @out = out
       @manifest = File.join(out, "input.json")
       File.write(@manifest, "{}")
@@ -19,7 +21,10 @@ class ArticleCollectionTest < Minitest::Test
     private
 
     def capture(*) = ""
-    def command(_env, log, *) = File.write(log, "fake setup\n")
+    def command(_env, log, *args)
+      @commands << args
+      File.write(log, "fake setup\n")
+    end
     def wait_for_apps(*) = nil
     def runtime_configuration(env) = APPS.to_h { |service| [service, env] }
     def run_driver(env, _driver, log)
@@ -44,6 +49,8 @@ class ArticleCollectionTest < Minitest::Test
     first = FakeCollection.new(@dir)
     capture_io { first.run }
     assert_equal 3, first.executed.size
+    assert_includes first.commands, ["./analyze_databases.sh", "prod"]
+    assert first.commands.select { |args| args.include?("up") }.all? { |args| args.first == "./dc_prod" }
     second = FakeCollection.new(@dir)
     capture_io { second.run }
     assert_empty second.executed

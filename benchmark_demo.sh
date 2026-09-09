@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MANIFEST="${MANIFEST:-data/development/demo-fixtures/latest/fixture_manifest.json}"
-OUT_DIR="${OUT_DIR:-data/development/benchmark-runs/$(date +%Y%m%d-%H%M%S)}"
+stack_settings="$(ruby scripts/benchmark_environment.rb)"
+eval "$stack_settings"
+
+OUT_DIR="${OUT_DIR:-reports/raw/benchmark-runs/$(date +%Y%m%d-%H%M%S)}"
 RUNS="${RUNS:-3}"
 CACHE_WAIT_SECONDS="${CACHE_WAIT_SECONDS:-0}"
 REQUEST_TIMEOUT_SECONDS="${REQUEST_TIMEOUT_SECONDS:-600}"
@@ -18,14 +20,11 @@ REDIS_CACHE_DB="${REDIS_CACHE_DB:-1}"
 REDIS_CACHE_SERVICES="${REDIS_CACHE_SERVICES:-accountcache authcache groupcache orgcache}"
 MSP_READY_ATTEMPTS="${MSP_READY_ATTEMPTS:-120}"
 MSP_READY_SLEEP_SECONDS="${MSP_READY_SLEEP_SECONDS:-1}"
-GRAFANA_BASE_URL="${GRAFANA_BASE_URL:-http://localhost:11150}"
+
 GRAFANA_DASHBOARD_UID="${GRAFANA_DASHBOARD_UID:-iam-demo-cache-hit-miss}"
 GRAFANA_ANNOTATION_USER="${GRAFANA_ANNOTATION_USER:-admin}"
 GRAFANA_ANNOTATION_PASSWORD="${GRAFANA_ANNOTATION_PASSWORD:-admin}"
 GRAFANA_ANNOTATIONS_ENABLED="${GRAFANA_ANNOTATIONS_ENABLED:-1}"
-
-USER_MANAGEMENT_BASE_URL="${USER_MANAGEMENT_BASE_URL:-http://localhost:7500}"
-JAEGER_BASE_URL="${JAEGER_BASE_URL:-http://localhost:11160}"
 
 configured_env_value() {
   local name="$1"
@@ -36,8 +35,8 @@ configured_env_value() {
     return
   fi
 
-  if [[ -f development.env ]]; then
-    awk -F= -v name="$name" -v fallback="$fallback" '$1 == name { print $2; found = 1 } END { if (!found) print fallback }' development.env
+  if [[ -f "$BENCHMARK_ENV_FILE" ]]; then
+    awk -F= -v name="$name" -v fallback="$fallback" '$1 == name { print $2; found = 1 } END { if (!found) print fallback }' "$BENCHMARK_ENV_FILE"
   else
     echo "$fallback"
   fi
@@ -81,8 +80,8 @@ configured_redis_toggle() {
     return
   fi
 
-  if [[ -f development.env ]]; then
-    awk -F= '$1 == "GLOBAL_IAM_DEMO_USE_REDIS" { print $2; found = 1 } END { if (!found) print "true" }' development.env
+  if [[ -f "$BENCHMARK_ENV_FILE" ]]; then
+    awk -F= '$1 == "GLOBAL_IAM_DEMO_USE_REDIS" { print $2; found = 1 } END { if (!found) print "true" }' "$BENCHMARK_ENV_FILE"
   else
     echo "true"
   fi
@@ -124,9 +123,9 @@ flush_redis_caches() {
     return
   fi
 
-  echo "Flushing Redis cache DBs through ./dc_dev..."
+  echo "Flushing Redis cache DBs through $BENCHMARK_WRAPPER..."
   for service in $REDIS_CACHE_SERVICES; do
-    ./dc_dev exec -T "$service" redis-cli -n "$REDIS_CACHE_DB" FLUSHDB >/dev/null
+    "$BENCHMARK_WRAPPER" exec -T "$service" redis-cli -n "$REDIS_CACHE_DB" FLUSHDB >/dev/null
     echo "  flushed $service"
   done
 }

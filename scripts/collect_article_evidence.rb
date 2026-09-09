@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require "digest"
 require "time"
+require_relative "benchmark_environment"
 
 class ArticleCollection
   APPS = %w[user-management-service account-service account-auth-service authorization-service organization-service user-service group-service].freeze
@@ -12,19 +13,22 @@ class ArticleCollection
   CONFIG_KEYS = %w[RAILS_ENV RAILS_MAX_THREADS RAILS_MIN_THREADS WEB_CONCURRENCY IAM_DEMO_BATCH_SIZE IAM_DEMO_RETRIEVAL_MODE GLOBAL_IAM_DEMO_USE_REDIS AUTHORIZATION_CHECK_MODE ACCOUNT_SERVICE_API_BASE_URL AUTHORIZATION_SERVICE_API_BASE_URL ORGANIZATION_SERVICE_API_BASE_URL].freeze
 
   def initialize
+    @stack_env = BenchmarkEnvironment.values
     @matrix = JSON.parse(File.read("benchmarks/article_matrix.json"))
     @out = File.expand_path(ENV.fetch("COLLECTION_DIR", "reports/raw/article-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}"))
-    @manifest = File.expand_path(ENV.fetch("MANIFEST", "data/development/demo-fixtures/latest/fixture_manifest.json"))
+    @manifest = File.expand_path(@stack_env.fetch("MANIFEST"))
     @revision = capture("git", "rev-parse", "HEAD").strip
     @fingerprint = { "revision" => @revision, "matrix_sha256" => Digest::SHA256.file("benchmarks/article_matrix.json").hexdigest,
-      "manifest_sha256" => Digest::SHA256.file(@manifest).hexdigest }
+      "stack" => @stack_env.fetch("BENCHMARK_STACK"), "benchmark_environment" => @stack_env,
+      "manifest_sha256" => File.file?(@manifest) ? Digest::SHA256.file(@manifest).hexdigest : nil }
   end
 
   def run
     if ARGV.include?("--plan")
-      puts JSON.pretty_generate(@matrix)
+      puts JSON.pretty_generate(@matrix.merge("stack" => @stack_env.fetch("BENCHMARK_STACK"), "manifest" => @manifest))
       return
     end
+    raise "Missing fixture manifest: #{@manifest}; prepare this stack’s data first" unless File.file?(@manifest)
     raise "Commit or stash tracked changes before collecting" unless capture("git", "diff", "HEAD", "--name-only").strip.empty?
     FileUtils.mkdir_p(@out)
     lock = File.open(File.join(@out, "collection.lock"), "w")
@@ -43,12 +47,13 @@ class ArticleCollection
     puts "Collection: #{@out}"
     puts "Revision: #{@revision}"
     $stdout.flush
+    command({}, File.join(@out, "ports.log"), "ruby", "scripts/check_stack_ports.rb")
     unless ENV.fetch("SKIP_BUILD", "0") == "1"
-      command({}, File.join(@out, "build.log"), "./dc_dev", "build", *APPS.reject { |app| app == "account-auth-service" })
+      command({}, File.join(@out, "build.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "build", *APPS.reject { |app| app == "account-auth-service" })
     end
-    command({}, File.join(@out, "startup.log"), "./dc_dev", "up", "-d", "--wait", *INFRA)
+    command({}, File.join(@out, "startup.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "up", "-d", "--wait", *(INFRA + capture(@stack_env.fetch("BENCHMARK_WRAPPER"), "config", "--services").split.select { |name| name.match?(/-db(?:-|$)/) }).uniq)
     # Existing queue-drain convention is accepted; do not reseed or reconcile data.
-    command({}, File.join(@out, "analyze.log"), "./analyze_databases.sh", "dev")
+    command({}, File.join(@out, "analyze.log"), "./analyze_databases.sh", @stack_env.fetch("BENCHMARK_STACK"))
     selected = ENV["CASE_IDS"]&.split(",")
     raise "Unknown CASE_IDS" if selected && (selected - @matrix.fetch("cases").map { |item| item.fetch("id") }).any?
     @matrix.fetch("cases").each do |item|
@@ -74,12 +79,12 @@ class ArticleCollection
       env = case_environment(item, attempt_dir)
       puts "Starting #{item.fetch('id')} (attempt #{attempt})"
       $stdout.flush
-      command(env, File.join(attempt_dir, "startup.log"), "./dc_dev", "up", "-d", "--no-deps", *APPS)
+      command(env, File.join(attempt_dir, "startup.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "up", "-d", "--no-deps", *APPS)
       wait_for_apps(env)
       configurations = runtime_configuration(env)
       verify_configuration!(item, configurations)
       write_json(File.join(attempt_dir, "runtime.json"), configurations)
-      containers = capture("./dc_dev", "ps", "-q", *APPS).split
+      containers = capture(@stack_env.fetch("BENCHMARK_WRAPPER"), "ps", "-q", *APPS).split
       write_json(File.join(attempt_dir, "images.json"), containers.map { |id|
         capture("docker", "inspect", "--format", '{{.Name}} {{.Image}} {{.State.Pid}}', id).strip
       })
@@ -125,7 +130,7 @@ class ArticleCollection
   private
 
   def case_environment(item, out)
-    self.class.case_environment(item, out, @manifest, @matrix.fetch("runs"))
+    @stack_env.merge(self.class.case_environment(item, out, @manifest, @matrix.fetch("runs")))
   end
 
   def run_driver(env, driver, log)
@@ -147,7 +152,7 @@ class ArticleCollection
     APPS.each do |service|
       ready = false
       90.times do
-        if system(env, "./dc_dev", "exec", "-T", service, "curl", "-fsS", "--max-time", "2", "http://localhost:3000/up", out: File::NULL, err: File::NULL)
+        if system(env, @stack_env.fetch("BENCHMARK_WRAPPER"), "exec", "-T", service, "curl", "-fsS", "--max-time", "2", "http://localhost:3000/up", out: File::NULL, err: File::NULL)
           ready = true
           break
         end
@@ -159,7 +164,7 @@ class ArticleCollection
 
   def runtime_configuration(env)
     APPS.to_h do |service|
-      output, status = Open3.capture2e(env, "./dc_dev", "exec", "-T", service, "ruby", "-rjson", "-e", "puts ENV.slice(*ARGV).to_json", *CONFIG_KEYS)
+      output, status = Open3.capture2e(env, @stack_env.fetch("BENCHMARK_WRAPPER"), "exec", "-T", service, "ruby", "-rjson", "-e", "puts ENV.slice(*ARGV).to_json", *CONFIG_KEYS)
       raise "Cannot inspect #{service}: #{output}" unless status.success?
       [service, JSON.parse(output)]
     end
@@ -167,7 +172,7 @@ class ArticleCollection
 
   def verify_configuration!(item, configurations)
     configurations.each do |service, config|
-      { "IAM_DEMO_BATCH_SIZE" => item.fetch("batch_size").to_s, "AUTHORIZATION_CHECK_MODE" => item.fetch("auth") }.each do |key, expected|
+      { "RAILS_ENV" => @stack_env.fetch("RAILS_ENV"), "IAM_DEMO_BATCH_SIZE" => item.fetch("batch_size").to_s, "AUTHORIZATION_CHECK_MODE" => item.fetch("auth") }.each do |key, expected|
         raise "#{service}: #{key} mismatch" unless config[key] == expected
       end
       if %w[account-service account-auth-service authorization-service organization-service].include?(service)
