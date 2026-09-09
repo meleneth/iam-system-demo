@@ -217,3 +217,25 @@ Harness regression checks (fake services, no benchmark traffic):
 ./dc_test run --rm --no-deps -v "$PWD:/workspace" -w /workspace \
   user-management-service ruby test/benchmark_test.rb
 ```
+
+### Archived trace evidence
+
+Trace export is enabled by default. Every request sends a sampled W3C
+`traceparent`, and its timing row and `.result.json` contain the trace ID.
+After each complete workload (including its priming run), the harness fetches
+Jaeger's `/api/traces/:id` response and saves it to `traces/<phase>-<sample>.json`.
+Polling is outside measured requests and continuation walks.
+
+A neighboring `.status.json` records the trace ID, span count, timestamp, and
+export outcome. The exporter waits for spans to settle and checks that the
+initiating request and referenced parents are present. Missing/incomplete exports
+make the benchmark exit nonzero; any partial JSON is retained. Settling is a
+practical check, not proof that the telemetry pipeline dropped no spans.
+`TRACE_EXPORT_TIMEOUT_SECONDS=60` and `TRACE_QUIET_SECONDS=5` control polling.
+`ARCHIVE_TRACES=0` explicitly skips exporting for exploratory timing-only runs.
+Keep the complete output directory as the article evidence artifact.
+
+```bash
+./dc_test run --rm --no-deps -v "$PWD:/workspace" -w /workspace \
+  user-management-service ruby test/archive_trace_test.rb
+```

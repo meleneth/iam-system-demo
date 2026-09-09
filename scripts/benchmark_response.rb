@@ -42,9 +42,10 @@ module BenchmarkResponse
 end
 
 if $PROGRAM_NAME == __FILE__
-  path, http_code, curl_exit, kind = ARGV
+  path, http_code, curl_exit, kind, trace_id, trace_file = ARGV
   result = BenchmarkResponse.inspect_response(path, http_code: http_code.to_i, curl_exit: curl_exit.to_i,
     partition: kind == "partition", graphql: kind == "graphql")
+  result.merge!("trace_id" => trace_id, "trace_file" => trace_file) if trace_id
   File.write("#{path}.result.json", JSON.pretty_generate(result) + "\n")
   puts "outcome=#{result.fetch('outcome')} curl_exit=#{curl_exit}"
 end

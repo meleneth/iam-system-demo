@@ -24,6 +24,9 @@ class BenchmarkTest < Minitest::Test
       require "json"
       output = ARGV[ARGV.index("-o") + 1]
       url = ARGV.last
+      traceparent = ARGV.find { |arg| arg.start_with?("traceparent:") }
+      raise "No sampled traceparent" unless traceparent&.match?(/traceparent: 00-[0-9a-f]{32}-[0-9a-f]{16}-01/)
+      File.open("traceheaders.log", "a") { |f| f.puts(traceparent) }
       page = url.include?("continuance=") ? 2 : 1
       File.open("events.log", "a") { |f| f.puts("page#{page}") }
       if ENV["FAKE_TIMEOUT"] == "1"
@@ -62,6 +65,26 @@ class BenchmarkTest < Minitest::Test
     walks = rows.select { |row| row["label"].end_with?("full_walk") }
     assert_equal 6, walks.size # two cold, two warm primes, two warm measurements
     assert walks.all? { |row| row["notes"].include?("outcome=ok pages=2 accounts=2") }
+  end
+
+  def test_exports_each_page_under_its_initiated_trace_id_and_fails_on_export_errors
+    File.write(File.join(@dir, "scripts/archive_trace.rb"), <<~'STUB')
+      require "json"
+      base, trace_id, parent_id, output = ARGV
+      File.write(output, JSON.generate(data: [{ traceID: trace_id }]))
+      exit(ENV["FAKE_EXPORT_FAILURE"] == "1" ? 1 : 0)
+    STUB
+    rows = run_benchmark("ARCHIVE_TRACES" => "1", "COLD_ONLY" => "1", "RUNS" => "1", "FAKE_EXPORT_FAILURE" => "1")
+    refute @status.success?
+    samples = rows.reject { |row| row["label"].end_with?("full_walk") }
+    assert_equal 2, samples.size
+    headers = File.readlines(File.join(@dir, "traceheaders.log"))
+    samples.each_with_index do |sample, index|
+      summary = JSON.parse(File.read(File.join(@dir, "#{sample['response_file']}.result.json")))
+      archived = JSON.parse(File.read(File.join(@dir, summary.fetch("trace_file"))))
+      assert_equal summary.fetch("trace_id"), archived.fetch("data").first.fetch("traceID")
+      assert_includes headers[index], summary.fetch("trace_id")
+    end
   end
 
   def test_keeps_timeout_duration_and_body_and_exits_unsuccessfully

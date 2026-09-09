@@ -7,6 +7,7 @@ RUNS="${RUNS:-3}"
 CACHE_WAIT_SECONDS="${CACHE_WAIT_SECONDS:-0}"
 REQUEST_TIMEOUT_SECONDS="${REQUEST_TIMEOUT_SECONDS:-600}"
 RUN_FAILED=0
+ARCHIVE_TRACES="${ARCHIVE_TRACES:-1}"
 INCLUDE_EXPERIMENTAL="${INCLUDE_EXPERIMENTAL:-0}"
 INCLUDE_MSP_100K="${INCLUDE_MSP_100K:-1}"
 INCLUDE_MSP_50K="${INCLUDE_MSP_50K:-1}"
@@ -44,6 +45,7 @@ configured_env_value() {
 RETRIEVAL_MODE="$(configured_env_value IAM_DEMO_RETRIEVAL_MODE batched)"
 AUTHORIZATION_MODE="$(configured_env_value AUTHORIZATION_CHECK_MODE can)"
 BATCH_SIZE="$(configured_env_value IAM_DEMO_BATCH_SIZE 1000)"
+REVISION="$(git rev-parse HEAD 2>/dev/null || true)"
 
 if [[ ! "$RETRIEVAL_MODE" =~ ^(serial|batched)$ ]]; then
   echo "IAM_DEMO_RETRIEVAL_MODE must be serial or batched, got: $RETRIEVAL_MODE" >&2
@@ -56,7 +58,9 @@ if [[ ! -f "$MANIFEST" ]]; then
   exit 1
 fi
 
-mkdir -p "$OUT_DIR/graphql"
+mkdir -p "$OUT_DIR/graphql" "$OUT_DIR/traces"
+TRACE_PENDING="$OUT_DIR/traces/pending.tsv"
+: > "$TRACE_PENDING"
 RESULTS="$OUT_DIR/timings.csv"
 URLS="$OUT_DIR/urls.md"
 METADATA="$OUT_DIR/metadata.json"
@@ -161,7 +165,10 @@ curl_time() {
   local output_file
   output_file="$OUT_DIR/${phase}-${label//[^A-Za-z0-9_.-]/_}.json"
 
-  local curl_args=(-sS --max-time "$REQUEST_TIMEOUT_SECONDS" -D "$output_file.headers" -o "$output_file" -w "%{http_code},%{time_total},%{size_download}")
+  local trace_id parent_id
+  read -r trace_id parent_id <<< "$(ruby -rsecurerandom -e 'puts "#{SecureRandom.hex(16)} #{SecureRandom.hex(8)}"')"
+  local trace_file="$OUT_DIR/traces/${phase}-${label//[^A-Za-z0-9_.-]/_}.json"
+  local curl_args=(-H "traceparent: 00-$trace_id-$parent_id-01" -sS --max-time "$REQUEST_TIMEOUT_SECONDS" -D "$output_file.headers" -o "$output_file" -w "%{http_code},%{time_total},%{size_download}")
   if [[ -n "$header" ]]; then
     curl_args+=(-H "$header")
   fi
@@ -180,8 +187,10 @@ curl_time() {
   [[ "$url" == *"/graphql" ]] && kind="graphql"
   [[ "$url" == *"/organization_user_management/partition?"* ]] && kind="partition"
   local notes
-  notes="$(ruby scripts/benchmark_response.rb "$output_file" "$http_code" "$curl_exit" "$kind")"
+  notes="$(ruby scripts/benchmark_response.rb "$output_file" "$http_code" "$curl_exit" "$kind" "$trace_id" "$trace_file")"
   [[ "$notes" == outcome=ok* ]] || RUN_FAILED=1
+  printf '%s\t%s\t%s\n' "$trace_id" "$parent_id" "$trace_file" >> "$TRACE_PENDING"
+  notes="$notes trace_id=$trace_id"
   echo "$phase,$RETRIEVAL_MODE,$label,$method,$url,$result,$output_file,$notes" | tee -a "$RESULTS"
 }
 
@@ -404,6 +413,7 @@ cat > "$URLS" <<URLS
 - Timing CSV: $RESULTS
 - Response bodies: $OUT_DIR
 - Run metadata: $METADATA
+- Jaeger trace JSON and export status: $OUT_DIR/traces
 URLS
 
 echo "phase,retrieval_mode,label,method,url,http_code,time_total,size_download,response_file,notes" > "$RESULTS"
@@ -416,13 +426,14 @@ ruby -rjson -e '
     batch_size: ARGV[3].to_i,
     manifest: ARGV[4],
     focused_organization_only: ARGV[5] == "1",
-    revision: `git rev-parse HEAD`.strip,
+    revision: ARGV[9].empty? ? nil : ARGV[9],
+    archive_traces: ARGV[8] == "1",
     request_timeout_seconds: ARGV[6].to_f,
     cache_wait_seconds: ARGV[7].to_i,
     cold_policy: "flush before each complete workload",
     warm_policy: "prime each complete workload immediately before measurement"
   })
-' "$RETRIEVAL_MODE" "$AUTHORIZATION_MODE" "$(configured_redis_toggle)" "$BATCH_SIZE" "$MANIFEST" "$FOCUSED_ORGANIZATION_ONLY" "$REQUEST_TIMEOUT_SECONDS" "$CACHE_WAIT_SECONDS" > "$METADATA"
+' "$RETRIEVAL_MODE" "$AUTHORIZATION_MODE" "$(configured_redis_toggle)" "$BATCH_SIZE" "$MANIFEST" "$FOCUSED_ORGANIZATION_ONLY" "$REQUEST_TIMEOUT_SECONDS" "$CACHE_WAIT_SECONDS" "$ARCHIVE_TRACES" "$REVISION" > "$METADATA"
 
 run_msp_fanout_walk() {
   local phase="$1"
@@ -538,6 +549,15 @@ run_sample() {
       ;;
   esac
   "$command" "$phase" "$@"
+  # Export after the complete sample, so collector polling does not delay pages
+  # or separate a warm measurement from its priming request.
+  if [[ "$ARCHIVE_TRACES" == "1" ]]; then
+    local trace_id parent_id trace_file
+    while IFS=$'\t' read -r trace_id parent_id trace_file; do
+      ruby scripts/archive_trace.rb "$JAEGER_BASE_URL" "$trace_id" "$parent_id" "$trace_file" || RUN_FAILED=1
+    done < "$TRACE_PENDING"
+  fi
+  : > "$TRACE_PENDING"
 }
 
 run_organization_walk() {
