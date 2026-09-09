@@ -4,7 +4,9 @@ set -euo pipefail
 MANIFEST="${MANIFEST:-data/development/demo-fixtures/latest/fixture_manifest.json}"
 OUT_DIR="${OUT_DIR:-data/development/benchmark-runs/$(date +%Y%m%d-%H%M%S)}"
 RUNS="${RUNS:-3}"
-CACHE_WAIT_SECONDS="${CACHE_WAIT_SECONDS:-310}"
+CACHE_WAIT_SECONDS="${CACHE_WAIT_SECONDS:-0}"
+REQUEST_TIMEOUT_SECONDS="${REQUEST_TIMEOUT_SECONDS:-600}"
+RUN_FAILED=0
 INCLUDE_EXPERIMENTAL="${INCLUDE_EXPERIMENTAL:-0}"
 INCLUDE_MSP_100K="${INCLUDE_MSP_100K:-1}"
 INCLUDE_MSP_50K="${INCLUDE_MSP_50K:-1}"
@@ -159,7 +161,7 @@ curl_time() {
   local output_file
   output_file="$OUT_DIR/${phase}-${label//[^A-Za-z0-9_.-]/_}.json"
 
-  local curl_args=(-sS -o "$output_file" -w "%{http_code},%{time_total},%{size_download}")
+  local curl_args=(-sS --max-time "$REQUEST_TIMEOUT_SECONDS" -D "$output_file.headers" -o "$output_file" -w "%{http_code},%{time_total},%{size_download}")
   if [[ -n "$header" ]]; then
     curl_args+=(-H "$header")
   fi
@@ -171,11 +173,16 @@ curl_time() {
   local curl_exit=0
   result="$(curl "${curl_args[@]}" "$url" 2>"$output_file.curl_error")" || curl_exit=$?
   if [[ "$curl_exit" -ne 0 ]]; then
-    result="000,0,0"
-    printf '{}\n' > "$output_file"
     echo "curl failed for $phase,$label with exit $curl_exit; see $output_file.curl_error" >&2
   fi
-  echo "$phase,$RETRIEVAL_MODE,$label,$method,$url,$result,$output_file," | tee -a "$RESULTS"
+  local http_code="${result%%,*}"
+  local kind="html"
+  [[ "$url" == *"/graphql" ]] && kind="graphql"
+  [[ "$url" == *"/organization_user_management/partition?"* ]] && kind="partition"
+  local notes
+  notes="$(ruby scripts/benchmark_response.rb "$output_file" "$http_code" "$curl_exit" "$kind")"
+  [[ "$notes" == outcome=ok* ]] || RUN_FAILED=1
+  echo "$phase,$RETRIEVAL_MODE,$label,$method,$url,$result,$output_file,$notes" | tee -a "$RESULTS"
 }
 
 write_graphql_body() {
@@ -272,9 +279,10 @@ graphql_accounts_count() {
 
 deep_leaf="$(json_get deep_chain targets.leaf_account_id)"
 deep_admin="$(json_get_or deep_chain targets.top_level_admin_user_id targets.admin_user_id)"
+organization_fixture="${ORGANIZATION_FIXTURE:-wide_org}"
 wide_root="$(json_get wide_org targets.root_account_id)"
-wide_org="$(json_get wide_org organization_id)"
-wide_admin="$(json_get_or wide_org targets.top_level_admin_user_id targets.admin_user_id)"
+wide_org="$(json_get "$organization_fixture" organization_id)"
+wide_admin="$(json_get_or "$organization_fixture" targets.top_level_admin_user_id targets.admin_user_id)"
 dense_account="$(json_get dense_account targets.account_id)"
 dense_admin="$(json_get_or dense_account targets.top_level_admin_user_id targets.admin_user_id)"
 branch_leaf="$(json_get branching_tree targets.leaf_account_id)"
@@ -407,9 +415,14 @@ ruby -rjson -e '
     redis_enabled: ARGV[2],
     batch_size: ARGV[3].to_i,
     manifest: ARGV[4],
-    focused_organization_only: ARGV[5] == "1"
+    focused_organization_only: ARGV[5] == "1",
+    revision: `git rev-parse HEAD`.strip,
+    request_timeout_seconds: ARGV[6].to_f,
+    cache_wait_seconds: ARGV[7].to_i,
+    cold_policy: "flush before each complete workload",
+    warm_policy: "prime each complete workload immediately before measurement"
   })
-' "$RETRIEVAL_MODE" "$AUTHORIZATION_MODE" "$(configured_redis_toggle)" "$BATCH_SIZE" "$MANIFEST" "$FOCUSED_ORGANIZATION_ONLY" > "$METADATA"
+' "$RETRIEVAL_MODE" "$AUTHORIZATION_MODE" "$(configured_redis_toggle)" "$BATCH_SIZE" "$MANIFEST" "$FOCUSED_ORGANIZATION_ONLY" "$REQUEST_TIMEOUT_SECONDS" "$CACHE_WAIT_SECONDS" > "$METADATA"
 
 run_msp_fanout_walk() {
   local phase="$1"
@@ -446,12 +459,16 @@ run_msp_fanout_walk() {
     total_time="$(ruby -e 'puts ARGV.map(&:to_f).sum' "$total_time" "$page_time")"
     total_download=$((total_download + page_download))
 
-    if [[ "$last_http_code" == "000" ]]; then
+    if [[ "$last_http_code" != "200" ]]; then
       stop_reason="curl_failed"
       echo "Stopping $phase/$label run $run: curl failed on page $page." >&2
       break
     fi
 
+    if [[ "$(ruby -rjson -e 'print JSON.parse(File.read(ARGV[0])).fetch("outcome")' "$final_response.result.json")" == "invalid_response" ]]; then
+      stop_reason="invalid_response"
+      break
+    fi
     total_accounts=$((total_accounts + $(graphql_accounts_count "$final_response")))
 
     if graphql_has_errors "$final_response"; then
@@ -499,11 +516,67 @@ run_msp_fanout_walk() {
 
   local notes="pages=$completed_pages accounts=$total_accounts loading_probes=$loading_probes"
   if [[ -n "$stop_reason" ]]; then
+    RUN_FAILED=1
     notes="$notes stop=$stop_reason"
   fi
 
   echo "$phase,$RETRIEVAL_MODE,${label}_full_walk_$run,POST,$USER_MANAGEMENT_BASE_URL/graphql,$last_http_code,$total_time,$total_download,$final_response,$notes" | tee -a "$RESULTS"
   grafana_annotate "$phase $label run $run finished: $notes" "benchmark,fanout,$phase,$label"
+}
+
+# Flush/prime once for each complete workload, never between its continuation pages.
+run_sample() {
+  local phase="$1"
+  local command="$2"
+  shift 2
+  case "$phase" in
+    cold_after_redis_flush) flush_redis_caches ;;
+    warm) "$command" "warm_prime" "$@" ;;
+    after_cache_expiry)
+      "$command" "expiry_prime" "$@"
+      sleep "$CACHE_WAIT_SECONDS"
+      ;;
+  esac
+  "$command" "$phase" "$@"
+}
+
+run_organization_walk() {
+  local phase="$1" label="$2" url="$organization_partition_url"
+  local page=1 total_accounts=0 expected_accounts="" total_time=0 total_download=0
+  local response_file summary next_path outcome row http_code page_time page_download
+  local seen_paths="|$url|"
+  while :; do
+    curl_time "$phase" "${label}_page_$page" GET "$url"
+    response_file="$OUT_DIR/${phase}-${label}_page_$page.json"
+    summary="$response_file.result.json"
+    row="$(tail -n 1 "$RESULTS")"
+    IFS=, read -r _ _ _ _ _ http_code page_time page_download _ _ <<< "$row"
+    total_time="$(ruby -e 'puts ARGV.map(&:to_f).sum' "$total_time" "$page_time")"
+    total_download=$((total_download + page_download))
+    outcome="$(ruby -rjson -e 'print JSON.parse(File.read(ARGV[0])).fetch("outcome")' "$summary")"
+    [[ "$outcome" == "ok" ]] || break
+    local counts
+    counts="$(ruby -rjson -e 'j=JSON.parse(File.read(ARGV[0])); puts [j.fetch("accounts"),j.fetch("total_accounts")].join(" ")' "$summary")"
+    local returned expected
+    read -r returned expected <<< "$counts"
+    if [[ -n "$expected_accounts" && "$expected_accounts" != "$expected" ]]; then
+      outcome="changing_account_total"; RUN_FAILED=1; break
+    fi
+    expected_accounts="$expected"
+    total_accounts=$((total_accounts + returned))
+    next_path="$(ruby -rjson -e 'print JSON.parse(File.read(ARGV[0]))["next_path"]' "$summary")"
+    [[ -n "$next_path" ]] || break
+    if [[ "$next_path" != /organization_user_management/partition\?* || "$seen_paths" == *"|$next_path|"* || "$returned" == "0" ]]; then
+      outcome="invalid_continuation"; RUN_FAILED=1; break
+    fi
+    seen_paths+="$next_path|"
+    url="$USER_MANAGEMENT_BASE_URL$next_path"
+    page=$((page + 1))
+  done
+  if [[ "$outcome" == "ok" && "$total_accounts" != "$expected_accounts" ]]; then
+    outcome="incomplete_walk"; RUN_FAILED=1
+  fi
+  echo "$phase,$RETRIEVAL_MODE,${label}_full_walk,GET,$organization_partition_url,$http_code,$total_time,$total_download,$response_file,outcome=$outcome pages=$page accounts=$total_accounts" | tee -a "$RESULTS"
 }
 
 run_phase() {
@@ -514,29 +587,29 @@ run_phase() {
 
   for run in $(seq 1 "$RUNS"); do
     grafana_annotate "$phase run $run started" "benchmark,run,$phase"
-    curl_time "$phase" "organization_user_management_partition_$run" GET "$organization_partition_url"
+    run_sample "$phase" run_organization_walk "organization_user_management_partition_$run"
     if [[ "$FOCUSED_ORGANIZATION_ONLY" == "1" ]]; then
       grafana_annotate "$phase run $run finished" "benchmark,run,$phase,retrieval-$RETRIEVAL_MODE"
       continue
     fi
-    curl_time "$phase" "web_root_$run" GET "$USER_MANAGEMENT_BASE_URL/"
-    curl_time "$phase" "graphql_deep_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$deep_body"
-    curl_time "$phase" "graphql_wide_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$wide_body"
-    curl_time "$phase" "graphql_dense_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$dense_body"
+    run_sample "$phase" curl_time "web_root_$run" GET "$USER_MANAGEMENT_BASE_URL/"
+    run_sample "$phase" curl_time "graphql_deep_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$deep_body"
+    run_sample "$phase" curl_time "graphql_wide_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$wide_body"
+    run_sample "$phase" curl_time "graphql_dense_$run" POST "$USER_MANAGEMENT_BASE_URL/graphql" "$dense_body"
     if [[ "$INCLUDE_MSP_100K" == "1" ]]; then
-      run_msp_fanout_walk "$phase" "graphql_100k_fanout" "$fanout_100k_msp_account" "$fanout_100k_admin" "$run"
+      run_sample "$phase" run_msp_fanout_walk "graphql_100k_fanout" "$fanout_100k_msp_account" "$fanout_100k_admin" "$run"
     fi
     if [[ "$INCLUDE_MSP_50K" == "1" ]]; then
-      run_msp_fanout_walk "$phase" "graphql_50k_fanout" "$fanout_50k_msp_account" "$fanout_50k_admin" "$run"
+      run_sample "$phase" run_msp_fanout_walk "graphql_50k_fanout" "$fanout_50k_msp_account" "$fanout_50k_admin" "$run"
     fi
     if [[ "$INCLUDE_MSP_10K" == "1" ]]; then
-      run_msp_fanout_walk "$phase" "graphql_10k_fanout" "$fanout_10k_msp_account" "$fanout_10k_admin" "$run"
+      run_sample "$phase" run_msp_fanout_walk "graphql_10k_fanout" "$fanout_10k_msp_account" "$fanout_10k_admin" "$run"
     fi
 
     if [[ "$INCLUDE_EXPERIMENTAL" == "1" ]]; then
-      curl_time "$phase" "web_deep_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$deep_leaf?as=$deep_admin"
-      curl_time "$phase" "web_branching_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$branch_leaf?as=$branch_admin"
-      curl_time "$phase" "web_dense_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$dense_account?as=$dense_admin"
+      run_sample "$phase" curl_time "web_deep_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$deep_leaf?as=$deep_admin"
+      run_sample "$phase" curl_time "web_branching_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$branch_leaf?as=$branch_admin"
+      run_sample "$phase" curl_time "web_dense_account_$run" GET "$USER_MANAGEMENT_BASE_URL/accounts/$dense_account?as=$dense_admin"
     fi
     grafana_annotate "$phase run $run finished" "benchmark,run,$phase"
   done
@@ -550,7 +623,7 @@ echo "Timings: $RESULTS"
 echo "Metadata: $METADATA"
 grafana_annotate "benchmark started: $OUT_DIR" "benchmark,lifecycle"
 
-run_phase "startup_cold"
+run_phase "cold_after_redis_flush"
 
 if [[ "$COLD_ONLY" == "1" ]]; then
   echo
@@ -561,20 +634,14 @@ if [[ "$COLD_ONLY" == "1" ]]; then
   echo "URL list: $URLS"
   echo "Jaeger: $JAEGER_BASE_URL/search?service=user-management-service"
   grafana_annotate "benchmark complete: $OUT_DIR" "benchmark,lifecycle"
-  exit 0
+  exit "$RUN_FAILED"
 fi
-
-echo
-echo "Repeating cold-cache run after startup noise is out of the way."
-flush_redis_caches
-run_phase "cold_after_redis_flush"
 
 run_phase "warm"
 
 if [[ "$CACHE_WAIT_SECONDS" -gt 0 ]]; then
   echo
-  echo "Waiting ${CACHE_WAIT_SECONDS}s for the 5 minute cache TTL to expire..."
-  sleep "$CACHE_WAIT_SECONDS"
+  echo "Each expiry sample will be primed, then wait ${CACHE_WAIT_SECONDS}s."
 
   run_phase "after_cache_expiry"
 else
@@ -588,3 +655,5 @@ echo "Timing CSV: $RESULTS"
 echo "URL list: $URLS"
 echo "Jaeger: $JAEGER_BASE_URL/search?service=user-management-service"
 grafana_annotate "benchmark complete: $OUT_DIR" "benchmark,lifecycle"
+
+exit "$RUN_FAILED"

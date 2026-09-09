@@ -189,3 +189,31 @@ Group, hierarchy, and count loads use this setting, including the front-door
 lookups and legacy account probes. Serial retrieval still sends one key per call.
 Large Account/hierarchy/count collections use JSON POST bodies to avoid URL size
 limits. Account-source concurrency remains bounded at four workers.
+
+### Isolated benchmark samples
+
+`benchmark_demo.sh` flushes service Redis caches before **each** cold workload,
+including every repetition. It does not flush between continuation pages. Each
+warm workload gets an immediately preceding priming walk; `warm_prime` rows are
+retained separately and must not be included in warm timing statistics. Process
+startup is no longer labeled or measured as cache coldness.
+
+The organization case follows all partition continuations and emits page rows
+plus a `full_walk` row. `ORGANIZATION_FIXTURE=wide_org` selects its manifest fixture.
+Response headers, bodies, and `.result.json` outcome/count summaries are saved.
+GraphQL errors and incomplete organization walks fail the run even with HTTP 200.
+`REQUEST_TIMEOUT_SECONDS` defaults to 600; timeout rows retain curl's elapsed time
+and partial response and are marked `outcome=timeout`, not successful timings.
+A run with failed samples exits nonzero while retaining the evidence.
+
+TTL-expiry sampling is opt-in (`CACHE_WAIT_SECONDS=310`). Each expiry sample is
+primed and then waits that duration; the default is `0` to skip this extra phase.
+Redis-disabled runs skip flushes. Do not run unrelated traffic against the stack
+while collecting isolated cache measurements.
+
+Harness regression checks (fake services, no benchmark traffic):
+
+```bash
+./dc_test run --rm --no-deps -v "$PWD:/workspace" -w /workspace \
+  user-management-service ruby test/benchmark_test.rb
+```
