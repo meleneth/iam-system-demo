@@ -59,12 +59,12 @@ The seeder waits for the grants queue every 10,000 jobs and waits for the seed q
 After the workers finish, refresh PostgreSQL statistics before collecting timings:
 
 ```bash
-bash vacuum_analyze_dev_databases.sh
+./analyze_databases.sh
 ```
 
 ## Benchmark And Timing Commands
 
-Run the full benchmark script. It executes cold, immediate warm, then post-cache-expiry phases. The wait defaults to 310 seconds so the 5 minute caches expire before the final phase.
+Run the full benchmark script. Each cold workload gets its own Redis flush; each warm workload gets a separate priming run. Post-cache-expiry sampling is opt-in with `CACHE_WAIT_SECONDS=310`. Trace JSON is archived by default.
 
 ```bash
 bash benchmark_demo.sh
@@ -73,7 +73,7 @@ bash benchmark_demo.sh
 Useful overrides:
 
 ```bash
-RUNS=1 CACHE_WAIT_SECONDS=10 bash benchmark_demo.sh
+RUNS=1 CACHE_WAIT_SECONDS=0 bash benchmark_demo.sh
 OUT_DIR=data/development/benchmark-runs/manual RUNS=5 bash benchmark_demo.sh
 ```
 

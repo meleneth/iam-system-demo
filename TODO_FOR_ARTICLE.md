@@ -4,6 +4,16 @@ This file tracks evidence work needed by the whirred.io GraphQL Auth Explosion
 case-study articles. It is deliberately separate from implementation TODOs for
 the demo itself.
 
+## September 2026 implementation follow-up
+
+See [BENCHMARK_READINESS_AUDIT.md](BENCHMARK_READINESS_AUDIT.md) for the current
+implementation/validation status and accepted scope. The sections below retain
+historical audit requirements: retrieval failure handling, environment-sized
+chunks, organization Dataloader account loads, independent cold samples, trace
+JSON archival, and database ANALYZE are now implemented. Queue drain remains the
+accepted seed-readiness convention. Controlled article measurements are still
+outstanding.
+
 ## Part 2: Multiple Object Retrieval
 
 Status: blocking controlled benchmark and trace evidence
