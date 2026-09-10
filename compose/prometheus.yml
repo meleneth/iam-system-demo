@@ -1,7 +1,7 @@
 ---
 services:
   prometheus:
-    image: prom/prometheus:v3.5.4
+    image: prom/prometheus:v3.14.0
     ports:
     - "${PROMETHEUS_WEB_PORT}:9090"
     volumes:

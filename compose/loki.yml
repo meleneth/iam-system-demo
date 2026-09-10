@@ -1,7 +1,7 @@
 ---
 services:
   loki:
-    image: grafana/loki:3.7.3
+    image: grafana/loki:3.7.7
     ports:
     - "${LOKI_WEB_PORT}:3100"
     command:

@@ -59,6 +59,7 @@ class DemoUserSeeder
 
     total_count = fixture_payloads.length + random_count
     started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    @last_progress_at = started_at
     reset_progress_rate(0, started_at)
     fixture_stream = StreamingFixtureScheduler.new(fixture_payloads, total_count, random: @random)
     puts "Streaming #{random_count} random jobs and #{fixture_payloads.length} fixture jobs#{@dry_run ? ' (dry run)' : ''}..."
@@ -106,9 +107,11 @@ class DemoUserSeeder
   end
 
   def log_progress(published, total_count)
-    return unless (published % progress_interval).zero? || published == total_count
+    now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    return unless (published % progress_interval).zero? || published == total_count || now - @last_progress_at >= 5
 
-    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @progress_rate_started_at
+    @last_progress_at = now
+    elapsed = now - @progress_rate_started_at
     published_in_window = published - @progress_rate_started_published
     rate = elapsed.positive? ? (published_in_window / elapsed).round(1) : published_in_window
     puts "Published #{published}/#{total_count} jobs (#{rate} jobs/sec since last grants wait)"

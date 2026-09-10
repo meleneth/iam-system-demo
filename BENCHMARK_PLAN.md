@@ -1,17 +1,16 @@
 # Article evidence collection plan
 
-Status: the 2026-09-09 collection was cancelled during seeding after finding missing
-group workers. Production application databases were dropped and containers stopped.
-The fixture manifest left on disk is stale and must not be used for collection.
-The configuration audit below is static; a fresh seed and live smoke gates are still required.
+Status: production seeding completed successfully on 2026-09-10 at 10:42 UTC:
+2,000,000 jobs, all five seed queues drained, and all ten seed workers stopped.
+Elapsed seed time including queue drain was 27,212.111 seconds (7h 33m 32s).
+The fresh production manifest replaces the stale manifest from the cancelled run.
+Preparation passed production HTTP readiness for all seven web services after
+updating net-imap to 0.6.7 for Ruby 4 production eager loading.
 
-Historical setup validation (before the missing workers were fixed): production setup validated on 2026-09-09: all 46 services booted, all seven
-application health endpoints returned HTTP 200 in production mode, and tooling
-tests passed through `./dc_test` (21 tests, 82 assertions). Cross-stack validation
-found no collisions among 92 published port bindings. Seed workers and optional
-monitoring were stopped after setup validation. **Production article fixtures
-still need seeding, and the actual suite has not started**. Run from a text console after switching to multiuser/no-X mode.
-The first two cases are live smoke gates; both must pass before measured cases.
+Seed logs, CPU/RAM details, and preparation evidence are in
+`reports/raw/article-no-x-20260910T011818Z/`. Collection has not yet passed its
+live smoke gates. Run from multiuser/no-X mode; both smoke gates must pass before
+measured cases.
 
 ## What this run covers
 
@@ -69,13 +68,25 @@ its schemas and applications without resetting any existing data:
 ```bash
 ./prepare_prod.sh
 ./seed_workers.sh prod start
-./dc_prod run --rm --no-deps -e USER_COUNT=2000000 -e DEMO_PROGRESS_INTERVAL=10000 user-management-service bin/rails runner scripts/demo_user_seeder.rb
+set -o pipefail
+mkdir -p reports/raw
+./dc_prod run --rm --no-deps -T -e USER_COUNT=2000000 -e DEMO_PROGRESS_INTERVAL=10000 user-management-service bin/rails runner scripts/demo_user_seeder.rb 2>&1 | tee "reports/raw/seeding-$(date -u +%Y%m%dT%H%M%SZ).log"
 ./seed_workers.sh prod stop
 ```
 
 `./seed_workers.sh prod start` first checks production/dev service parity, queue
 consumer coverage, and production database settings, then discovers all seed
 workers from the resolved production configuration. `stop` stops that same set.
+
+Run this command in the attached host tmux pane: its output belongs to the
+one-off runner, so following the long-running web service's logs will not show
+seed progress. `tee` keeps both live output and a saved log; `pipefail` preserves
+runner failures. The seeder flushes stdout immediately and reports at least every
+five seconds while jobs are being published, as well as every 10,000 jobs.
+This is progress reporting after successful publishes, not a heartbeat during a
+blocked network request. Queue waits report every five seconds after polling.
+Its first message is `Building fixture payloads...`, after Rails has booted;
+silence before that message is outside the publishing loop.
 
 Run seeding once, only when preparing the dataset. The seeder waits for queues to
 drain and writes `data/production/demo-fixtures/latest/fixture_manifest.json`.

@@ -178,11 +178,11 @@ GEM
       net-smtp
     marcel (1.0.4)
     mini_mime (1.1.5)
-    minitest (5.25.5)
+    minitest (5.27.0)
     msgpack (1.8.0)
     net-http (0.9.1)
       uri (>= 0.11.1)
-    net-imap (0.5.9)
+    net-imap (0.6.7)
       date
       net-protocol
     net-pop (0.1.2)
@@ -197,17 +197,17 @@ GEM
       net-protocol
     net-ssh (7.3.0)
     nio4r (2.7.4)
-    nokogiri (1.18.9-aarch64-linux-gnu)
+    nokogiri (1.19.4-aarch64-linux-gnu)
       racc (~> 1.4)
-    nokogiri (1.18.9-aarch64-linux-musl)
+    nokogiri (1.19.4-aarch64-linux-musl)
       racc (~> 1.4)
-    nokogiri (1.18.9-arm-linux-gnu)
+    nokogiri (1.19.4-arm-linux-gnu)
       racc (~> 1.4)
-    nokogiri (1.18.9-arm-linux-musl)
+    nokogiri (1.19.4-arm-linux-musl)
       racc (~> 1.4)
-    nokogiri (1.18.9-x86_64-linux-gnu)
+    nokogiri (1.19.4-x86_64-linux-gnu)
       racc (~> 1.4)
-    nokogiri (1.18.9-x86_64-linux-musl)
+    nokogiri (1.19.4-x86_64-linux-musl)
       racc (~> 1.4)
     opentelemetry-api (1.6.0)
     opentelemetry-common (0.22.0)
@@ -571,7 +571,7 @@ GEM
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.1.4)
       unicode-emoji (~> 4.0, >= 4.0.4)
-    unicode-emoji (4.0.4)
+    unicode-emoji (4.2.0)
     uri (1.0.3)
     useragent (0.16.11)
     websocket-driver (0.8.0)
@@ -613,4 +613,4 @@ DEPENDENCIES
   tzinfo-data
 
 BUNDLED WITH
-   4.0.14
+  4.0.16

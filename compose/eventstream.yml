@@ -1,7 +1,7 @@
 ---
 services:
   eventstream:
-    image: admiralpiett/goaws:v0.5.3
+    image: admiralpiett/goaws:v0.5.4
     ports:
     - "${EVENTSTREAM_WEB_PORT}:4566"
     volumes:

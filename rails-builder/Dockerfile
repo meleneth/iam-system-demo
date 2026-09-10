@@ -1,4 +1,4 @@
-FROM ruby:3.4.4-bookworm
+FROM ruby:4.0.6-trixie
 RUN apt-get update -qq && apt-get install -y nodejs postgresql-client
 # Common dependencies
 RUN apt-get update -qq \

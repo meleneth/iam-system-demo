@@ -10,7 +10,7 @@ if [[ "${SKIP_BUILD:-0}" != 1 ]]; then
 fi
 services="$(./dc_prod config --services)"
 mapfile -t databases < <(printf '%s\n' "$services" | ruby -ne 'puts $_ if /-db(?:-|$)/')
-./dc_prod up -d --wait "${databases[@]}" accountcache authcache orgcache groupcache otel-collector jaeger eventstream
+./dc_prod up -d --wait --remove-orphans "${databases[@]}" accountcache authcache orgcache groupcache otel-collector jaeger eventstream
 # Prepare schemas before booting consumers; never reset existing data.
 for service in "${apps[@]}"; do
   ./dc_prod run --rm --no-deps "$service" bin/rails db:prepare
@@ -23,10 +23,16 @@ for service in "${apps[@]}" account-auth-service; do
       ready=1
       break
     fi
+    if ! ./dc_prod ps --status running --services | rg -Fxq "$service"; then
+      echo "Production service exited before readiness: $service" >&2
+      ./dc_prod logs --no-color --tail 100 "$service" >&2
+      exit 1
+    fi
     sleep 1
   done
   if [[ "$ready" != 1 ]]; then
     echo "Production service failed readiness: $service" >&2
+    ./dc_prod logs --no-color --tail 100 "$service" >&2
     exit 1
   fi
 done

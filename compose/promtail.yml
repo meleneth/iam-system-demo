@@ -1,7 +1,7 @@
 ---
 services:
   promtail:
-    image: grafana/promtail:3.6.8
+    image: grafana/promtail:3.6.11
     ports:
     - "${PROMTAIL_WEB_PORT}:9080"
     command:

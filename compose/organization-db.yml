@@ -1,15 +1,17 @@
 ---
 services:
   organization-db:
-    image: postgres:17.5-bookworm
+    image: postgres:18.6-trixie
     ports:
     - "${ORGANIZATION_DB_POSTGRES_PORT}:5432"
     environment:
     - POSTGRES_DB=${ORGANIZATION_DB_POSTGRES_DB}
     - POSTGRES_PASSWORD=${ORGANIZATION_DB_POSTGRES_PASSWORD}
     - POSTGRES_USER=${ORGANIZATION_DB_POSTGRES_USER}
+    # PostgreSQL 18 uses a versioned PGDATA under this parent mount.
+    # Keep older clusters intact; this subdirectory is a fresh PG18 cluster.
     volumes:
-    - "${ORGANIZATION_DB_POSTGRES_DATA}:/var/lib/postgresql/data"
+    - "${ORGANIZATION_DB_POSTGRES_DATA}/pg18:/var/lib/postgresql"
     healthcheck:
       test:
       - CMD-SHELL
