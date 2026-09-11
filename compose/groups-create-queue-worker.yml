@@ -2,6 +2,7 @@ x-groups-create-service-worker: &groups-create-service-worker
   image: parent_account_id/group-service
   command: ["./bin/rails", "runner", "GroupsCreateQueueWorker.new.run"]
   environment:
+    - IAM_DEPLOYMENT_ROLE=queue-worker
     - GROUPS_SEED_QUEUE_URL=http://eventstream:4566/000000000000/group_create
     - AWS_ACCESS_KEY_ID=fake
     - AWS_SECRET_ACCESS_KEY=fake

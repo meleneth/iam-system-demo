@@ -46,16 +46,23 @@ class OrganizationAccountsController < ApplicationController
   end
 
   def for_accounts
-    account_ids = params.permit(account_ids: [])[:account_ids]
-    raise ActionController::BadRequest, "account_ids must be an array" unless account_ids.is_a?(Array)
-    raise ActionController::BadRequest, "account_ids must not be empty" if account_ids.empty?
+    account_ids = Instrumentation.trace("organization_accounts.params.parse") do
+      ids = params.permit(account_ids: [])[:account_ids]
+      raise ActionController::BadRequest, "account_ids must be an array" unless ids.is_a?(Array)
+      raise ActionController::BadRequest, "account_ids must not be empty" if ids.empty?
+      ids
+    end
 
-    pad_user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise "no pad-user-id header sent" unless pad_user_id
+    Instrumentation.trace("organization_accounts.authorize", attributes: { "scope.count" => account_ids.size }) do
+      pad_user_id = request.headers["HTTP_PAD_USER_ID"]
+      raise "no pad-user-id header sent" unless pad_user_id
+      authorize_account_read!(pad_user_id, account_ids)
+    end
 
-    authorize_account_read!(pad_user_id, account_ids)
-
-    render json: compressed_organization_account_ids_for_account_ids(account_ids)
+    payload = Instrumentation.trace("organization_accounts.payload.build") do
+      compressed_organization_account_ids_for_account_ids(account_ids)
+    end
+    Instrumentation.trace("organization_accounts.response.serialize") { render json: payload }
   end
 
   # GET /organization_accounts/1
@@ -122,8 +129,10 @@ class OrganizationAccountsController < ApplicationController
 
   def compressed_organization_account_ids_for_account_ids(account_ids)
     ids = Array(account_ids).map(&:to_s)
-    org_accounts = OrganizationAccount.where(account_id: ids)
-    org_account_by_account_id = org_accounts.index_by { |org_account| org_account.account_id.to_s }
+    org_accounts, org_account_by_account_id = Instrumentation.trace("organization_accounts.membership.materialize") do
+      rows = OrganizationAccount.where(account_id: ids).to_a
+      [rows, rows.index_by { |org_account| org_account.account_id.to_s }]
+    end
     missing_ids = ids - org_account_by_account_id.keys
     raise ActiveRecord::RecordNotFound, "No organization accounts for account_ids #{missing_ids}" if missing_ids.any?
 
@@ -143,8 +152,10 @@ class OrganizationAccountsController < ApplicationController
 
   def cached_account_ids_by_organization_id(organization_ids)
     cache_keys = organization_ids.map { |organization_id| account_ids_cache_key(organization_id) }
-    cached_values = ORGANIZATION_CACHE.pipelined do |pipe|
-      cache_keys.each { |cache_key| pipe.get(cache_key) }
+    cached_values = Instrumentation.trace("organization_accounts.cache.lookup", attributes: { "scope.count" => organization_ids.size }) do
+      ORGANIZATION_CACHE.pipelined do |pipe|
+        cache_keys.each { |cache_key| pipe.get(cache_key) }
+      end
     end
 
     by_organization_id = {}
@@ -154,12 +165,14 @@ class OrganizationAccountsController < ApplicationController
       OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; treating #{organization_ids.size} organization account-id lists as misses")
     end
 
-    organization_ids.each_with_index do |organization_id, index|
-      cached = cached_values[index]
-      if cached
-        by_organization_id[organization_id] = JSON.parse(cached)
-      else
-        misses << organization_id
+    Instrumentation.trace("organization_accounts.cache.decode") do
+      organization_ids.each_with_index do |organization_id, index|
+        cached = cached_values[index]
+        if cached
+          by_organization_id[organization_id] = JSON.parse(cached)
+        else
+          misses << organization_id
+        end
       end
     end
     IamDemo::CacheMetrics.record(
@@ -176,8 +189,10 @@ class OrganizationAccountsController < ApplicationController
     )
 
     if misses.any?
-      OrganizationAccount.where(organization_id: misses).group_by { |org_account| org_account.organization_id.to_s }.each do |organization_id, rows|
-        by_organization_id[organization_id] = rows.map(&:account_id)
+      Instrumentation.trace("organization_accounts.cache.miss.materialize") do
+        OrganizationAccount.where(organization_id: misses).group_by { |org_account| org_account.organization_id.to_s }.each do |organization_id, rows|
+          by_organization_id[organization_id] = rows.map(&:account_id)
+        end
       end
 
       unless cache_disabled?

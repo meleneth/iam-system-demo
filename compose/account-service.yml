@@ -4,18 +4,18 @@ services:
     image: parent_account_id/account-service
     ports:
       - "${ACCOUNT_SERVICE_WEB_PORT}:3000"
-    environment:
-      - DATABASE_URL=${ACCOUNT_DB_DATABASE_URL}
-      - RAILS_ENV=test
-      - RAILS_MAX_THREADS=5
-      - RAILS_MIN_THREADS=5
-      - AUTHORIZATION_SERVICE_API_BASE_URL=http://authorization-service:80
-      - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-service:80
-      - USER_SERVICE_API_BASE_URL=http://user-service:80
-      - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
-      - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
-      - IAM_DEMO_BATCH_SIZE=${IAM_DEMO_BATCH_SIZE:-1000}
-      - SECRET_KEY_BASE=${ACCOUNT_RAILS_SECRET_KEY_BASE}
+    environment: &account-service-environment
+      DATABASE_URL: "${ACCOUNT_DB_DATABASE_URL}"
+      RAILS_ENV: "test"
+      RAILS_MAX_THREADS: "5"
+      RAILS_MIN_THREADS: "5"
+      AUTHORIZATION_SERVICE_API_BASE_URL: "http://authorization-service:80"
+      ORGANIZATION_SERVICE_API_BASE_URL: "http://organization-service:80"
+      USER_SERVICE_API_BASE_URL: "http://user-service:80"
+      GLOBAL_IAM_DEMO_USE_REDIS: "${GLOBAL_IAM_DEMO_USE_REDIS}"
+      AUTHORIZATION_CHECK_MODE: "${AUTHORIZATION_CHECK_MODE:-can}"
+      IAM_DEMO_BATCH_SIZE: "${IAM_DEMO_BATCH_SIZE:-1000}"
+      SECRET_KEY_BASE: "${ACCOUNT_RAILS_SECRET_KEY_BASE}"
     build:
       context: "./account-service"
     depends_on:
@@ -24,6 +24,10 @@ services:
         restart: true
   account-auth-service:
     <<: *account-service-template
+    environment:
+      <<: *account-service-environment
+      OTEL_SERVICE_NAME: account-auth-service
+      IAM_DEPLOYMENT_ROLE: authorization-account-lookup
     ports:
       - "${ACCOUNT_AUTH_SERVICE_WEB_PORT}:3000"
     depends_on:

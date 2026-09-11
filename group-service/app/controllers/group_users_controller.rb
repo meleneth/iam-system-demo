@@ -6,10 +6,11 @@ class GroupUsersController < ApplicationController
     filters = params.slice(*GroupUser.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = GroupUser.where(*filters)
-    auth = authorize_group_user_collection_read!(results)
+    auth = Instrumentation.trace("GroupUser.collection.authorize") { authorize_group_user_collection_read!(results) }
     return render json: auth, status: :accepted if auth
 
-    render json: results
+    Instrumentation.trace("GroupUser.collection.materialize") { results.load } if results.respond_to?(:load)
+    Instrumentation.trace("GroupUser.response.serialize") { render json: results }
   end
 
   # POST /group_users/search
@@ -18,10 +19,11 @@ class GroupUsersController < ApplicationController
     raise BadFilterError unless filters.present?
 
     results = GroupUser.where(*filters)
-    auth = authorize_group_user_collection_read!(results)
+    auth = Instrumentation.trace("GroupUser.collection.authorize") { authorize_group_user_collection_read!(results) }
     return render json: auth, status: :accepted if auth
 
-    render json: results
+    Instrumentation.trace("GroupUser.collection.materialize") { results.load } if results.respond_to?(:load)
+    Instrumentation.trace("GroupUser.response.serialize") { render json: results }
   end
 
   # GET /group_users/1

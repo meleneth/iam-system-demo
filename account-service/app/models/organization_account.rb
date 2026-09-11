@@ -35,30 +35,34 @@ class OrganizationAccount < ActiveResource::Base
   def self.account_ids_for_organizations_by_account_ids(account_ids)
     url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_ids"
 
-    pad_user_id = headers["pad-user-id"]
-    outgoing_headers = {
-      "pad-user-id" => pad_user_id,
-      "Content-Type" => "application/json"
-    }
-    OpenTelemetry.propagation.inject(outgoing_headers)
-    response = Faraday.post(url) do |req|
-      outgoing_headers.each { |key, value| req.headers[key] = value }
-      req.body = { account_ids: account_ids }.to_json
-    end
-
-    raise "Failed to get org accounts for account_ids #{account_ids}" unless response.status == 200
-
-    data = JSON.parse(response.body)
-    organizations = data.fetch("organizations")
-
-    data.fetch("account_to_organization").to_h do |account_id, organization_id|
-      [
-        account_id.to_s,
-        {
-          organization: Organization.new(id: organization_id),
-          account_ids: organizations.fetch(organization_id.to_s)
+    Instrumentation.trace("organization_accounts.lookup", attributes: { "scope.count" => account_ids.size }) do
+      outgoing_headers, body = Instrumentation.trace("organization_accounts.request.encode") do
+        request_headers = {
+          "pad-user-id" => headers["pad-user-id"],
+          "Content-Type" => "application/json"
         }
-      ]
+        [request_headers, { account_ids: account_ids }.to_json]
+      end
+      response = Faraday.post(url) do |req|
+        outgoing_headers.each { |key, value| req.headers[key] = value }
+        req.body = body
+      end
+
+      raise "Failed to get org accounts for account_ids #{account_ids}" unless response.status == 200
+
+      data = Instrumentation.trace("organization_accounts.response.decode",
+        attributes: { "http.response.body.size" => response.body.bytesize, "http.request.body.size" => body.bytesize }) do
+        JSON.parse(response.body)
+      end
+      Instrumentation.trace("organization_accounts.response.materialize") do
+        organizations = data.fetch("organizations")
+        data.fetch("account_to_organization").to_h do |account_id, organization_id|
+          [account_id.to_s, {
+            organization: Organization.new(id: organization_id),
+            account_ids: organizations.fetch(organization_id.to_s)
+          }]
+        end
+      end
     end
   end
 

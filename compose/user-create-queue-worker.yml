@@ -2,6 +2,7 @@ x-user-create-service-worker: &user-create-service-worker
   image: parent_account_id/user-service
   command: ["./bin/rails", "runner", "UserCreateQueueWorker.new.run"]
   environment:
+    - IAM_DEPLOYMENT_ROLE=queue-worker
     - USER_SEED_QUEUE_URL=http://eventstream:4566/000000000000/user_create
     - AWS_ACCESS_KEY_ID=fake
     - AWS_SECRET_ACCESS_KEY=fake

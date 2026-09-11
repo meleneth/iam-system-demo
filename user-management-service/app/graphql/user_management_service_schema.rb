@@ -5,7 +5,8 @@ class UserManagementServiceSchema < GraphQL::Schema
   query(Types::QueryType)
 
   # For batch-loading (see https://graphql-ruby.org/dataloader/overview.html)
-  use GraphQL::Dataloader
+  trace_with Tracing::SourceContext
+  use Tracing::Dataloader
   #use GraphQL::Execution::Interpreter
   #use GraphQL::Analysis::AST
 

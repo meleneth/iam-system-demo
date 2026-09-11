@@ -6,11 +6,12 @@ class UsersController < ApplicationController
     filters = params.slice(*User.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = User.where(*filters)
-    auth = authorize_user_collection_read!(results)
+    auth = Instrumentation.trace("User.collection.authorize") { authorize_user_collection_read!(results) }
     return if performed?
     return render json: auth, status: :accepted if auth
 
-    render json: results
+    Instrumentation.trace("User.collection.materialize") { results.load } if results.respond_to?(:load)
+    Instrumentation.trace("User.response.serialize") { render json: results }
   end
 
   # POST /users/search
@@ -19,11 +20,12 @@ class UsersController < ApplicationController
     raise BadFilterError unless filters.present?
 
     results = User.where(*filters)
-    auth = authorize_user_collection_read!(results)
+    auth = Instrumentation.trace("User.collection.authorize") { authorize_user_collection_read!(results) }
     return if performed?
     return render json: auth, status: :accepted if auth
 
-    render json: results
+    Instrumentation.trace("User.collection.materialize") { results.load } if results.respond_to?(:load)
+    Instrumentation.trace("User.response.serialize") { render json: results }
   end
 
   # GET /users/1

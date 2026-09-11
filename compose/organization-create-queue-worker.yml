@@ -2,6 +2,7 @@ x-organization-create-service-worker: &organization-create-service-worker
   image: parent_account_id/organization-service
   command: ["./bin/rails", "runner", "OrganizationCreateQueueWorker.new.run"]
   environment:
+    - IAM_DEPLOYMENT_ROLE=queue-worker
     - ORGANIZATION_SEED_QUEUE_URL=http://eventstream:4566/000000000000/organization_create
     - AWS_ACCESS_KEY_ID=fake
     - AWS_SECRET_ACCESS_KEY=fake

@@ -2,6 +2,7 @@ x-account-create-service-worker: &account-create-service-worker
   image: parent_account_id/account-service
   command: ["./bin/rails", "runner", "AccountCreateQueueWorker.new.run"]
   environment:
+    - IAM_DEPLOYMENT_ROLE=queue-worker
     - ACCOUNT_SEED_QUEUE_URL=http://eventstream:4566/000000000000/account_create
     - AWS_ACCESS_KEY_ID=fake
     - AWS_SECRET_ACCESS_KEY=fake
