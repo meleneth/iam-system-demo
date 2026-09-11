@@ -9,6 +9,17 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=4.0.6
+# Build the pinned Thruster with ingress tracing; keep its proxy behavior.
+FROM golang:1.24.4-bookworm AS traced-thruster
+WORKDIR /src
+ADD --checksum=sha256:cfc8313331c2f609297160d8715a865babc81874e79bfd59340df9a438c2ba31 https://codeload.github.com/basecamp/thruster/tar.gz/refs/tags/v0.1.15 /tmp/thruster.tar.gz
+RUN tar -xzf /tmp/thruster.tar.gz --strip-components=1
+COPY instrumentation/thruster/go.mod instrumentation/thruster/go.sum ./
+RUN go mod download
+COPY instrumentation/thruster/iam_tracing.go instrumentation/thruster/iam_tracing_test.go ./internal/
+COPY instrumentation/thruster/tracing.patch /tmp/tracing.patch
+RUN git apply /tmp/tracing.patch && go test ./internal && CGO_ENABLED=0 go build -mod=readonly -o /thrust ./cmd/thrust
+
 FROM docker.io/library/ruby:$RUBY_VERSION-slim-trixie AS base
 
 # Rails app lives here
@@ -50,6 +61,9 @@ RUN bundle exec bootsnap precompile app/ lib/
 
 # Final stage for app image
 FROM base
+
+COPY --from=traced-thruster /thrust /usr/local/bin/iam-thrust
+ENV IAM_RAILS_SERVICE_NAME="group-service"
 
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"

@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
+instrumented = ENV.fetch("IAM_THRUSTER_BINARY", "/usr/local/bin/iam-thrust")
+exec instrumented, *ARGV if File.executable?(instrumented)
+
 require "rubygems"
 require "bundler/setup"
 

@@ -21,10 +21,23 @@ class TracingConfigurationTest < Minitest::Test
   end
 
   def test_phase_hooks_are_identical_in_isolated_service_build_contexts
-    %w[http_phases.rb rack_phases.rb].each do |name|
+    %w[http_phases.rb rack_phases.rb controller_phases.rb server_phases.rb].each do |name|
       copies = Dir[File.expand_path("../*-service/lib/#{name}", __dir__)]
       assert_equal 6, copies.size
       assert_equal 1, copies.map { |path| File.read(path) }.uniq.size
+    end
+  end
+
+  def test_ingress_adapter_is_identical_and_built_for_every_service
+    services = Dir[File.expand_path("../*-service/config/application.rb", __dir__)].map { |path| File.dirname(File.dirname(path)) }
+    assert_equal 6, services.size
+    %w[iam_tracing.go iam_tracing_test.go tracing.patch go.mod go.sum].each do |name|
+      assert_equal 1, services.map { |service| File.read("#{service}/instrumentation/thruster/#{name}") }.uniq.size
+    end
+    services.each do |service|
+      assert_includes File.read("#{service}/Dockerfile"), "COPY --from=traced-thruster /thrust /usr/local/bin/iam-thrust"
+      assert_includes File.read("#{service}/config/boot.rb"), 'require_relative "../lib/server_phases"'
+      assert_includes File.read("#{service}/config/initializers/opentelemetry.rb"), 'require_relative "../../lib/controller_phases"'
     end
   end
 end

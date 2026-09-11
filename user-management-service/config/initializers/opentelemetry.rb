@@ -29,3 +29,5 @@ OpenTelemetry::SDK.configure do |c|
 end
 
 require_relative "../../lib/http_phases"
+
+require_relative "../../lib/controller_phases"
