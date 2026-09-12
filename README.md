@@ -120,7 +120,7 @@ jaeger: 11030, 11160, 11290
 this shows the spans that the system generates via OpenTelemetry as things happen
 
 See [request timing in Jaeger](docs/request-tracing.md) for controller spans,
-Thruster ingress and Puma server phases, configuration switches, and timing boundaries.
+configuration switches, and timing boundaries.
 
 The current implementation does have header-based authorization, and `IAM_SYSTEM` is a system bypass used by internal requests and scripts. See [`authorization-service/app/controllers/can_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/authorization-service/app/controllers/can_controller.rb), [`organization-service/app/controllers/organization_accounts_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/organization-service/app/controllers/organization_accounts_controller.rb), and [`account-service/app/controllers/accounts_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/account-service/app/controllers/accounts_controller.rb).
 
