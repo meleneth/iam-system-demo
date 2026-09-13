@@ -36,7 +36,7 @@ class OrganizationAccount < ActiveResource::Base
     url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_ids"
 
     Instrumentation.trace("organization_accounts.lookup", attributes: { "scope.count" => account_ids.size }) do
-      outgoing_headers, body = Instrumentation.trace("organization_accounts.request.encode") do
+      outgoing_headers, body = begin
         request_headers = {
           "pad-user-id" => headers["pad-user-id"],
           "Content-Type" => "application/json"
@@ -50,11 +50,10 @@ class OrganizationAccount < ActiveResource::Base
 
       raise "Failed to get org accounts for account_ids #{account_ids}" unless response.status == 200
 
-      data = Instrumentation.trace("organization_accounts.response.decode",
-        attributes: { "http.response.body.size" => response.body.bytesize, "http.request.body.size" => body.bytesize }) do
+      data = begin
         JSON.parse(response.body)
       end
-      Instrumentation.trace("organization_accounts.response.materialize") do
+      begin
         organizations = data.fetch("organizations")
         data.fetch("account_to_organization").to_h do |account_id, organization_id|
           [account_id.to_s, {

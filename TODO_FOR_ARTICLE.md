@@ -4,6 +4,76 @@ This file tracks evidence work needed by the whirred.io GraphQL Auth Explosion
 case-study articles. It is deliberately separate from implementation TODOs for
 the demo itself.
 
+## September 13, 2026: simplify instrumentation and refresh gallery evidence
+
+Status: revised requirements from the author; code validation in progress before
+commit, rebuild, and a fresh warmed collection. The earlier September 13 refresh
+removed HTTP request spans and included first-request work; it is superseded by
+this protocol.
+
+The gallery must show cross-service requests from direct HTTP, Faraday, and
+ActiveResource calls, with application SQL beneath those API calls. Remove
+controller/action and custom HTTP phase detail, schema introspection and setup
+SQL, serialization, and materialization timings. **Cache-operation spans remain.**
+
+Keep ActiveRecord's per-request query cache. Remove only unused Solid Cache.
+Warm Rails with representative workload requests before measuring. Clear Redis
+alone for cold-Redis samples; do not restart Rails between warmup/cold/warm, and
+do not restart PostgreSQL or clear its buffers. Commit code before rebuilding.
+
+### Instrumentation changes
+
+- Remove controller/action timing spans.
+- Retain HTTP client and API server request spans, covering direct HTTP,
+  Faraday, and ActiveResource retrievals. Remove custom connection preparation,
+  connection, request-write, response-header/body, and response-lifecycle phases
+  such as `rack.response.commit_to_close`.
+- Remove serialization, encoding/decoding, payload-building, and materialization
+  spans. Materialization here means constructing application objects or arrays
+  from query results or decoded responses; that implementation detail is not
+  the point of the gallery.
+- Preserve cache-operation spans, including Redis commands/pipelines and useful
+  application cache lookup/hit/miss operations. For cache operations whose name
+  includes decode/materialize, retain visibility of the cache operation itself
+  without retaining separate object-construction or serialization timings.
+- Preserve SQL and meaningful application/authorization operations. Preserve
+  cross-service trace-context propagation and verify HTTP/API/SQL ancestry.
+- Apply the changes consistently across service copies and update relevant
+  tests and `docs/request-tracing.md`. Do not change authorization semantics or
+  actor identity as part of this instrumentation task.
+- Remove instrumentation at the source. Filtering old spans out of the gallery
+  is not a substitute for collecting new evidence with the intended setup.
+
+### Collection and handoff
+
+- Rebuild through the repository Compose wrappers and rerun the showcase trace
+  collection (`scripts/refresh_article_traces.rb`) with the reduced instrumentation.
+  Warm each Rails profile before measurement, then flush only Redis for cold
+  samples. Record Puma process continuity and client elapsed timings.
+  Finish seeding and stop seed workers before collecting; the previous showcase
+  rerun observed workers running, which limited timing comparisons.
+- Validate the resulting exports: removed span categories are absent, cache
+  operations remain visible, and cross-service trace context is intact. Record
+  actual request outcomes, including any failures; do not assume historical
+  capabilities failures will recur.
+- Preserve historical collections. Record the new collection path, source
+  revision, instrumentation settings, worker state, outcomes, and selected
+  authorization subtree roots for the publishing handoff.
+- The currently published gallery uses `article-traces-20260912T001449Z` at
+  revision `a11a5c7765a835566015e7f7fcf8b369a8cf8a0b`. That revision removed
+  Puma/Thruster hooks but retained controller, Ruby HTTP-phase, serialization,
+  and materialization instrumentation. It is not the requested reduced setup.
+- A showcase rerun supplies gallery examples only. The article benchmark tables
+  still use the September 10 collection; do not relabel those timings as new
+  measurements without rerunning the benchmark matrix.
+- Provide an explicit handoff for `/home/meleneth/Documents/whirred-io`:
+  update `scripts/import-iam-traces.py` to the new collection and subtree roots,
+  regenerate JSON/manifests and SVG previews, update gallery comparisons to the
+  actual new traces, and remove the viewer's obsolete "Before the first outgoing
+  HTTP request" diagnostic breakdown. Correct `scripts/README.md`, which currently
+  claims controller spans were already omitted. Validate, commit, and deploy
+  the publishing changes through that repository's documented workflow.
+
 ## September 2026 implementation follow-up
 
 See [BENCHMARK_READINESS_AUDIT.md](BENCHMARK_READINESS_AUDIT.md) for the current

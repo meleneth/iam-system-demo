@@ -84,10 +84,6 @@ production:
     database: authorization_service_production
     username: authorization_service
     password: <%= ENV["AUTHORIZATION_SERVICE_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: authorization_service_production_cache
-    migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
     database: authorization_service_production_queue

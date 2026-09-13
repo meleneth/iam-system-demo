@@ -46,7 +46,7 @@ class OrganizationAccountsController < ApplicationController
   end
 
   def for_accounts
-    account_ids = Instrumentation.trace("organization_accounts.params.parse") do
+    account_ids = begin
       ids = params.permit(account_ids: [])[:account_ids]
       raise ActionController::BadRequest, "account_ids must be an array" unless ids.is_a?(Array)
       raise ActionController::BadRequest, "account_ids must not be empty" if ids.empty?
@@ -59,10 +59,10 @@ class OrganizationAccountsController < ApplicationController
       authorize_account_read!(pad_user_id, account_ids)
     end
 
-    payload = Instrumentation.trace("organization_accounts.payload.build") do
+    payload = begin
       compressed_organization_account_ids_for_account_ids(account_ids)
     end
-    Instrumentation.trace("organization_accounts.response.serialize") { render json: payload }
+    render json: payload
   end
 
   # GET /organization_accounts/1
@@ -129,7 +129,7 @@ class OrganizationAccountsController < ApplicationController
 
   def compressed_organization_account_ids_for_account_ids(account_ids)
     ids = Array(account_ids).map(&:to_s)
-    org_accounts, org_account_by_account_id = Instrumentation.trace("organization_accounts.membership.materialize") do
+    org_accounts, org_account_by_account_id = begin
       rows = OrganizationAccount.where(account_id: ids).to_a
       [rows, rows.index_by { |org_account| org_account.account_id.to_s }]
     end
@@ -151,21 +151,21 @@ class OrganizationAccountsController < ApplicationController
   end
 
   def cached_account_ids_by_organization_id(organization_ids)
-    cache_keys = organization_ids.map { |organization_id| account_ids_cache_key(organization_id) }
-    cached_values = Instrumentation.trace("organization_accounts.cache.lookup", attributes: { "scope.count" => organization_ids.size }) do
-      ORGANIZATION_CACHE.pipelined do |pipe|
-        cache_keys.each { |cache_key| pipe.get(cache_key) }
+    Instrumentation.trace("organization_accounts.cache.fetch", attributes: { "scope.count" => organization_ids.size }) do
+      cache_keys = organization_ids.map { |organization_id| account_ids_cache_key(organization_id) }
+      cached_values = Instrumentation.trace("organization_accounts.cache.lookup", attributes: { "scope.count" => organization_ids.size }) do
+        ORGANIZATION_CACHE.pipelined do |pipe|
+          cache_keys.each { |cache_key| pipe.get(cache_key) }
+        end
       end
-    end
 
-    by_organization_id = {}
-    misses = []
+      by_organization_id = {}
+      misses = []
 
-    if cache_disabled?
-      OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; treating #{organization_ids.size} organization account-id lists as misses")
-    end
+      if cache_disabled?
+        OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; treating #{organization_ids.size} organization account-id lists as misses")
+      end
 
-    Instrumentation.trace("organization_accounts.cache.decode") do
       organization_ids.each_with_index do |organization_id, index|
         cached = cached_values[index]
         if cached
@@ -174,39 +174,39 @@ class OrganizationAccountsController < ApplicationController
           misses << organization_id
         end
       end
-    end
-    IamDemo::CacheMetrics.record(
-      cache: "account_ids_by_organization",
-      outcome: "hit",
-      count: organization_ids.size - misses.size,
-      redis_enabled: !cache_disabled?
-    )
-    IamDemo::CacheMetrics.record(
-      cache: "account_ids_by_organization",
-      outcome: "miss",
-      count: misses.size,
-      redis_enabled: !cache_disabled?
-    )
+      IamDemo::CacheMetrics.record(
+        cache: "account_ids_by_organization",
+        outcome: "hit",
+        count: organization_ids.size - misses.size,
+        redis_enabled: !cache_disabled?
+      )
+      IamDemo::CacheMetrics.record(
+        cache: "account_ids_by_organization",
+        outcome: "miss",
+        count: misses.size,
+        redis_enabled: !cache_disabled?
+      )
 
-    if misses.any?
-      Instrumentation.trace("organization_accounts.cache.miss.materialize") do
-        OrganizationAccount.where(organization_id: misses).group_by { |org_account| org_account.organization_id.to_s }.each do |organization_id, rows|
-          by_organization_id[organization_id] = rows.map(&:account_id)
-        end
-      end
-
-      unless cache_disabled?
-        ORGANIZATION_CACHE.pipelined do |pipe|
-          misses.each do |organization_id|
-            pipe.set(account_ids_cache_key(organization_id), by_organization_id.fetch(organization_id).to_json, ex: 300)
+      if misses.any?
+        Instrumentation.trace("organization_accounts.cache.miss.load") do
+          OrganizationAccount.where(organization_id: misses).group_by { |org_account| org_account.organization_id.to_s }.each do |organization_id, rows|
+            by_organization_id[organization_id] = rows.map(&:account_id)
           end
         end
-      else
-        OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; skipped writing #{misses.size} organization account-id lists")
-      end
-    end
 
-    by_organization_id
+        unless cache_disabled?
+          ORGANIZATION_CACHE.pipelined do |pipe|
+            misses.each do |organization_id|
+              pipe.set(account_ids_cache_key(organization_id), by_organization_id.fetch(organization_id).to_json, ex: 300)
+            end
+          end
+        else
+          OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; skipped writing #{misses.size} organization account-id lists")
+        end
+      end
+
+      by_organization_id
+    end
   end
 
   def cache_disabled?

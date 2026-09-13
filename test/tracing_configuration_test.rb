@@ -11,28 +11,34 @@ class TracingConfigurationTest < Minitest::Test
     assert_equal normal, auth.reject { |key, _| %w[OTEL_SERVICE_NAME IAM_DEPLOYMENT_ROLE].include?(key) }
   end
 
-  def test_rack_events_are_loaded_before_sdk_selects_the_middleware_backend
-    Dir[File.expand_path("../*-service/config/initializers/opentelemetry.rb", __dir__)].each do |path|
+  def test_http_cache_and_graphql_allowlist_and_application_sql_are_enabled
+    paths = Dir[File.expand_path("../*-service/config/initializers/opentelemetry.rb", __dir__)]
+    assert_equal 6, paths.size
+    paths.each do |path|
       source = File.read(path)
-      assert_operator source.index('require_relative "../../lib/rack_phases"'), :<, source.index("OpenTelemetry::SDK.configure")
-      boot = File.read(File.expand_path("../boot.rb", File.dirname(path)))
-      assert_includes boot, 'require_relative "../lib/rack_phases"'
+      names = source.scan(/c.use "([^"]+)"/).flatten
+      assert_empty names - %w[OpenTelemetry::Instrumentation::Net::HTTP OpenTelemetry::Instrumentation::Rack OpenTelemetry::Instrumentation::Redis OpenTelemetry::Instrumentation::GraphQL]
+      assert_includes names, "OpenTelemetry::Instrumentation::Net::HTTP"
+      assert_includes names, "OpenTelemetry::Instrumentation::Rack"
+      assert_includes names, "OpenTelemetry::Instrumentation::Redis"
+      refute_includes source, "c.use_all"
+      assert_includes source, "ApplicationSqlTracing.install"
     end
   end
 
-  def test_phase_hooks_are_identical_in_isolated_service_build_contexts
-    %w[http_phases.rb rack_phases.rb controller_phases.rb].each do |name|
-      copies = Dir[File.expand_path("../*-service/lib/#{name}", __dir__)]
-      assert_equal 6, copies.size
-      assert_equal 1, copies.map { |path| File.read(path) }.uniq.size
+  def test_sql_helpers_are_identical_in_isolated_service_build_contexts
+    copies = Dir[File.expand_path("../*-service/lib/application_sql_tracing.rb", __dir__)]
+    assert_equal 6, copies.size
+    assert_equal 1, copies.map { |path| File.read(path) }.uniq.size
+    assert_empty Dir[File.expand_path("../*-service/lib/*_phases.rb", __dir__)]
+  end
+  def test_solid_cache_is_removed_but_active_record_query_cache_is_preserved
+    Dir[File.expand_path("../*-service/Gemfile", __dir__)].each do |path|
+      refute_includes File.read(path), 'gem "solid_cache"'
+      service = File.dirname(path)
+      assert_includes File.read(File.join(service, "config/environments/production.rb")), "config.cache_store = :null_store"
+      refute_includes File.read(File.join(service, "config/database.yml")), "query_cache: false"
     end
   end
 
-  def test_controller_hooks_are_loaded_for_every_service
-    initializers = Dir[File.expand_path("../*-service/config/initializers/opentelemetry.rb", __dir__)]
-    assert_equal 6, initializers.size
-    initializers.each do |path|
-      assert_includes File.read(path), 'require_relative "../../lib/controller_phases"'
-    end
-  end
 end

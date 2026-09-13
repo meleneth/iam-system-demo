@@ -9,8 +9,8 @@ class GroupUsersController < ApplicationController
     auth = Instrumentation.trace("GroupUser.collection.authorize") { authorize_group_user_collection_read!(results) }
     return render json: auth, status: :accepted if auth
 
-    Instrumentation.trace("GroupUser.collection.materialize") { results.load } if results.respond_to?(:load)
-    Instrumentation.trace("GroupUser.response.serialize") { render json: results }
+    results.load if results.respond_to?(:load)
+    render json: results
   end
 
   # POST /group_users/search
@@ -22,8 +22,8 @@ class GroupUsersController < ApplicationController
     auth = Instrumentation.trace("GroupUser.collection.authorize") { authorize_group_user_collection_read!(results) }
     return render json: auth, status: :accepted if auth
 
-    Instrumentation.trace("GroupUser.collection.materialize") { results.load } if results.respond_to?(:load)
-    Instrumentation.trace("GroupUser.response.serialize") { render json: results }
+    results.load if results.respond_to?(:load)
+    render json: results
   end
 
   # GET /group_users/1

@@ -10,8 +10,8 @@ class UsersController < ApplicationController
     return if performed?
     return render json: auth, status: :accepted if auth
 
-    Instrumentation.trace("User.collection.materialize") { results.load } if results.respond_to?(:load)
-    Instrumentation.trace("User.response.serialize") { render json: results }
+    results.load if results.respond_to?(:load)
+    render json: results
   end
 
   # POST /users/search
@@ -24,8 +24,8 @@ class UsersController < ApplicationController
     return if performed?
     return render json: auth, status: :accepted if auth
 
-    Instrumentation.trace("User.collection.materialize") { results.load } if results.respond_to?(:load)
-    Instrumentation.trace("User.response.serialize") { render json: results }
+    results.load if results.respond_to?(:load)
+    render json: results
   end
 
   # GET /users/1

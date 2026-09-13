@@ -84,10 +84,6 @@ production:
     database: group_service_production
     username: group_service
     password: <%= ENV["GROUP_SERVICE_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: group_service_production_cache
-    migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
     database: group_service_production_queue

@@ -10,8 +10,8 @@ class AccountsController < ApplicationController
     results = Account.where(*filters)
     Instrumentation.trace("Account.collection.authorize") { authorize_account_collection_read!(results) }
 
-    Instrumentation.trace("Account.collection.materialize") { results.load } if results.respond_to?(:load)
-    Instrumentation.trace("Account.response.serialize") { render json: results }
+    results.load if results.respond_to?(:load)
+    render json: results
   end
 
   # POST /accounts/search
@@ -21,8 +21,8 @@ class AccountsController < ApplicationController
     results = Account.where(*filters)
     Instrumentation.trace("Account.collection.authorize") { authorize_account_collection_read!(results) }
 
-    Instrumentation.trace("Account.collection.materialize") { results.load } if results.respond_to?(:load)
-    Instrumentation.trace("Account.response.serialize") { render json: results }
+    results.load if results.respond_to?(:load)
+    render json: results
   end
 
   # GET /with_parent_accounts/1
@@ -35,8 +35,8 @@ class AccountsController < ApplicationController
       raise "no authorization for #{pad_user_id} account.read #{account_id}" unless User.user_can(pad_user_id, "Account", "account.read",  account_id)
     end
 
-    Instrumentation.trace("Account.collection.materialize") { results.load } if results.respond_to?(:load)
-    Instrumentation.trace("Account.response.serialize") { render json: results }
+    results.load if results.respond_to?(:load)
+    render json: results
   end
 
   # GET /with_parent_accounts
@@ -49,9 +49,9 @@ class AccountsController < ApplicationController
         return render json: { error: "forbidden" }, status: :forbidden
       end
     end
-    results = Instrumentation.trace("Account.hierarchy.materialize") { fetch_accounts_with_parents(account_ids) }
-    Instrumentation.trace("Account.collection.materialize") { results.load } if results.respond_to?(:load)
-    Instrumentation.trace("Account.response.serialize") { render json: results }
+    results = fetch_accounts_with_parents(account_ids)
+    results.load if results.respond_to?(:load)
+    render json: results
   end
 
   # GET /accounts/1

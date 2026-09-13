@@ -2,9 +2,8 @@ require "opentelemetry/sdk"
 require "opentelemetry/exporter/otlp"
 require "opentelemetry/instrumentation/all"
 require "socket"
-# Rack selects its backend during SDK installation; load Events first.
-require_relative "../../lib/rack_phases"
-
+require "net/http"
+require_relative "../../lib/application_sql_tracing"
 
 OpenTelemetry::SDK.configure do |c|
   otel_endpoint =  "#{ENV.fetch("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector:4318")}/v1/traces"
@@ -14,7 +13,10 @@ OpenTelemetry::SDK.configure do |c|
     "deployment.role" => ENV.fetch("IAM_DEPLOYMENT_ROLE", "web"),
     "process.pid" => Process.pid
   )
-  c.use_all("OpenTelemetry::Instrumentation::Faraday" => { enable_internal_instrumentation: true })
+  # One HTTP client span covers direct, Faraday, and ActiveResource requests.
+  c.use "OpenTelemetry::Instrumentation::Net::HTTP"
+  c.use "OpenTelemetry::Instrumentation::Rack", { use_rack_events: false, untraced_endpoints: ["/up"] }
+  c.use "OpenTelemetry::Instrumentation::Redis"
   c.add_span_processor(
     OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
       OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: otel_endpoint)
@@ -22,6 +24,5 @@ OpenTelemetry::SDK.configure do |c|
   )
 end
 
-require_relative "../../lib/http_phases"
-
-require_relative "../../lib/controller_phases"
+ApplicationSqlTracing.install
+Rails.application.config.middleware.insert_before 0, *OpenTelemetry::Instrumentation::Rack::Instrumentation.instance.middleware_args

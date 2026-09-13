@@ -84,10 +84,6 @@ production:
     database: organization_service_production
     username: organization_service
     password: <%= ENV["ORGANIZATION_SERVICE_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: organization_service_production_cache
-    migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
     database: organization_service_production_queue

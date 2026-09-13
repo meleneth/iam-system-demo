@@ -3,11 +3,10 @@ require "net/http"
 require "stringio"
 require "rack/mock"
 require "action_controller"
-require_relative "../../account-service/lib/rack_phases"
+require "opentelemetry/instrumentation/rack"
 require "puma"
 require "puma/server"
 require "opentelemetry/sdk"
-require_relative "../../account-service/lib/controller_phases"
 
 class PhaseController < ActionController::API
   before_action do
@@ -26,7 +25,7 @@ end
 class TraceServerIntegrationTest < Minitest::Test
   EXPORTER = OpenTelemetry::SDK::Trace::Export::InMemorySpanExporter.new
   OpenTelemetry::SDK.configure do |c|
-    c.use "OpenTelemetry::Instrumentation::Rack"
+    c.use "OpenTelemetry::Instrumentation::Rack", { use_rack_events: false }
     c.add_span_processor(OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(EXPORTER))
   end
 
@@ -41,8 +40,8 @@ class TraceServerIntegrationTest < Minitest::Test
     assert_empty @errors, "OpenTelemetry reported instrumentation errors"
   end
 
-  def test_real_puma_keepalive_requests_have_controller_boundaries
-    app = Rack::Events.new(PhaseController.action(:show), [OpenTelemetry::Instrumentation::Rack::Middlewares::EventHandler.new])
+  def test_real_puma_keepalive_requests_have_connected_api_spans_without_controller_phases
+    app = OpenTelemetry::Instrumentation::Rack::Middlewares::TracerMiddleware.new(PhaseController.action(:show))
     server = Puma::Server.new(app, Puma::Events.new, min_threads: 1, max_threads: 1)
     server.add_tcp_listener("127.0.0.1", 0)
     port = server.binder.ios.first.addr[1]
@@ -61,17 +60,14 @@ class TraceServerIntegrationTest < Minitest::Test
     end
     server.stop(true)
     spans = @exporter.finished_spans
-    racks = spans.select { |s| s.kind == :server }
-    assert_equal 2, racks.length
-    racks.each do |rack|
-      assert_equal ['b' * 16].pack("H*"), rack.parent_span_id
-      assert_equal ['a' * 32].pack("H*"), rack.trace_id
-      controller = spans.find { |s| s.parent_span_id == rack.span_id && s.name == "PhaseController#show" }
-      refute_nil controller
-      callback = spans.find { |s| s.name == "authorization.callback" && s.parent_span_id == controller.span_id }
-      refute_nil callback
-      assert_operator callback.start_timestamp, :>=, controller.start_timestamp
-      assert_operator controller.end_timestamp, :<=, rack.end_timestamp
+    servers = spans.select { |span| span.kind == :server }
+    assert_equal 2, servers.size
+    assert_equal 2, spans.count { |span| span.name == "authorization.callback" }
+    assert_equal 4, spans.size
+    servers.each do |span|
+      assert_equal ['b' * 16].pack("H*"), span.parent_span_id
+      assert_equal ['a' * 32].pack("H*"), span.trace_id
+      assert spans.any? { |child| child.name == "authorization.callback" && child.parent_span_id == span.span_id }
     end
     refute OpenTelemetry::Trace.current_span.context.valid?
   ensure
@@ -79,21 +75,12 @@ class TraceServerIntegrationTest < Minitest::Test
   end
 
   def test_controller_exception_is_preserved_and_context_detached
-    error = assert_raises(RuntimeError) { PhaseController.action(:fail_action).call(Rack::MockRequest.env_for("/")) }
+    app = OpenTelemetry::Instrumentation::Rack::Middlewares::TracerMiddleware.new(PhaseController.action(:fail_action))
+    error = assert_raises(RuntimeError) { app.call(Rack::MockRequest.env_for("/", "HTTP_TRACEPARENT" => "00-#{'a' * 32}-#{'b' * 16}-01")) }
     assert_equal "controller failure", error.message
-    span = @exporter.finished_spans.find { |s| s.name == "PhaseController#fail_action" }
-    refute_nil span
-    assert_equal OpenTelemetry::Trace::Status::ERROR, span.status.code
+    assert_equal 2, @exporter.finished_spans.size
+    server = @exporter.finished_spans.find { |span| span.kind == :server }
+    assert_equal OpenTelemetry::Trace::Status::ERROR, server.status.code
     refute OpenTelemetry::Trace.current_span.context.valid?
-  end
-
-  def test_controller_tracing_can_be_disabled
-    previous = ENV["IAM_TRACE_CONTROLLER_PHASES"]
-    ENV["IAM_TRACE_CONTROLLER_PHASES"] = "false"
-    response = PhaseController.action(:show).call(Rack::MockRequest.env_for("/"))
-    assert_equal 200, response[0]
-    refute @exporter.finished_spans.any? { |s| s.name == "PhaseController#show" }
-  ensure
-    ENV["IAM_TRACE_CONTROLLER_PHASES"] = previous
   end
 end

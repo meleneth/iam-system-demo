@@ -7,8 +7,9 @@
 # each case's settings, and flushes cache DB 1 for cold samples. Leaves the final
 # case's configuration running. No seeding, ANALYZE, load tests or full MSP walks.
 # CASE_IDS is an optional comma-separated subset for rerunning unfinished cases.
-# COLLECTION_DIR selects a NEW output directory. Dirty instrumentation is allowed
-# and recorded. Authorization excerpts must be reselected using NEW span IDs.
+# COLLECTION_DIR selects a NEW output directory. Commit runtime code before running.
+# Each configuration is warmed before measurements. Only Redis DB 1 is flushed;
+# Rails processes and PostgreSQL caches stay warm. Reselect NEW subtree span IDs.
 
 require_relative "collect_article_evidence"
 require_relative "benchmark_hierarchies"
@@ -41,10 +42,12 @@ class ArticleTraceRefresh < ArticleCollection
     if ARGV.include?("--plan")
       puts JSON.pretty_generate(stack: @stack_env.fetch("BENCHMARK_STACK"), output: @out,
         cases: @cases.map { |item| item.merge("runs" => 1, "examples" => CASES.fetch(item.fetch("id"))) },
-        notes: ["#{@cases.sum { |item| CASES.fetch(item.fetch("id")).size }} exports; first organization/MSP page only", "Warm samples get an immediate prime; primes are not archived",
-                "Hierarchy record /can retains the depth-25 walk", "Build current working tree; no seed or ANALYZE"])
+        notes: ["#{@cases.sum { |item| CASES.fetch(item.fetch("id")).size }} exports; first organization/MSP page only", "Two workload warmups per profile precede all measurements; Redis alone is flushed for cold samples",
+                "Hierarchy record /can retains the depth-25 walk", "Build committed runtime code; no seed, ANALYZE, or PostgreSQL restart"])
       return
     end
+    dirty_code = capture("git", "diff", "HEAD", "--name-only", "--", "*-service", "scripts").strip
+    raise "Commit runtime/collector changes before collecting: #{dirty_code}" unless dirty_code.empty?
     raise "Missing fixture manifest: #{@manifest}" unless File.file?(@manifest)
     raise "Output already exists; choose a new COLLECTION_DIR: #{@out}" if File.exist?(@out)
     @fixtures = JSON.parse(File.read(@manifest)).fetch("fixtures").to_h { |f| [f.fetch("name"), f] }
@@ -53,6 +56,10 @@ class ArticleTraceRefresh < ArticleCollection
     FileUtils.cp(@manifest, File.join(@out, "fixture_manifest.json"))
     write_json(File.join(@out, "collection.json"), @fingerprint.merge("started_at" => Time.now.utc.iso8601,
       "purpose" => "Selected article traces only; not replacement benchmark timings",
+      "instrumentation" => { "automatic" => %w[Net::HTTP Rack Redis GraphQL], "sql" => "application sql.active_record executions only",
+        "controller_http_phases_serialization_materialization_spans" => false, "application_cache_authorization_spans" => true,
+        "solid_cache" => false, "active_record_query_cache" => true, "workload_warmups_per_profile" => 2,
+        "cold_cache_policy" => "Redis DB 1 only; no Rails or PostgreSQL restart" },
       "working_tree_status" => capture("git", "status", "--short"), "cases" => @cases))
     File.write(File.join(@out, "working-tree.patch"), capture("git", "diff", "HEAD", "--", ".", ":(exclude)*.env"))
     puts "Trace refresh: #{@out}"
@@ -61,7 +68,12 @@ class ArticleTraceRefresh < ArticleCollection
       command({}, File.join(@out, "build.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "build", *APPS.reject { |app| app == "account-auth-service" })
     end
     databases = capture(@stack_env.fetch("BENCHMARK_WRAPPER"), "config", "--services").split.select { |name| name.match?(/-db(?:-|$)/) }
-    command({}, File.join(@out, "infra.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "up", "-d", "--wait", *(INFRA + databases).uniq)
+    command({}, File.join(@out, "infra.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "up", "-d", "--wait", "--no-recreate", *(INFRA + databases).uniq)
+    running = capture(@stack_env.fetch("BENCHMARK_WRAPPER"), "ps", "--status", "running", "--services").split
+    workers = running.grep(/-create-service-worker-/)
+    raise "Stop seed workers before collection: #{workers.join(', ')}" unless workers.empty?
+    write_json(File.join(@out, "worker-state.json"), { checked_at: Time.now.utc.iso8601, running_seed_workers: workers,
+      running_services: running })
     @cases.each do |item|
       @case = item
       @directory = File.join(@out, item.fetch("id"), "attempt-001")
@@ -74,6 +86,9 @@ class ArticleTraceRefresh < ArticleCollection
         config = runtime_configuration(@env)
         verify_configuration!(item, config)
         write_json(File.join(@directory, "runtime.json"), config)
+        @warm_processes = rails_processes
+        warm_case(item)
+        verify_warm_processes!("after-warmup")
         case item.fetch("id")
         when "hierarchies-redis-off"
           hierarchy("hierarchy-walk", "walk", depth: 5)
@@ -99,6 +114,8 @@ class ArticleTraceRefresh < ArticleCollection
           out: File.join(@directory, "failure-services.log"), err: [:child, :out])
         write_json(File.join(@directory, "failure.json"), @failures.last)
       ensure
+        verify_warm_processes!("after-measurement") if @warm_processes
+        @warm_processes = nil
         # No trace polling between a prime and its warm request.
         @pending.each do |entry|
           status = TraceArchive.new(base_url: @stack_env.fetch("JAEGER_BASE_URL"),
@@ -124,6 +141,47 @@ class ArticleTraceRefresh < ArticleCollection
 
   private
 
+  def rails_processes
+    probe = 'puts Dir["/proc/[0-9]*/cmdline"].filter_map { |path| pid=path.split("/")[2].to_i; next if pid==Process.pid; command=File.read(path).tr("\\0", " "); next unless command.start_with?("puma ", "ruby bin/rails", "ruby /rails/bin/rails"); [pid,File.read("/proc/#{pid}/stat").split[21]] rescue nil }.sort.to_json'
+    APPS.to_h do |service|
+      processes = JSON.parse(capture(@stack_env.fetch("BENCHMARK_WRAPPER"), "exec", "-T", service, "ruby", "-rjson", "-e", probe))
+      raise "Cannot identify Rails process: #{service}" if processes.empty?
+      [service, processes]
+    end
+  end
+
+  def verify_warm_processes!(phase)
+    current = rails_processes
+    write_json(File.join(@directory, "processes-#{phase}.json"), current)
+    raise "Rails process changed during warmup/measurement" unless current == @warm_processes
+  end
+
+  def flush_redis(label)
+    %w[accountcache authcache groupcache orgcache].each do |service|
+      command(@env, File.join(@directory, "flush-#{label}-#{service}.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "exec", "-T", service, "redis-cli", "-n", "1", "FLUSHDB")
+    end
+  end
+
+  def warm_case(item)
+    write_json(File.join(@directory, "processes-before-warmup.json"), @warm_processes)
+    # Exercise misses as well as hits before the measured Redis flush.
+    flush_redis("before-warmup") if item.fetch("redis") == "true"
+    outcomes = []
+    2.times do |round|
+      prefix = "warmup-#{round + 1}"
+      puts "Warming #{item.fetch('id')} (#{round + 1}/2)"
+      if item.fetch("id") == "hierarchies-redis-off"
+        [["walk", 5], ["cte", 5], ["individual", nil], ["batch", nil], ["walk", 25]].each_with_index do |(mode, depth), index|
+          outcomes << hierarchy("#{prefix}-#{index}-#{mode}", mode, depth: depth, archive: false)
+        end
+      else
+        args = item.fetch("id").start_with?("graphql-") ? graphql_request(item.fetch("id") == "graphql-cache-b200") : organization_request(item.fetch("fixture"))
+        outcomes << request(prefix, *args, archive: false, warmup: true)
+      end
+    end
+    write_json(File.join(@directory, "warmup-results.json"), outcomes)
+  end
+
   def actor(fixture)
     targets = fixture.fetch("targets")
     value = targets.fetch("top_level_admin_user_id") { targets.fetch("admin_user_id") }
@@ -139,7 +197,7 @@ class ArticleTraceRefresh < ArticleCollection
     write_json(File.join(@out, "trace-index.json"), @index)
   end
 
-  def hierarchy(id, mode, depth: nil)
+  def hierarchy(id, mode, depth: nil, archive: true)
     fixture = @fixtures.fetch("deep_chain")
     ids = fixture.fetch("accounts").map { |account| account.fetch("id") }
     ids = depth ? [ids.find { |target| HierarchyComparison.expected_chain(fixture, target).size == depth } || raise("Missing depth #{depth}")] : ids.last(8)
@@ -149,7 +207,8 @@ class ArticleTraceRefresh < ArticleCollection
         mode: mode, target_ids: ids, expected: ids.to_h { |target| [target, HierarchyComparison.expected_chain(fixture, target)] }, directory: directory)
     write_json(File.join(directory, "result.json"), result)
     raise "Hierarchy failed: #{id}: #{result}" unless result.fetch(:outcome) == "ok"
-    enqueue(id, result.fetch(:trace_id), result.fetch(:initiating_span_id), File.join(directory, "trace.json"))
+    enqueue(id, result.fetch(:trace_id), result.fetch(:initiating_span_id), File.join(directory, "trace.json")) if archive
+    result
   end
 
   def organization_request(name)
@@ -170,28 +229,27 @@ class ArticleTraceRefresh < ArticleCollection
   end
 
   def cold_warm(prefix, args)
-    %w[accountcache authcache groupcache orgcache].each do |service|
-      command(@env, File.join(@directory, "flush-#{service}.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "exec", "-T", service, "redis-cli", "-n", "1", "FLUSHDB")
-    end
+    flush_redis("measured-cold")
     request("#{prefix}-cold", *args)
     request("#{prefix}-prime", *args, archive: false)
     request("#{prefix}-warm", *args)
   end
 
-  def request(id, method, url, body, archive: true)
+  def request(id, method, url, body, archive: true, warmup: false)
     directory = File.join(@directory, id)
     FileUtils.mkdir_p(directory)
     response_file = File.join(directory, "response.json")
     trace_id, parent_id = SecureRandom.hex(16), SecureRandom.hex(8)
     args = ["curl", "-sS", "--max-time", ENV.fetch("REQUEST_TIMEOUT_SECONDS", "600"),
       "-H", "traceparent: 00-#{trace_id}-#{parent_id}-01", "-D", File.join(directory, "headers.txt"),
-      "-o", response_file, "-w", "%{http_code}"]
+      "-o", response_file, "-w", "%{http_code} %{time_total}"]
     if body
       payload = File.join(directory, "request.json")
       write_json(payload, body)
       args += ["-X", method, "-H", "Content-Type: application/json", "--data-binary", "@#{payload}"]
     end
-    code, error, status = Open3.capture3(*args, url)
+    timing, error, status = Open3.capture3(*args, url)
+    code, elapsed = timing.split
     File.write(File.join(directory, "curl-error.txt"), error)
     result = BenchmarkResponse.inspect_response(response_file, http_code: code.to_i,
       curl_exit: status.exitstatus || 1, partition: body.nil?, graphql: !body.nil?)
@@ -202,24 +260,23 @@ class ArticleTraceRefresh < ArticleCollection
       page = JSON.parse(File.read(response_file)).fetch("data").fetch("mspUserManagement")
       result["outcome"] = "msp_page_not_ready" if page["loading"] || Array(page["accounts"]).empty?
     end
-    write_json(File.join(directory, "result.json"), result.merge("trace_id" => trace_id, "url" => url))
-    if archive || result.fetch("outcome") != "ok"
+    result.merge!("trace_id" => trace_id, "url" => url, "http_status" => code.to_i,
+      "client_elapsed_seconds" => Float(elapsed), "warmup" => warmup)
+    write_json(File.join(directory, "result.json"), result)
+    if archive
       enqueue(id, trace_id, parent_id, File.join(directory, "trace.json"))
       @index.last[:request_outcome] = result.fetch("outcome")
       @index.last[:publishable] = archive && result.fetch("outcome") == "ok"
       write_json(File.join(@out, "trace-index.json"), @index)
     end
-    # The instrumented wide capabilities request is expected to return an empty
-    # reply. Retain its trace as failure evidence without aborting collection.
-    expected_failure = @case.fetch("id") == "retrieval-wide-batched" &&
-      result["outcome"] == "transport_error" && result["curl_exit"] == 52
-    if expected_failure
-      @index.last[:expected_failure] = true
-      write_json(File.join(@out, "trace-index.json"), @index)
-      warn "#{id}: expected empty reply; archiving the failed-request trace and continuing"
+    if warmup
+      settled = TraceArchive.new(base_url: @stack_env.fetch("JAEGER_BASE_URL"), timeout: 180, quiet_seconds: 5).archive(
+        trace_id: trace_id, parent_id: parent_id, output: File.join(directory, "trace.json"))
+      raise "Warmup did not settle: #{id}: #{settled}" unless settled.fetch(:status) == "archived"
     elsif result.fetch("outcome") != "ok"
       raise "Request failed: #{id}: #{result}; see #{directory}"
     end
+    result
   end
 end
 
