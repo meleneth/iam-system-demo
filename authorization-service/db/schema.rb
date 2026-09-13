@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_30_064000) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_14_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_064000) do
   end
 
   create_table "capability_grants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "group_id", null: false
+    t.string "permission", null: false
+    t.string "scope_type", null: false
+    t.uuid "scope_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_id", "permission", "scope_type", "scope_id"], name: "index_capability_grants_on_group_permission_scope", unique: true
+    t.check_constraint "scope_type::text = ANY (ARRAY['Account'::character varying, 'Group'::character varying, 'Organization'::character varying]::text[])", name: "capability_grants_known_scope"
+  end
+
+  create_table "legacy_user_capability_grants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "user_id", null: false
     t.string "permission", null: false
     t.string "scope_type", null: false

@@ -21,13 +21,13 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
   it "allows the actor's organization and denies a mixed organization list across unrelated MSPs" do
     own = request("organization-service", "/organization_accounts?organization_id[]=#{id(:msp_a)}")
     expect(own.code).to eq("200")
-    expect(parsed(own).map { |row| row.fetch("account_id") }).to eq([id(:cohort_a)])
+    expect(parsed(own).map { |row| row.fetch("account_id") }).to match_array(%i[provider_root_a cohort_a].map { |key| id(key) })
     expect_denied(request("organization-service", "/organization_accounts?organization_id[]=#{id(:msp_a)}&organization_id[]=#{id(:msp_b)}"))
   end
 
   it "authorizes individual organization membership records through the same real primitive" do
     rows = parsed(request("organization-service", "/organization_accounts?organization_id=#{id(:msp_b)}", actor: :admin_b))
-    membership_id = rows.fetch(0).fetch("id")
+    membership_id = rows.find { |row| row.fetch("account_id") == id(:cohort_b) }.fetch("id")
     own = request("organization-service", "/organization_accounts/#{membership_id}", actor: :admin_b)
     expect(parsed(own).fetch("account_id")).to eq(id(:cohort_b))
     expect_denied(request("organization-service", "/organization_accounts/#{membership_id}"))
@@ -63,15 +63,15 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
     2.times do
       %w[user-service group-service].each do |service|
         resource = service == "user-service" ? "users" : "groups"
-        expected = service == "user-service" ? :reader_a : :group_a
+        expected = service == "user-service" ? [:reader_a] : %i[group_a wrong_permissions wrong_scopes exact_group_readers]
         allowed = request(service, "/#{resource}/search", actor: :reader_a, body: {account_id: [id(:root_a)]})
         expect(allowed.code).to eq("200")
-        expect(parsed(allowed).map { |row| row.fetch("id") }).to eq([id(expected)])
+        expect(parsed(allowed).map { |row| row.fetch("id") }).to match_array(expected.map { |key| id(key) })
         expect_denied(request(service, "/#{resource}/search", actor: :reader_a, body: {account_id: [id(:root_a), id(:root_b)]}))
       end
     end
   end
-  it "requires both the specific MSP grant and the target's ownership relationship" do
+  it "inherits ordinary provider-ancestor grants through the client organization relationship" do
     2.times do
       %i[cohort_a root_a child_a root_a2].each do |target|
         expect(parsed(request("authorization-service", "/capabilities/Account/#{id(target)}"))).to eq(%w[account.read account.users.read])
@@ -82,8 +82,8 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
     end
   end
 
-  it "does not disclose a managed account page or its count on MSP role alone" do
-    %i[role_only member_a admin_b].each do |actor|
+  it "does not disclose a managed account page without ordinary account.read" do
+    %i[role_only nonmember admin_b].each do |actor|
       query = 'query { mspUserManagement(mspAccountId: "' + id(:cohort_a) + '", as: "' + id(actor) + '") { totalCount accounts { id } } }'
       response = parsed(request("user-management-service", "/graphql", body: {query: query}))
       expect(response["data"]).to be_nil
@@ -102,10 +102,10 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
     end
   end
 
-  it "never combines an MSP grant in one organization with an operational grant in another" do
+  it "does not let an unrelated organization grant restrict or extend ordinary MSP inheritance" do
     %i[root_a root_a2 root_b].each do |target|
       response = request("authorization-service", "/capabilities/Account/#{id(target)}", actor: :mixed_actor)
-      expect(parsed(response)).to eq([])
+      expect(parsed(response)).to eq(target == :root_b ? ["account.users.read"] : [])
     end
     expect(parsed(request("authorization-service", "/capabilities/Account/#{id(:cohort_b)}", actor: :mixed_actor))).to eq(["account.users.read"])
   end
@@ -138,7 +138,7 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
         service = resource == "users" ? "user-service" : "group-service"
         path = "/accounts/#{resource}/counts"
         allowed = request(service, path, actor: :reader_a, body: {account_id: [id(:root_a), id(:leaf_a)]})
-        expect(parsed(allowed)).to eq(id(:root_a) => 1, id(:leaf_a) => 0)
+        expect(parsed(allowed)).to eq(id(:root_a) => (resource == "users" ? 1 : 4), id(:leaf_a) => 0)
         expect_denied(request(service, path, actor: :reader_b, body: {account_id: [id(:root_a)]}))
         expect_denied(request(service, path, actor: :reader_a, body: {account_id: [id(:root_a), id(:root_b)]}))
       end
@@ -174,14 +174,50 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
     expect(own.code).to eq("200")
     raw = own.body.match(/<script[^>]*type=['"]application\/json['"][^>]*>(.*?)<\/script>/m)[1]
     payload = JSON.parse(raw)
-    expect(payload.fetch("accounts").map { |row| row.fetch("id") }).to eq([id(:cohort_a)])
+    expect(payload.fetch("accounts").map { |row| row.fetch("id") }).to match_array(%i[provider_root_a cohort_a].map { |key| id(key) })
     expect(payload.fetch("users").map { |row| row.fetch("id") }.sort).to eq(%i[admin_a member_a].map { |key| id(key) }.sort)
-    expect(payload.fetch("total_account_count")).to eq(1)
+    expect(payload.fetch("total_account_count")).to eq(2)
     expect_denied(request("user-management-service", path + "&as=#{id(:admin_b)}"))
     expect_denied(request("user-management-service", "/accounts/#{id(:cohort_a)}?as=#{id(:admin_b)}"))
     expect(request("user-management-service", "/accounts/#{id(:cohort_a)}?as=#{id(:admin_a)}").code).to eq("200")
     expect(request("user-management-service", "/frontdoor/random_record").code).to eq("404")
     expect(request("user-management-service", "/debug").code).to eq("404")
+  end
+
+  it "gives a shared exact-group grant to both members and denies a nonmember" do
+    2.times do
+      %i[group_reader group_reader_peer].each do |actor|
+        response = request("authorization-service", "/capabilities/Group/#{id(:group_a)}", actor: actor)
+        expect(parsed(response)).to eq(["group.read"])
+        expect(request("group-service", "/groups/#{id(:group_a)}", actor: actor).code).to eq("200")
+        expect(request("group-service", "/group_users/#{id(:membership_a)}", actor: actor).code).to eq("200")
+        expect(parsed(request("authorization-service", "/capabilities/Account/#{id(:root_a)}", actor: actor))).to eq([])
+        expect_denied(request("group-service", "/groups/#{id(:group_b)}", actor: actor))
+      end
+      expect(parsed(request("authorization-service", "/capabilities/Group/#{id(:group_a)}", actor: :nonmember))).to eq([])
+      expect_denied(request("group-service", "/groups/#{id(:group_a)}", actor: :nonmember))
+    end
+  end
+
+  it "keeps provider accounts out of client hierarchies while inheriting their group grants" do
+    response = request("account-service", "/accounts_with_parents", body: {account_ids: [id(:leaf_a)]})
+    expect(response.code).to eq("200")
+    rows = parsed(response).first
+    expect(rows.map { |row| row.fetch("id") }).to eq(%i[root_a child_a leaf_a].map { |key| id(key) })
+    expect(rows.first.fetch("parent_account_id")).to be_nil
+  end
+
+  it "completes concurrent group and MSP reads without exhausting authorization fact workers" do
+    responses = 12.times.map do |index|
+      Thread.new do
+        if index.even?
+          request("group-service", "/groups/#{id(:group_a)}", actor: :reader_a)
+        else
+          request("organization-service", "/msp_managed_organizations/#{id(:cohort_a)}?limit=2")
+        end
+      end
+    end.map(&:value)
+    expect(responses.map(&:code)).to eq(Array.new(12, "200"))
   end
 
 end

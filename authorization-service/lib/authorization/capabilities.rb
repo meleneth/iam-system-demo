@@ -9,8 +9,9 @@ module Authorization
     MAX_ACCOUNT_HIERARCHY_DEPTH = 100
     UUID_PATTERN = /\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/i
 
-    def initialize(user_id:, redis: AUTHORIZATION_CACHE, account_context_client: AccountContextClient.new)
+    def initialize(user_id:, redis: AUTHORIZATION_CACHE, account_context_client: AccountContextClient.new, group_context_client: GroupContextClient.new)
       @user_id = user_id
+      @group_context_client = group_context_client
       @redis = redis
       @account_context_client = account_context_client
     end
@@ -18,7 +19,7 @@ module Authorization
     def for_organization(organization_id)
       cached(scope_type: "Organization", scope_id: organization_id) do
         CapabilityGrant.where(
-          user_id: @user_id,
+          group_id: group_ids,
           scope_type: "Organization",
           scope_id: organization_id
         ).distinct.pluck(:permission).sort
@@ -27,14 +28,20 @@ module Authorization
 
     def for_account(account_id)
       cached(scope_type: "Account", scope_id: account_id) do
-        hierarchy_ids = account_hierarchy_ids(account_id)
-        direct_capabilities = CapabilityGrant
-          .where(user_id: @user_id, scope_type: "Account", scope_id: hierarchy_ids)
-          .where.not("permission LIKE ?", "msp.%")
-          .distinct
-          .pluck(:permission)
+        scopes = account_scope_ids_for([account_id.to_s]).fetch(account_id.to_s)
+        CapabilityGrant.where(group_id: group_ids, scope_type: "Account", scope_id: scopes)
+          .distinct.pluck(:permission).sort
+      end
+    end
 
-        (direct_capabilities + reflected_msp_account_capabilities(account_id, hierarchy_ids)).uniq.sort
+    def for_group(group_id)
+      cached(scope_type: "Group", scope_id: group_id) do
+        group = @group_context_client.groups([group_id]).find { |row| row.fetch("id").to_s == group_id.to_s }
+        next [] unless group
+
+        direct = CapabilityGrant.where(group_id: group_ids, scope_type: "Group", scope_id: group_id)
+          .distinct.pluck(:permission)
+        (direct + for_account(group.fetch("account_id"))).uniq.sort
       end
     end
 
@@ -67,15 +74,14 @@ module Authorization
 
       return authorized if unresolved_account_ids.empty?
 
-      hierarchy_by_account_id = account_hierarchy_ids_for(unresolved_account_ids)
+      hierarchy_by_account_id = account_scope_ids_for(unresolved_account_ids)
       permissions_by_account_id = unresolved_account_ids.each_with_object({}) do |account_id, memo|
         memo[account_id] = Set.new
       end
 
       direct_scope_ids = hierarchy_by_account_id.values.flatten.uniq
       CapabilityGrant
-        .where(user_id: @user_id, scope_type: "Account", scope_id: direct_scope_ids, permission: permission)
-        .where.not("permission LIKE ?", "msp.%")
+        .where(group_id: group_ids, scope_type: "Account", scope_id: direct_scope_ids, permission: permission)
         .pluck(:scope_id)
         .map(&:to_s)
         .then do |granted_scope_ids|
@@ -84,15 +90,6 @@ module Authorization
             permissions_by_account_id[account_id] << permission if hierarchy_ids.any? { |scope_id| granted_scope_id_set.include?(scope_id) }
           end
         end
-
-      valid_account_ids = unresolved_account_ids.select { |account_id| hierarchy_by_account_id.fetch(account_id).any? }
-      reflected_msp_account_ids_with_permission(
-        valid_account_ids,
-        hierarchy_by_account_id,
-        permission
-      ).each do |account_id|
-        permissions_by_account_id[account_id] << permission
-      end
 
       computed_results = permissions_by_account_id.to_h do |account_id, permissions|
         permitted = permissions.include?(permission)
@@ -105,6 +102,10 @@ module Authorization
     end
 
     private
+
+    def group_ids
+      @group_ids ||= @group_context_client.group_ids_for(@user_id)
+    end
 
     def valid_account_id?(account_id)
       UUID_PATTERN.match?(account_id)
@@ -174,12 +175,6 @@ module Authorization
       capabilities
     end
 
-    def account_hierarchy_ids(account_id)
-      return [] unless valid_account_id?(account_id.to_s)
-
-      account_hierarchy_ids_for([account_id.to_s]).fetch(account_id.to_s, [])
-    end
-
     def account_hierarchy_ids_for(account_ids)
       requested_ids = Array(account_ids).map(&:to_s).uniq
       hierarchies = nil
@@ -220,83 +215,46 @@ module Authorization
       end
     end
 
-    def reflected_msp_account_capabilities(account_id, hierarchy_ids)
-      return [] if hierarchy_ids.empty?
-
-      msp_organization_ids = CapabilityGrant
-        .where(user_id: @user_id, scope_type: "Organization", permission: "msp.admin.users")
-        .pluck(:scope_id)
-        .map(&:to_s)
-      return [] if msp_organization_ids.empty?
-
-      account_grants = CapabilityGrant
-        .where(user_id: @user_id, scope_type: "Account")
-        .where.not(scope_id: hierarchy_ids)
-        .where.not("permission LIKE ?", "msp.%")
-        .pluck(:scope_id, :permission)
-
-      permissions_by_msp_account_id = account_grants.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(scope_id, permission), memo|
-        memo[scope_id.to_s] << permission
-      end
-      return [] if permissions_by_msp_account_id.empty?
-
-      contexts = msp_organization_ids.flat_map do |msp_organization_id|
-        permissions_by_msp_account_id.keys.map do |msp_account_id|
-          {
-            msp_organization_id: msp_organization_id,
-            msp_account_id: msp_account_id,
-            accounts: [
-              {
-                account_id: account_id.to_s,
-                parent_account_ids: hierarchy_ids - [account_id.to_s]
-              }
-            ]
-          }
+    # Physical parents stay inside their organization. Organization-service adds
+    # provider edges to this authorization-only graph; client responses never see it.
+    def account_scope_ids_for(account_ids)
+      requested = Array(account_ids).map(&:to_s).uniq
+      hierarchies = {}
+      providers = {}
+      frontier = requested.select { |id| valid_account_id?(id) }
+      MAX_ACCOUNT_HIERARCHY_DEPTH.times do
+        break if frontier.empty?
+        batch = account_hierarchy_ids_for(frontier)
+        hierarchies.merge!(batch)
+        valid = frontier.select { |id| batch.fetch(id).any? }
+        unless valid.empty?
+          rows = @account_context_client.providers_for(account_ids: valid).fetch("accounts")
+          rows.each do |row|
+            target = row.fetch("account_id").to_s
+            provider = row.fetch("msp_account_id").to_s
+            raise "Invalid provider context" unless valid.include?(target) && valid_account_id?(provider) && !providers.key?(target)
+            providers[target] = provider
+          end
         end
+        frontier = valid.filter_map { |id| providers[id] }.uniq.reject { |id| hierarchies.key?(id) }
       end
+      raise "Provider hierarchy exceeds maximum depth" unless frontier.empty?
 
-      response = @account_context_client.account_contexts(contexts: contexts)
-      Array(response.fetch("accounts")).flat_map do |account_context|
-        permissions_by_msp_account_id[account_context.fetch("msp_account_id").to_s]
-      end
-    end
-
-    def reflected_msp_account_ids_with_permission(account_ids, hierarchy_by_account_id, permission)
-      return Set.new if account_ids.empty?
-
-      msp_organization_ids = CapabilityGrant
-        .where(user_id: @user_id, scope_type: "Organization", permission: "msp.admin.users")
-        .pluck(:scope_id)
-        .map(&:to_s)
-      return Set.new if msp_organization_ids.empty?
-
-      msp_account_ids = CapabilityGrant
-        .where(user_id: @user_id, scope_type: "Account", permission: permission)
-        .where.not("permission LIKE ?", "msp.%")
-        .pluck(:scope_id)
-        .map(&:to_s)
-        .uniq
-      return Set.new if msp_account_ids.empty?
-
-      account_payloads = account_ids.map do |account_id|
-        {
-          account_id: account_id,
-          parent_account_ids: hierarchy_by_account_id.fetch(account_id, []) - [account_id]
-        }
-      end
-
-      contexts = msp_organization_ids.flat_map do |msp_organization_id|
-        msp_account_ids.map do |msp_account_id|
-          {
-            msp_organization_id: msp_organization_id,
-            msp_account_id: msp_account_id,
-            accounts: account_payloads
-          }
+      requested.to_h do |target|
+        scopes = []
+        visited = Set.new
+        current = target
+        while current
+          chain = hierarchies.fetch(current, [])
+          if chain.empty? || !visited.add?(current)
+            scopes = []
+            break
+          end
+          scopes.concat(chain)
+          current = providers[current]
         end
+        [target, scopes.uniq]
       end
-
-      response = @account_context_client.account_contexts(contexts: contexts)
-      Array(response.fetch("accounts")).map { |account_context| account_context.fetch("account_id").to_s }.to_set
     end
 
     def redis_enabled?
@@ -304,11 +262,11 @@ module Authorization
     end
 
     def cache_key(scope_type, scope_id)
-      "capabilities:#{@user_id}:#{scope_type}:#{scope_id}"
+      "group-grants-v1:capabilities:#{@user_id}:#{scope_type}:#{scope_id}"
     end
 
     def account_permission_cache_key(permission, account_id)
-      "can:#{@user_id}:Account:#{permission}:#{account_id}"
+      "group-grants-v1:can:#{@user_id}:Account:#{permission}:#{account_id}"
     end
   end
 end

@@ -76,7 +76,7 @@ class GroupsController < ApplicationController
     account_ids = Array(groups).map(&:account_id).map(&:to_s).uniq
     return if account_ids.empty?
 
-    if User.user_can(user_id, "Account", "account.users.read", account_ids)
+    if User.can_read_groups?(user_id, Array(groups).map { |group| [group.id, group.account_id] })
       return
     end
 

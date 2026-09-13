@@ -12,13 +12,14 @@ This contract defines the model used by the code, seeded data, benchmarks, and a
 * **Capability:** A permission to perform a particular action.
 * **Grant:** An assignment of a capability to a group within a specified scope (currently Account, Group, or Organization).
 * **Scope:** The account, organization, or other explicitly identified boundary where a grant applies.
-* **MSP:** Managed service provider—a provider managing access across client organizations. Its provider account can sit above client accounts in the account hierarchy.  For MSP clients, the MSP account will not show in the hierarchy.
+* **MSP:** Managed service provider—a provider managing access across client organizations. Its provider account is a virtual ancestor through an explicit relationship to the client organization. MSP accounts never occur in a client’s parent_account_id chain or returned hierarchy.
 * **Target:** The object against which an action is requested.
 * **Account hierarchy:** An account and its chain of parents. An ancestor is an account above it; a descendant is an account below it.
 
 ## Service Headers
 
 * **IAM_SYSTEM** used for internal IAM requests that are explicitly not permission checked.  In an actual implementation, this would be implemented at least by request signing with a key that non IAM services are forbidden from knowing
+* **IAM_SYSTEM_AUTH** is restricted to explicit authorization-context endpoints for group memberships, group ownership and MSP organization relationships. It cannot bypass ordinary resource endpoints.
 * **HTTP_PAD_USER_ID** used to identify the user id the request is being made on behalf of 
 
 ## Rules
@@ -29,13 +30,13 @@ This contract defines the model used by the code, seeded data, benchmarks, and a
 
 3. **An allow decision requires a matching grant.** The user must belong to the grant’s group, the grant must include the requested capability, and its scope must cover the target. Without such a grant, access is denied. Grants are additive.
 
-4. **Account grants apply downward.** A grant covers its account and descendants, including across a provider-to-client relationship. It does not cover ancestors or sibling branches. Other scope types require their own explicit coverage rules.
+4. **Account grants apply downward.** A grant covers its account and descendants, including across a provider-to-client organization relationship. MSP reflection is additional to physical parent_account_id inheritance: a grant on the linked provider account or its ancestors covers the managed client organization’s accounts. It does not cover ancestors or sibling branches. Organization grants cover exactly that organization. Group grants cover exactly that group; account grants also cover groups owned by covered accounts. group.read permits reading the group and its membership rows; account.users.read also permits those reads.
 
-5. **MSP access follows grants.** Provider affiliation alone confers no access to client objects.
+5. **MSP access follows grants.** Provider affiliation alone confers no access to client objects. Ordinary account capabilities control MSP access; there is no msp.admin.users capability or separate MSP role gate.
 
 6. **Authorization uses the target’s actual scope.** This applies to objects requested by ID and to each protected object included in a composite response.
 
-7. **Client hierarchies exclude the provider account.** The returned hierarchy stops at the client root. Internal authorization still uses the ancestry needed to evaluate inherited grants.
+7. **Client hierarchies exclude the provider account.** The returned hierarchy stops at the client root. Internal authorization combines client ancestry with provider ancestry through the organization relationship.
 
 8. **Optimizations preserve results.** Individual, batched, cached, and paginated execution must produce the same permission decisions and authorized objects.
 

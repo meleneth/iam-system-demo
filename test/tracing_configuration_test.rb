@@ -8,7 +8,23 @@ class TracingConfigurationTest < Minitest::Test
     auth = services.fetch("account-auth-service").fetch("environment")
     assert_equal "account-auth-service", auth.fetch("OTEL_SERVICE_NAME")
     assert_equal "authorization-account-lookup", auth.fetch("IAM_DEPLOYMENT_ROLE")
-    assert_equal normal, auth.reject { |key, _| %w[OTEL_SERVICE_NAME IAM_DEPLOYMENT_ROLE].include?(key) }
+    assert_equal "http://organization-auth-service:80", auth.fetch("ORGANIZATION_SERVICE_API_BASE_URL")
+    assert_equal normal.reject { |key, _| key == "ORGANIZATION_SERVICE_API_BASE_URL" }, auth.reject { |key, _| %w[OTEL_SERVICE_NAME IAM_DEPLOYMENT_ROLE ORGANIZATION_SERVICE_API_BASE_URL].include?(key) }
+  end
+
+  def test_group_and_organization_fact_roles_share_ownership_without_host_ports
+    %w[group organization].each do |domain|
+      services = YAML.unsafe_load_file(File.expand_path("../compose/#{domain}-service.yml", __dir__)).fetch("services")
+      normal = services.fetch("#{domain}-service")
+      auth = services.fetch("#{domain}-auth-service")
+      env = auth.fetch("environment").to_h { |entry| entry.split("=", 2) }
+      assert_equal "#{domain}-auth-service", env.fetch("OTEL_SERVICE_NAME")
+      assert_equal "authorization-#{domain}-lookup", env.fetch("IAM_DEPLOYMENT_ROLE")
+      assert_empty auth.fetch("ports")
+      assert_equal normal.fetch("environment"), auth.fetch("environment").reject { |entry| entry.start_with?("OTEL_SERVICE_NAME=", "IAM_DEPLOYMENT_ROLE=") }
+      prod = YAML.unsafe_load_file(File.expand_path("../production-overrides.yml", __dir__)).fetch("services")
+      assert_equal prod.fetch("#{domain}-service").fetch("environment"), prod.fetch("#{domain}-auth-service").fetch("environment")
+    end
   end
 
   def test_http_cache_and_graphql_allowlist_and_application_sql_are_enabled

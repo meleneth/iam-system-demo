@@ -124,3 +124,9 @@ services:
       group-db:
         condition: service_healthy
         restart: true
+  group-auth-service:
+    environment:
+    - RAILS_ENV=development
+  organization-auth-service:
+    environment:
+    - RAILS_ENV=development

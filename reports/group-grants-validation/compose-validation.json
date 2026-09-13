@@ -1,0 +1,44 @@
+{
+  "dev": {
+    "group": {
+      "same_database": true,
+      "same_rails_environment": true,
+      "no_published_ports": true,
+      "auth_lookup_url": "http://group-auth-service:80"
+    },
+    "organization": {
+      "same_database": true,
+      "same_rails_environment": true,
+      "no_published_ports": true,
+      "auth_lookup_url": "http://organization-auth-service:80"
+    }
+  },
+  "test": {
+    "group": {
+      "same_database": true,
+      "same_rails_environment": true,
+      "no_published_ports": true,
+      "auth_lookup_url": "http://group-auth-service:80"
+    },
+    "organization": {
+      "same_database": true,
+      "same_rails_environment": true,
+      "no_published_ports": true,
+      "auth_lookup_url": "http://organization-auth-service:80"
+    }
+  },
+  "prod": {
+    "group": {
+      "same_database": true,
+      "same_rails_environment": true,
+      "no_published_ports": true,
+      "auth_lookup_url": "http://group-auth-service:80"
+    },
+    "organization": {
+      "same_database": true,
+      "same_rails_environment": true,
+      "no_published_ports": true,
+      "auth_lookup_url": "http://organization-auth-service:80"
+    }
+  }
+}

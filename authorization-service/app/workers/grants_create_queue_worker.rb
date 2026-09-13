@@ -47,15 +47,12 @@ class GrantsCreateQueueWorker
 
     rows = grant_rows(body)
     validate_grant_rows!(rows, body)
-    result = CapabilityGrant.insert_all(
+    CapabilityGrant.insert_all(
       rows,
-      unique_by: :index_capability_grants_on_user_perm_scope,
+      unique_by: :index_capability_grants_on_group_permission_scope,
       returning: %w[id]
     )
-    inserted_count = result.rows.length
-    if inserted_count != rows.length
-      puts "[grants-create-queue-worker] duplicate native grant projection: inserted=#{inserted_count} expected=#{rows.length} index=#{body["index"]} fixture=#{body["fixture"]} user_id=#{body.dig("user", "id")}"
-    end
+    # Shared group grants are intentionally repeated across member seed events.
 
     delete(msg)
   rescue => e
@@ -84,26 +81,32 @@ class GrantsCreateQueueWorker
     timestamp = Time.current
 
     raw_grants = []
-    add_grant(raw_grants, user_id, "organization.read", "Organization", org_id, timestamp)
-    add_grant(raw_grants, user_id, "organization.read.accounts", "Organization", org_id, timestamp)
-    add_grant(raw_grants, user_id, "account.read", "Account", account_id, timestamp)
-    add_grant(raw_grants, user_id, "account.users.read", "Account", account_id, timestamp)
-    add_grant(raw_grants, user_id, "msp.admin.users", "Organization", org_id, timestamp) if body["msp_admin"]
+    users_group = groups.find { |group| group.fetch("name") == "Users" }
+    admins_group = groups.find { |group| group.fetch("name") == "Admins" }
+    raise ArgumentError, "Users group required" unless users_group
+    raise ArgumentError, "Admins group required for admin" if is_admin && !admins_group
+
+    users_group_id = users_group.fetch("id")
+    add_grant(raw_grants, users_group_id, "organization.read", "Organization", org_id, timestamp)
+    add_grant(raw_grants, users_group_id, "organization.read.accounts", "Organization", org_id, timestamp)
+    add_grant(raw_grants, users_group_id, "account.read", "Account", account_id, timestamp)
+    add_grant(raw_grants, users_group_id, "account.users.read", "Account", account_id, timestamp)
 
     if is_admin
-      add_grant(raw_grants, user_id, "organization.accounts.create", "Organization", org_id, timestamp)
-      add_grant(raw_grants, user_id, "account.users.create", "Account", account_id, timestamp)
-      add_grant(raw_grants, user_id, "group.create", "Account", account_id, timestamp)
+      admins_group_id = admins_group.fetch("id")
+      add_grant(raw_grants, admins_group_id, "organization.accounts.create", "Organization", org_id, timestamp)
+      add_grant(raw_grants, admins_group_id, "account.users.create", "Account", account_id, timestamp)
+      add_grant(raw_grants, admins_group_id, "group.create", "Account", account_id, timestamp)
       groups.each do |group|
-        add_grant(raw_grants, user_id, "group.modify", "Group", group.fetch("id"), timestamp)
+        add_grant(raw_grants, admins_group_id, "group.modify", "Group", group.fetch("id"), timestamp)
       end
     end
 
     groups.each do |group|
-      add_grant(raw_grants, user_id, "group.read", "Group", group.fetch("id"), timestamp)
+      add_grant(raw_grants, group.fetch("id"), "group.read", "Group", group.fetch("id"), timestamp)
     end
 
-    grants = raw_grants.uniq { |grant| [grant[:user_id], grant[:permission], grant[:scope_type], grant[:scope_id]] }
+    grants = raw_grants.uniq { |grant| [grant[:group_id], grant[:permission], grant[:scope_type], grant[:scope_id]] }
     if grants.length != raw_grants.length
       puts "[grants-create-queue-worker] duplicate grants inside one event: raw=#{raw_grants.length} deduped=#{grants.length} index=#{body["index"]} fixture=#{body["fixture"]} user_id=#{user_id}"
     end
@@ -113,7 +116,7 @@ class GrantsCreateQueueWorker
 
   def validate_grant_rows!(rows, body)
     invalid_rows = rows.select do |row|
-      row[:user_id].blank? || row[:permission].blank? || row[:scope_type].blank? || row[:scope_id].blank?
+      row[:group_id].blank? || row[:permission].blank? || row[:scope_type].blank? || row[:scope_id].blank?
     end
     return if invalid_rows.empty?
 
@@ -121,9 +124,9 @@ class GrantsCreateQueueWorker
           "invalid native grant projection: invalid_rows=#{invalid_rows.length} index=#{body["index"]} fixture=#{body["fixture"]} user_id=#{body.dig("user", "id")}"
   end
 
-  def add_grant(grants, user_id, permission, scope_type, scope_id, timestamp)
+  def add_grant(grants, group_id, permission, scope_type, scope_id, timestamp)
     grants << {
-      user_id: user_id,
+      group_id: group_id,
       permission: permission,
       scope_type: scope_type,
       scope_id: scope_id,

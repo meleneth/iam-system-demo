@@ -171,6 +171,29 @@ services:
       organization-db-queue:
         condition: service_healthy
         restart: true
+  organization-auth-service:
+    environment:
+    - CABLE_DATABASE_URL=${ORGANIZATION_DB_CABLE_DATABASE_URL}
+    - CACHE_DATABASE_URL=${ORGANIZATION_DB_CACHE_DATABASE_URL}
+    - DATABASE_URL=${ORGANIZATION_DB_DATABASE_URL}
+    - SECRET_KEY_BASE=${ORGANIZATION_RAILS_SECRET_KEY_BASE}
+    - QUEUE_DATABASE_URL=${ORGANIZATION_DB_QUEUE_DATABASE_URL}
+    - RAILS_ENV=production
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
+    depends_on:
+      organization-db:
+        condition: service_healthy
+        restart: true
+      organization-db-cache:
+        condition: service_healthy
+        restart: true
+      organization-db-cable:
+        condition: service_healthy
+        restart: true
+      organization-db-queue:
+        condition: service_healthy
+        restart: true
   user-db-cache:
     environment:
     - POSTGRES_DB=${USER_DB_CACHE_POSTGRES_DB}
@@ -274,6 +297,29 @@ services:
     - RAILS_MIN_THREADS=5
     ports:
     - "${GROUP_SERVICE_WEB_PORT}:3000"
+    depends_on:
+      group-db:
+        condition: service_healthy
+        restart: true
+      group-db-cache:
+        condition: service_healthy
+        restart: true
+      group-db-cable:
+        condition: service_healthy
+        restart: true
+      group-db-queue:
+        condition: service_healthy
+        restart: true
+  group-auth-service:
+    environment:
+    - SECRET_KEY_BASE=${GROUP_RAILS_SECRET_KEY_BASE}
+    - CABLE_DATABASE_URL=${GROUP_DB_CABLE_DATABASE_URL}
+    - CACHE_DATABASE_URL=${GROUP_DB_CACHE_DATABASE_URL}
+    - DATABASE_URL=${GROUP_DB_DATABASE_URL}
+    - QUEUE_DATABASE_URL=${GROUP_DB_QUEUE_DATABASE_URL}
+    - RAILS_ENV=production
+    - RAILS_MAX_THREADS=5
+    - RAILS_MIN_THREADS=5
     depends_on:
       group-db:
         condition: service_healthy

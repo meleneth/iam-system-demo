@@ -83,11 +83,6 @@ module Types
       msp_organization_id = page["msp_organization_id"]
       raise GraphQL::ExecutionError, "Unknown MSP account #{msp_account_id}" if msp_organization_id.blank?
 
-      capabilities = CapabilityGrant.capabilities("Organization", msp_organization_id, user_id: as)
-      unless capabilities.include?("msp.admin.users")
-        raise GraphQL::ExecutionError, "Not authorized for MSP organization #{msp_organization_id}"
-      end
-
       total_count = page.fetch("total_count").to_i
       account_ids = page.fetch("managed_account_ids").map(&:to_s)
       loaded_count = [continuance.to_i + account_ids.length, total_count].min

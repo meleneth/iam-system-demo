@@ -560,8 +560,7 @@ class DemoFixtureCatalog
       msp_admin_user_id,
       true,
       msp_groups,
-      'msp-admin',
-      msp_admin: true
+      'msp-admin'
     )
 
     (1..customer_count).each do |i|
@@ -656,7 +655,7 @@ class DemoFixtureCatalog
     index < 10 || index >= total_count - 20
   end
 
-  def payload(fixture_name, account_id, parent_account_id, organization_id, user_id, admin, groups, role, msp_managed_by_organization_id: nil, msp_account_id: nil, msp_admin: false)
+  def payload(fixture_name, account_id, parent_account_id, organization_id, user_id, admin, groups, role, msp_managed_by_organization_id: nil, msp_account_id: nil)
     if msp_managed_by_organization_id.nil? != msp_account_id.nil?
       raise ArgumentError, "msp_managed_by_organization_id and msp_account_id must be provided together"
     end
@@ -685,7 +684,6 @@ class DemoFixtureCatalog
       event[:msp_managed_by_organization_id] = msp_managed_by_organization_id
       event[:msp_account_id] = msp_account_id
     end
-    event[:msp_admin] = true if msp_admin
     event
   end
 

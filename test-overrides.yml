@@ -127,3 +127,18 @@ services:
     volumes:
     - "${GROUP_SERVICE_TEST_SOURCE_PATH}:/rails"
 
+  group-auth-service:
+    environment:
+    - RAILS_ENV=test
+    volumes:
+    - "${GROUP_SERVICE_TEST_SOURCE_PATH}:/rails"
+  organization-auth-service:
+    environment:
+    - RAILS_ENV=test
+    volumes:
+    - "${ORGANIZATION_SERVICE_TEST_SOURCE_PATH}:/rails"
+  account-auth-service:
+    environment:
+    - RAILS_ENV=test
+    volumes:
+    - "${ACCOUNT_SERVICE_TEST_SOURCE_PATH}:/rails"

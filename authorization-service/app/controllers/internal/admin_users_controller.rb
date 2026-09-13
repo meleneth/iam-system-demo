@@ -8,22 +8,14 @@ module Internal
       return unless require_iam_system!
 
       organization_id = params.require(:organization_id)
-      grant = CapabilityGrant
-        .where(
-          scope_type: "Organization",
-          scope_id: organization_id,
-          permission: ORG_ADMIN_PERMISSION
-        )
-        .order(:created_at, :user_id)
-        .first
+      group_ids = CapabilityGrant.where(
+        scope_type: "Organization", scope_id: organization_id, permission: ORG_ADMIN_PERMISSION
+      ).distinct.pluck(:group_id)
+      user_id = Authorization::GroupContextClient.new.user_ids_for(group_ids).first
+      return render json: { error: "No organization admin found" }, status: :not_found unless user_id
 
-      return render json: { error: "No organization admin found" }, status: :not_found unless grant
+      render json: { user_id: user_id, organization_id: organization_id, permission: ORG_ADMIN_PERMISSION }
 
-      render json: {
-        user_id: grant.user_id,
-        organization_id: organization_id,
-        permission: grant.permission
-      }
     end
 
     private

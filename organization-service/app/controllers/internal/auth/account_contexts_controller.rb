@@ -11,6 +11,19 @@ module Internal
         render json: { accounts: account_contexts }
       end
 
+      def providers
+        return unless require_iam_system_auth!
+        ids = params.permit(account_ids: [])[:account_ids]
+        raise ActionController::BadRequest, "account_ids must be an array" unless ids.is_a?(Array)
+
+        rows = OrganizationAccount
+          .joins("INNER JOIN msp_managed_organizations managed ON managed.client_organization_id = organization_accounts.organization_id")
+          .joins("INNER JOIN organization_accounts provider ON provider.account_id = managed.msp_account_id AND provider.organization_id = managed.msp_organization_id")
+          .where(account_id: ids)
+          .pluck("organization_accounts.account_id", "managed.msp_account_id", "managed.msp_organization_id", "managed.client_organization_id")
+        render json: {accounts: rows.map { |account, provider, msp, client| {account_id: account, msp_account_id: provider, msp_organization_id: msp, client_organization_id: client} }}
+      end
+
       private
 
       def require_iam_system_auth!

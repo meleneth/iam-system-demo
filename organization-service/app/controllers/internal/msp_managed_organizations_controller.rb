@@ -27,7 +27,7 @@ module Internal
       if actor && actor != "IAM_SYSTEM"
         raise AuthorizationDenied unless relationship &&
           OrganizationAccount.where(account_id: msp_account_id).distinct.pluck(:organization_id) == [relationship.msp_organization_id] &&
-          User.user_can(actor, "Organization", "msp.admin.users", relationship.msp_organization_id)
+          User.user_can(actor, "Account", "account.read", msp_account_id)
       end
       return render json: empty_page(msp_account_id) unless relationship
 

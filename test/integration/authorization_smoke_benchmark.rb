@@ -8,6 +8,7 @@ Dir.mktmpdir("authorization-correctness-") do |directory|
   manifest = {fixtures: %i[a b].map do |side|
     {name: "msp_#{side}", msp: true, organization_id: fixture.id("msp_#{side}".to_sym),
      targets: {top_level_admin_user_id: fixture.id("admin_#{side}".to_sym), top_level_account_id: fixture.id("cohort_#{side}".to_sym),
+       organization_account_ids: [fixture.id("provider_root_#{side}".to_sym), fixture.id("cohort_#{side}".to_sym)],
        msp_account_id: fixture.id("cohort_#{side}".to_sym), sample_account_ids: [fixture.id("root_#{side}".to_sym)]}}
   end}
   manifest_path = File.join(directory, "manifest.json")

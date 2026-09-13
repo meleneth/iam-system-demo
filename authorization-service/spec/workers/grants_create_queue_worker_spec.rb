@@ -45,10 +45,10 @@ RSpec.describe GrantsCreateQueueWorker do
     )
 
     expect { worker.process(msg) }.to change(CapabilityGrant, :count).by(5)
-    expect(CapabilityGrant.where(user_id: user_id, permission: "group.read", scope_id: users_group_id).count).to eq(1)
+    expect(CapabilityGrant.where(group_id: users_group_id, permission: "group.read", scope_id: users_group_id).count).to eq(1)
   end
 
-  it "projects MSP admin grants only from explicit MSP admin seed events" do
+  it "projects only ordinary group grants even for an old MSP admin seed event" do
     msg = message(
       user: { id: user_id, email: "msp-admin@example.com", account_id: account_id, is_admin: true },
       account: { id: account_id, parent_account_id: nil },
@@ -60,15 +60,25 @@ RSpec.describe GrantsCreateQueueWorker do
       msp_admin: true
     )
 
-    expect { worker.process(msg) }.to change(CapabilityGrant, :count).by(12)
+    expect { worker.process(msg) }.to change(CapabilityGrant, :count).by(11)
     expect(
       CapabilityGrant.exists?(
-        user_id: user_id,
+        group_id: admins_group_id,
         permission: "msp.admin.users",
         scope_type: "Organization",
         scope_id: organization_id
       )
-    ).to be(true)
+    ).to be(false)
+  end
+
+  it "shares grants across users in the same group without duplicating grants per user" do
+    base = {account: {id: account_id}, organization: {id: organization_id}, groups: [{id: users_group_id, name: "Users"}]}
+    first = message(**base, user: {id: user_id, is_admin: false})
+    second = message(**base, user: {id: SecureRandom.uuid, is_admin: false})
+    expect { worker.process(first) }.to change(CapabilityGrant, :count).by(5)
+    expect { worker.process(second) }.not_to change(CapabilityGrant, :count)
+    expect(CapabilityGrant.where(group_id: users_group_id).distinct.pluck(:group_id)).to eq([users_group_id])
+    expect(CapabilityGrant.column_names).not_to include("user_id")
   end
 
   it "fails malformed events before insert_all can bypass model validations" do

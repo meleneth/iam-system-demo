@@ -17,13 +17,21 @@ class CapabilitiesController < ApplicationController
     render json: capability_map { |scope_id| capability_service.for_account(scope_id) }
   end
 
+  def group
+    render json: capability_service.for_group(params.require(:group_id))
+  end
+
+  def groups
+    render json: capability_map { |scope_id| capability_service.for_group(scope_id) }
+  end
+
   private
 
   def capability_service
     user_id = request.headers["HTTP_PAD_USER_ID"]
     raise ActionController::BadRequest, "pad-user-id header required" if user_id.blank?
 
-    Authorization::Capabilities.new(user_id: user_id)
+    @capability_service ||= Authorization::Capabilities.new(user_id: user_id)
   end
 
   def capability_map

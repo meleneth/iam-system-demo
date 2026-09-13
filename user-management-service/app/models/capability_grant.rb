@@ -9,10 +9,10 @@ class CapabilityGrant < ActiveResource::Base
 
   schema do
     string 'id'
-    string 'user_id'
+    string 'group_id'
     string 'permission'
     string 'scope_type'
-    string 'uuid'
+    string 'scope_id'
   end
 
   # Optional: if the resource uses UUIDs instead of integers

@@ -2,6 +2,18 @@ require 'rails_helper'
 require 'ostruct'
 
 RSpec.describe "Cans", type: :request do
+  def grant_group_id(actor)
+    @grant_group_ids ||= {}
+    @grant_group_ids[actor] ||= SecureRandom.uuid
+  end
+
+  before do
+    allow_any_instance_of(Authorization::AccountContextClient).to receive(:providers_for).and_return({"accounts" => []})
+    allow_any_instance_of(Authorization::GroupContextClient).to receive(:group_ids_for) do |_client, actor|
+      [grant_group_id(actor)]
+    end
+  end
+
   class DisabledAuthorizationCache
     def redis_enabled?
       false
@@ -27,7 +39,7 @@ RSpec.describe "Cans", type: :request do
 
     it "uses native account hierarchy grants when stale MSP headers are present" do
       CapabilityGrant.create!(
-        user_id: user_id,
+        group_id: grant_group_id(user_id),
         permission: "account.users.read",
         scope_type: "Account",
         scope_id: parent_account_id
@@ -64,7 +76,7 @@ RSpec.describe "Cans", type: :request do
 
     it "requires the permission on every requested account scope" do
       CapabilityGrant.create!(
-        user_id: user_id,
+        group_id: grant_group_id(user_id),
         permission: "account.users.read",
         scope_type: "Account",
         scope_id: customer_account_id

@@ -39,6 +39,21 @@ RSpec.describe "/groups", type: :request do
       expect(response.parsed_body.length).to eq(3)
     end
 
+    it "preserves individual allows when a batch mixes account authority and exact-group authority" do
+      other = Group.create!(account_id: SecureRandom.uuid, name: "External")
+      allow(User).to receive(:user_can) do |actor, scope, permission, ids|
+        (scope == "Account" && permission == "account.users.read" && ids == [account_id]) ||
+          (scope == "Group" && permission == "group.read" && ids == [other.id])
+      end
+      [group, other].each do |target|
+        get group_url(target), headers: {"pad-user-id" => actor_user_id}, as: :json
+        expect(response).to have_http_status(:ok)
+      end
+      post "/groups/search", params: {id: [group.id, other.id]}, headers: {"pad-user-id" => actor_user_id}, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |row| row.fetch("id") }).to match_array([group.id, other.id])
+    end
+
     it "requires account.users.read before returning group counts" do
       expect(User).to receive(:user_can)
         .with(actor_user_id, "Account", "account.users.read", [account_id])

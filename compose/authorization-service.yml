@@ -10,6 +10,8 @@ services:
       - RAILS_MAX_THREADS=5
       - RAILS_MIN_THREADS=5
       - ACCOUNT_SERVICE_API_BASE_URL=http://account-auth-service:80
+      - GROUP_SERVICE_API_BASE_URL=http://group-auth-service:80
+      - ORGANIZATION_SERVICE_API_BASE_URL=http://organization-auth-service:80
       - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
       - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
       - IAM_DEMO_BATCH_SIZE=${IAM_DEMO_BATCH_SIZE:-1000}
@@ -20,3 +22,7 @@ services:
       authz-db:
         condition: service_healthy
         restart: true
+      group-auth-service:
+        condition: service_started
+      organization-auth-service:
+        condition: service_started

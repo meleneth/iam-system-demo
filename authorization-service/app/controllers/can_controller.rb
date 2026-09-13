@@ -15,7 +15,7 @@ class CanController < ApplicationController
       return head :ok
     end
     return render json: { error: "pad-user-id required" }, status: :bad_request if user_id.blank?
-    unless %w[Account Organization].include?(scope_type)
+    unless %w[Account Organization Group].include?(scope_type)
       return render json: { error: "Invalid scope_type" }, status: :bad_request
     end
     unless params[:scope_id].is_a?(Array)
@@ -32,14 +32,15 @@ class CanController < ApplicationController
       authorized = requested_account_ids.all? { |account_id| authorized_account_ids.include?(account_id) }
     when "Organization"
       requested_organization_ids = Array(scope_id).map(&:to_s).uniq
-      granted_organization_ids = CapabilityGrant.where(
-        user_id: user_id,
-        permission: permission,
-        scope_type: "Organization",
-        scope_id: requested_organization_ids
-      ).distinct.pluck(:scope_id).map(&:to_s)
-      authorized = requested_organization_ids.any? &&
-        (requested_organization_ids - granted_organization_ids).empty?
+      capability_service = Authorization::Capabilities.new(user_id: user_id)
+      authorized = requested_organization_ids.any? && requested_organization_ids.all? do |id|
+        capability_service.for_organization(id).include?(permission)
+      end
+    when "Group"
+      capability_service = Authorization::Capabilities.new(user_id: user_id)
+      ids = Array(scope_id).map(&:to_s).uniq
+      authorized = ids.any? && ids.all? { |id| capability_service.for_group(id).include?(permission) }
+
     else
       return render json: { error: "Invalid scope_type" }, status: :bad_request
     end

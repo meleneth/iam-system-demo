@@ -1,3 +1,5 @@
+> Current authorization model: group-owned grants and virtual MSP inheritance, as specified in [CORE_INVARIANTS.md](CORE_INVARIANTS.md). Historical benchmark evidence predating this change must be regenerated after reseeding and correctness validation. See [implementation and migration](reports/group-grants-implementation.md).
+
 > **Authorization correction, 2026-09-13:** Historical implementation/performance descriptions below are superseded where they conflict with the [correctness investigation](reports/authorization-correctness/README.md). Organization batches require every target; hierarchy responses authorize every returned ancestor; GraphQL actors are field-scoped; MSP pages preserve the actor and authorize all targets before counts; unrestricted frontdoor discovery has been removed. Article performance claims remain blocked pending reruns.
 
 # Final Architecture
@@ -11,12 +13,12 @@ Both GitHub and GitLab render Mermaid diagrams directly from fenced `mermaid` co
 1. Services own their domain records. Other services may ask questions about those records, but must not cache or persist another service's owned objects as source-of-truth data.
 2. Authorization callers ask specific questions: "can this actor perform this action on these scopes?" They do not fetch broad capability lists and interpret policy locally except at app-facing/demo boundaries where a capability list is itself the requested API.
 3. Authorization is account-scope aware. Returned users, groups, group memberships, and accounts are authorized by their owning account scope.
-4. Collection reads authorize the collection's distinct account scopes, not each returned row independently. This is still per-object in the important sense: every returned object's owning account is included in an authorization decision.
+4. Collection reads authorize every returned object’s scope. Group reads may mix Account authority and exact Group authority; batching preserves each object’s decision.
 5. `/can` is the internal service-to-service authorization workhorse. Keep its contract stable unless the task is explicitly changing that contract.
-6. MSP authority is organization-level. MSP ownership is not `msp_account_id -> managed_account_id`. That account-level reflected-grant model is invalid and has been removed.
-7. MSP-specific grants such as `msp.admin.users` are visible only in MSP organization context. Account-context capability results must not include `msp.*` grants.
+6. MSP relationships connect a provider account to a client organization. They extend authorization’s virtual account inheritance graph; physical client parent chains remain separate.
+7. Grants belong to groups. Users receive them through explicit memberships; normal Account capabilities also control MSP access, without a special MSP role.
 8. `IAM_SYSTEM` is a trusted internal identity for intra-system reads and projections. Never convert a real actor/user request into `IAM_SYSTEM` to bypass authorization.
-9. `IAM_SYSTEM_AUTH` is narrower than `IAM_SYSTEM`. It is used by authorization-service to ask organization-service for relationship facts needed to answer authorization questions.
+9. `IAM_SYSTEM_AUTH` is restricted to explicit authorization-context endpoints for organization relationships, group memberships and group ownership.
 10. Caches may store service-owned derived answers inside the owning service, or authorization-service's derived authorization answers. Caches must not turn another service's domain objects into local source-of-truth copies.
 
 ## Service Ownership
@@ -43,6 +45,7 @@ flowchart LR
 
   AZ --> AS
   AZ --> OS
+  AZ --> GS
   AS --> OS
 ```
 
@@ -81,7 +84,7 @@ Owns organizations, organization-account membership, and MSP organization relati
 | --- | --- | --- |
 | `organizations` | `id`, `account_id`, `name` | `account_id` is indexed. |
 | `organization_accounts` | `id`, `organization_id`, `account_id` | Both IDs are indexed. This is the source of truth for account membership in an organization. |
-| `msp_managed_organizations` | `msp_organization_id`, `msp_account_id`, `client_organization_id` | Models MSP authority at organization level. `client_organization_id` is validated unique by the model; the current schema does not enforce that with a unique index. |
+| `msp_managed_organizations` | `msp_organization_id`, `msp_account_id`, `client_organization_id` | Models MSP authority at organization level. `client_organization_id` has both model validation and a database unique index. The provider account must belong to the provider organization. |
 
 ### authorization-service
 
@@ -89,7 +92,8 @@ Owns grants and derived authorization answers.
 
 | Table | Key fields | Notes |
 | --- | --- | --- |
-| `capability_grants` | `user_id`, `permission`, `scope_type`, `scope_id` | Unique index on user/permission/scope. MSP organization grant lookup is indexed for `msp.%` organization grants. |
+| `capability_grants` | `group_id`, `permission`, `scope_type`, `scope_id` | Unique index on group/permission/scope. Scope must be Account, Group or Organization. |
+| `legacy_user_capability_grants` | old user grant columns | Migration archive only; never used in authorization. |
 | `capabilities` | `subject_id`, `account_id`, `permission` | Legacy/simple capability table still present. Current app-facing work is through `capability_grants`. |
 
 ## Source Of Truth Boundaries
@@ -123,8 +127,8 @@ There are also two special internal identities:
 | Header value | Meaning | Allowed use |
 | --- | --- | --- |
 | `pad-user-id: <real actor user id>` | The request is acting as that user. | Normal app and service-to-service reads. Must be authorized through grants and `/can`. |
-| `pad-user-id: IAM_SYSTEM` | Blessed internal system request. | Service-owned internal reads/projections where no real actor is being substituted. Examples: account-service asking organization-service for organization account IDs while computing account parent chains; user-management-service asking organization-service for an MSP demo page. |
-| `pad-user-id: IAM_SYSTEM_AUTH` | Narrow authorization-context request. | authorization-service asking organization-service for relationship facts needed to answer an authorization question. This exists so auth can get relationship context without becoming a general `IAM_SYSTEM` caller. |
+| `pad-user-id: IAM_SYSTEM` | Blessed internal system request. | Service-owned internal reads/projections where no real actor is being substituted. Examples: account-service asking organization-service for organization account IDs while computing account parent chains. |
+| `pad-user-id: IAM_SYSTEM_AUTH` | Narrow authorization-context request. | authorization-service asking organization-service for MSP relationships or group-service for memberships and group ownership needed to answer an authorization question. This exists so auth can get relationship context without becoming a general `IAM_SYSTEM` caller. |
 
 The critical rule is that a request that began as a real actor must not be converted into `IAM_SYSTEM` just to make authorization pass. The actor identity can be forwarded, and auth-service may perform its own internal fact gathering, but the final permission decision must still be about the original actor.
 
@@ -157,42 +161,35 @@ header: pad-user-id: <actor user id>
 
 For account scope, authorization-service answers the batch using `Authorization::Capabilities#account_ids_with_permission`:
 
-1. Normalize requested account IDs.
-2. Check authorization-service Redis for per-user/per-account/per-permission answers.
-3. For misses, ask account-service for parent chains in one batch using `IAM_SYSTEM`.
-4. Check direct account grants across all hierarchy IDs.
-5. Check MSP-reflected account permissions by asking organization-service for relationship context using `IAM_SYSTEM_AUTH`.
-6. Cache only the final derived true/false answer per `(user, account, permission)`.
+1. Normalize requested account IDs and read final cached decisions.
+2. Resolve the actor’s explicit group memberships through group-service’s `IAM_SYSTEM_AUTH` endpoint.
+3. For misses, fetch physical account parent chains with `IAM_SYSTEM`; these remain inside their organizations.
+4. Ask organization-service for provider relationships for those target accounts with `IAM_SYSTEM_AUTH`. Each relationship is resolved through the target’s client organization.
+5. Fetch the provider account’s physical ancestry and any further virtual provider edges. Reject malformed/cyclic graphs.
+6. Match the requested permission against grants belonging to the actor’s groups on any covered account scope. There is no MSP role prerequisite.
+7. Cache final answers by actor, account and permission under the `group-grants-v1` namespace. Membership and relationship facts remain owned by their services.
 
 ```mermaid
 sequenceDiagram
   participant Caller as Data service
   participant Auth as authorization-service
-  participant Account as account-service
-  participant Org as organization-service
+  participant Group as group-auth-service
+  participant Account as account-auth-service
+  participant Org as organization-auth-service
   participant DB as authz-db
-  participant Cache as authcache
-
-  Caller->>Auth: POST /can/Account/account.users.read<br/>scope_id: [account ids]
-  Auth->>Cache: get can:user:Account:permission:account
-  Cache-->>Auth: cached hits/misses
-  Auth->>Account: POST /accounts_with_parents<br/>pad-user-id: IAM_SYSTEM
-  Account-->>Auth: parent chains for misses
-  Auth->>DB: query direct grants over hierarchy ids
-  Auth->>DB: query actor MSP organization/account grants
-  Auth->>Org: POST /internal/auth/account_contexts<br/>pad-user-id: IAM_SYSTEM_AUTH
-  Org-->>Auth: managed client account contexts
-  Auth->>Cache: set derived can answers
+  Caller->>Auth: /can/Account/permission with real actor
+  Auth->>Group: /internal/auth/memberships (IAM_SYSTEM_AUTH)
+  Group-->>Auth: actor's group IDs
+  Auth->>Account: /accounts_with_parents (IAM_SYSTEM)
+  Account-->>Auth: client-only physical chains
+  Auth->>Org: /internal/auth/account_providers (IAM_SYSTEM_AUTH)
+  Org-->>Auth: provider edges through client organizations
+  Auth->>Account: provider account parent chains (IAM_SYSTEM)
+  Auth->>DB: matching group grants over physical and virtual scopes
   Auth-->>Caller: 200 or 403
 ```
 
-For organization scope, `/can` currently checks a direct organization grant:
-
-```text
-scope_type = "Organization"
-permission = organization.read.accounts, organization.accounts.read, organization.read, etc.
-scope_id = organization_id
-```
+Organization capabilities match group grants on that exact organization. Group capabilities combine exact-group grants with account grants covering the group’s actual owning account. `group.read` authorizes group and membership reads; `account.users.read` also covers those reads. Account-wide counts still require account authority.
 
 ### Capabilities-Only Override
 
@@ -234,20 +231,20 @@ This is the object-loading contract the services are supposed to enforce. "Ownin
 | User row | user-service | `account.users.read` | User's `account_id` | `GET /users/:id` |
 | User collection/search | user-service | `account.users.read` | Distinct returned/requested user account IDs | `GET /users`, `POST /users/search` |
 | User counts by account | user-service | `account.users.read` | Requested account IDs | `GET /accounts/users/counts` |
-| Group row | group-service | `account.users.read` | Group's `account_id` | `GET /groups/:id` |
-| Group collection/search | group-service | `account.users.read` | Distinct returned group account IDs | `GET /groups`, `POST /groups/search` |
+| Group row | group-service | `account.users.read` or `group.read` | Owning Account or exact Group | `GET /groups/:id` |
+| Group collection/search | group-service | `account.users.read` or `group.read` | Each returned group’s Account or Group scope | `GET /groups`, `POST /groups/search` |
 | Group counts by account | group-service | `account.users.read` | Requested account IDs | `GET /accounts/groups/counts` |
-| Group membership row | group-service | `account.users.read` | Owning group's `account_id` | `GET /group_users/:id` |
-| Group membership collection/search | group-service | `account.users.read` | Distinct owning group account IDs | `GET /group_users`, `POST /group_users/search` |
+| Group membership row | group-service | `account.users.read` or `group.read` | Owning Account or exact Group | `GET /group_users/:id` |
+| Group membership collection/search | group-service | `account.users.read` or `group.read` | Each membership’s owning Account or Group scope | `GET /group_users`, `POST /group_users/search` |
 | Organization row | organization-service | `organization.read` | Organization ID | `GET /organizations/:id` |
 | Organization account membership by organization | organization-service | `organization.read.accounts` or legacy `organization.accounts.read` | Organization ID | `GET /organization_accounts?organization_id=...` |
 | Organization account count | organization-service | `organization.read.accounts` or legacy `organization.accounts.read` | Organization ID | `GET /organizations/accounts/counts/:organization_id` |
 | Organization context by account IDs | organization-service | `account.read` | Requested account IDs | `POST /organization_account_ids/for_account_ids` |
 | MSP managed-account page | organization-service | `IAM_SYSTEM` only | MSP account ID | `GET /internal/msp_managed_organizations/:msp_account_id` |
 | MSP relationship context for auth | organization-service | `IAM_SYSTEM_AUTH` only | Provided MSP organization/account + target account contexts | `POST /internal/auth/account_contexts` |
-| MSP user-management GraphQL page | user-management-service | `msp.admin.users` | MSP organization ID | `mspUserManagement(...)` before loading managed accounts |
+| MSP user-management GraphQL page | user-management-service | ordinary `account.read`; nested fields check their normal permissions | provider account and each returned client account | actor-authorized managed page and downstream resource services |
 
-For MSP user-management, `msp.admin.users` proves the actor can use the MSP organization context. It does not by itself authorize direct account-context data reads. The account/user/group payloads are still loaded through downstream services. In normal mode, those services ask `/can/Account/account.users.read` for each distinct managed account scope. In capabilities-only mode, they fetch account capabilities in batches and check for `account.users.read` themselves. The reflected MSP answer is produced inside authorization-service from the actor's MSP organization grant, account grant, account hierarchy facts, and organization-service's `IAM_SYSTEM_AUTH` relationship check.
+For MSP user-management, the managed-account page requires ordinary `account.read` on the provider account and every managed target before disclosing IDs or counts. Nested users and groups require their normal capabilities. Provider affiliation alone grants nothing; provider Account grants belonging to the actor’s groups inherit through organization-service’s explicit client-organization relationship.
 
 ## App-Facing Capabilities API
 
@@ -260,7 +257,7 @@ GET /capabilities/Account/:account_id
 
 Organization capabilities are direct organization-scoped grants.
 
-Account capabilities include direct/cascaded account grants using parent-chain semantics and MSP reflection, but must exclude `msp.*` permissions in account context. MSP-specific grants stay visible in MSP organization context.
+Account capabilities include group-owned grants inherited through physical parent chains and virtual MSP relationships. No special MSP permission is created or required.
 
 This API returns capability names because the caller is asking for a capability listing. This is separate from the internal `/can` model, where services ask a precise yes/no question.
 
@@ -321,10 +318,10 @@ sequenceDiagram
   participant GS as group-service
 
   Browser->>UMS: GraphQL mspUserManagement(... continuance)
-  UMS->>Org: GET /internal/msp_managed_organizations/:msp_account_id<br/>pad-user-id: IAM_SYSTEM
+  UMS->>Org: GET /msp_managed_organizations/:msp_account_id<br/>pad-user-id: actor
   Org-->>UMS: managed account ids + next continuance
-  UMS->>Auth: GET /capabilities/Organization/:msp_org_id<br/>pad-user-id: actor
-  Auth-->>UMS: includes msp.admin.users
+  Org->>Auth: check ordinary account.read on provider and client accounts
+  Auth-->>Org: grant-derived authorization
   UMS->>US: POST /users/search account_id=[managed account ids in chunks]
   US->>Auth: POST /can/Account/account.users.read<br/>scope_id=[chunk account ids]
   Auth-->>US: 200
@@ -362,16 +359,11 @@ Semantics:
 - Returns `200` when all requested scopes are authorized, `403` otherwise.
 - `POST` is the normal batched form. `GET` exists for compatibility/simple probes.
 
-#### `GET /capability_grants` and `GET /capability_grants/:id`
+Grant records are owned by authorization-service and projected from explicit group seed events. Public grant CRUD routes are not exposed. Pre-migration user grants are archived in `legacy_user_capability_grants` and never queried for authorization.
 
-Purpose: ordinary read endpoints for grant records.
+#### `GET /capabilities/Group/:group_id` and `POST /capabilities/Group`
 
-Caller identity: current implementation exposes index/show without an extra special trust header.
-
-Semantics:
-
-- These are Rails resource read endpoints, not part of the cross-service authorization proof.
-- They are documented here because they are explicit public routes in authorization-service.
+Return exact-group grants plus account grants covering the group’s owning account, restricted to the actor’s memberships. `/can/Group/:permission` uses the same coverage rules.
 
 #### `GET /capabilities/Organization/:organization_id`
 
@@ -382,7 +374,7 @@ Caller identity: `pad-user-id`.
 Semantics:
 
 - Returns direct organization-scoped capability names.
-- MSP permissions such as `msp.admin.users` are valid here when granted on the MSP organization.
+- Only matching group grants on the exact organization apply; there is no MSP-specific role.
 
 #### `GET /capabilities/Account/:account_id`
 
@@ -394,7 +386,7 @@ Semantics:
 
 - Returns direct/cascaded account capabilities.
 - Reflects MSP account grants only when the organization relationship proves the MSP manages the client organization.
-- Excludes `msp.*` grants in account context.
+- Uses ordinary capability names for MSP and client accounts alike.
 
 #### `POST /capabilities/Organization`
 
@@ -445,7 +437,7 @@ Semantics:
 
 - Returns the full account capability-name array for each requested account scope.
 - Account capabilities use the same parent-chain and MSP reflection semantics as `GET /capabilities/Account/:account_id`.
-- Account-context results still exclude `msp.*` grants.
+- Account-context results use the same group grant and virtual inheritance rules as `/can`.
 - Callers are responsible for checking that each requested account includes the permission they need.
 
 #### `GET /internal/admin_users/organization/:organization_id`
@@ -454,7 +446,7 @@ Purpose: internal fixture/demo helper to find an organization admin grant.
 
 Caller identity: requires `pad-user-id: IAM_SYSTEM`.
 
-Returns the first `organization.accounts.create` grant for the organization, or `404`.
+Resolves groups with `organization.accounts.create` on the organization, asks group-service for their members, and returns the first member by user ID, or `404`.
 
 ### account-service
 
@@ -723,6 +715,16 @@ Query/body shape:
 
 - Accepts account IDs as `account_id[]=...` request parameters.
 
+### Authorization-only relationship endpoints
+
+All require exactly `pad-user-id: IAM_SYSTEM_AUTH` and return facts rather than permission decisions. Authorization-service sends these calls to dedicated `group-auth-service` and `organization-auth-service` processes using the same owner databases. These processes have no published host ports and prevent worker exhaustion when ordinary data requests are waiting on authorization:
+
+- Organization-service: `POST /internal/auth/account_providers`, `{account_ids: [...]}` → `{accounts: [{account_id, msp_account_id, msp_organization_id, client_organization_id}]}`. Resolves provider edges through each target’s organization and validates provider membership.
+- Group-service: `POST /internal/auth/memberships`, `{user_id: ...}` → `{memberships: [{group_id, user_id}]}`. A `{group_ids: [...]}` lookup is also available to the internal administrator fixture helper.
+- Group-service: `POST /internal/auth/group_contexts`, `{group_ids: [...]}` → `{groups: [{id, account_id}]}`.
+
+These identities do not bypass normal group or account resource endpoints.
+
 ### group-service
 
 #### `GET /group_users`
@@ -732,7 +734,7 @@ Purpose: group membership collection read.
 Caller identity:
 
 - `IAM_SYSTEM` may read directly.
-- Real actors require `account.users.read` over the distinct account IDs of the referenced groups.
+- Real actors require `account.users.read` on each owning account or `group.read` on each exact group.
 
 #### `GET /group_users/:id`
 
@@ -741,7 +743,7 @@ Purpose: group membership row read.
 Caller identity:
 
 - `IAM_SYSTEM` may read directly.
-- Real actors require `account.users.read` over the owning group's account.
+- Real actors require `account.users.read` on the owning account or `group.read` on the exact group.
 
 #### `POST /group_users/search`
 
@@ -750,7 +752,7 @@ Purpose: filtered group membership lookup.
 Caller identity:
 
 - `IAM_SYSTEM` may read directly.
-- Real actors require `account.users.read` over the distinct account IDs of the referenced groups.
+- Real actors require `account.users.read` on each owning account or `group.read` on each exact group.
 
 Body filters:
 
@@ -774,7 +776,7 @@ Purpose: group row read.
 Caller identity:
 
 - `IAM_SYSTEM` may read directly.
-- Real actors require `account.users.read` over the group's account.
+- Real actors require account-wide `account.users.read` or `group.read` covering this group.
 
 #### `POST /groups/search`
 
@@ -783,7 +785,7 @@ Purpose: filtered group lookup.
 Caller identity:
 
 - `IAM_SYSTEM` may read directly.
-- Real actors require `account.users.read` over the distinct account IDs of returned groups.
+- Each returned group requires account-wide `account.users.read` or `group.read` covering that group.
 
 Body filters:
 
@@ -880,9 +882,9 @@ GET /up
 | account-service | `account_with_parents:<account_id>` | Account parent-chain payloads | Allowed: account-service owns accounts. |
 | account-service | `org_cachekeys:<organization_id>` | Cache-key invalidation set for account parent chains | Derived/indexing support inside owning service boundary. |
 | organization-service | `account_ids_by_organization:<organization_id>` | Account IDs in an organization | Allowed: organization-service owns organization membership. |
-| authorization-service | `capabilities:<user>:Organization:<org_id>` | Derived organization capability names | Allowed: auth owns grants and derived answers. |
-| authorization-service | `capabilities:<user>:Account:<account_id>` | Derived account capability names | Allowed: auth owns derived answers; excludes `msp.*` in account context. |
-| authorization-service | `can:<user>:Account:<permission>:<account_id>` | Derived true/false decision | Allowed: auth owns derived answers. |
+| authorization-service | `group-grants-v1:capabilities:<user>:Organization:<org_id>` | Derived organization capability names | Allowed: auth owns grants and derived answers. |
+| authorization-service | `group-grants-v1:capabilities:<user>:Account:<account_id>` | Derived account capability names | Allowed: auth owns derived group-grant answers. |
+| authorization-service | `group-grants-v1:can:<user>:Account:<permission>:<account_id>` | Derived true/false decision | Allowed: auth owns derived answers. |
 
 Do not add caches in authorization-service for account parent records, organization membership lists, user rows, group rows, or group membership rows.
 

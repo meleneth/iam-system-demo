@@ -71,7 +71,7 @@ class ArticleTraceRefresh < ArticleCollection
     puts "Trace refresh: #{@out}"
     command({}, File.join(@out, "ports.log"), "ruby", "scripts/check_stack_ports.rb")
     unless ENV.fetch("SKIP_BUILD", "0") == "1"
-      command({}, File.join(@out, "build.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "build", *APPS.reject { |app| app == "account-auth-service" })
+      command({}, File.join(@out, "build.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "build", *APPS.reject { |app| app.end_with?("-auth-service") })
     end
     databases = capture(@stack_env.fetch("BENCHMARK_WRAPPER"), "config", "--services").split.select { |name| name.match?(/-db(?:-|$)/) }
     command({}, File.join(@out, "infra.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "up", "-d", "--wait", "--no-recreate", *(INFRA + databases).uniq)

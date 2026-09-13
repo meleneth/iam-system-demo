@@ -55,7 +55,7 @@ class GroupsCreateQueueWorker
       account_id = user_data["account_id"]
       group = Group.find_by(id: group_id)
       Group.create!(id: group_id, name: group_name, account_id: account_id) unless group
-      GroupUser.create(group_id: group_id, user_id: user_id)
+      GroupUser.find_or_create_by!(group_id: group_id, user_id: user_id)
     end
 
     delete(msg)

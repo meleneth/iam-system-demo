@@ -1,3 +1,5 @@
+> The current authorization contract is [CORE_INVARIANTS.md](CORE_INVARIANTS.md). Grants belong to groups. MSP relationships add virtual account inheritance through the client organization; provider accounts never enter client parent chains. There is no special MSP permission. See [migration and validation](reports/group-grants-implementation.md).
+
 > Authorization correctness is a publication blocker. See the [implemented repairs, policy, regression evidence and benchmark status](reports/authorization-correctness/README.md). Run `scripts/test_authorization_boundaries.sh` before collecting performance evidence. Do not run that isolated test fixture concurrently with service specs that prepare the same test databases.
 
 README still under construction, more detail coming!
@@ -17,7 +19,7 @@ All primary keys are UUID's.
 
 Accounts have parent_account_id, which may be nil if this is the 'top level' account.  For extra fun, grants are inherited from your parent account.
 
-Every account will belong to an Organization.  Organization-service has a OrganizationAccounts table that as an entry per Account saying which Organization it belongs to.  The first user created for an Organization will be the Admin user, which has additional grants.
+Every account will belong to an Organization.  Organization-service has a OrganizationAccounts table that as an entry per Account saying which Organization it belongs to.  Users receive capabilities through explicit group memberships. Grants belong to groups: the seeded Users group receives read capabilities and the Admins group receives additional write capabilities. Authorization-service resolves memberships through group-service before matching grants.
 
 [`./dc_test`](https://github.com/meleneth/iam-system-demo/blob/main/dc_test), [`./dc_dev`](https://github.com/meleneth/iam-system-demo/blob/main/dc_dev), and [`./dc_prod`](https://github.com/meleneth/iam-system-demo/blob/main/dc_prod) are docker compose helpers
 
@@ -83,7 +85,7 @@ User seeder SQS message format:
       }
     }
 
-is_admin_user is not stored directly in the database, but is reflected in the grants applied to the user.
+is_admin_user selects seeded Admins membership and that group’s grants; no authorization grant is assigned directly to a user.
 
 Service / Database layout:
 

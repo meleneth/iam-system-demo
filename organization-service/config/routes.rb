@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  post "/internal/auth/account_providers", to: "internal/auth/account_contexts#providers"
   get "/metrics", to: "metrics#show"
 
   namespace :internal do

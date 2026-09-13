@@ -28,6 +28,7 @@ services:
       <<: *account-service-environment
       OTEL_SERVICE_NAME: account-auth-service
       IAM_DEPLOYMENT_ROLE: authorization-account-lookup
+      ORGANIZATION_SERVICE_API_BASE_URL: http://organization-auth-service:80
     ports:
       - "${ACCOUNT_AUTH_SERVICE_WEB_PORT}:3000"
     depends_on:

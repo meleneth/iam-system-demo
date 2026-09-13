@@ -6,9 +6,8 @@ class MspUserManagementTest < ActiveSupport::TestCase
   MSP_ORGANIZATION_ID = "00000000-0000-0000-0000-000000000001"
   MANAGED_ACCOUNT_ID = "00000000-0000-0000-0000-000000000002"
 
-  test "loads MSP user management when actor has msp.admin.users on the MSP organization" do
+  test "loads MSP user management through the actor-authorized managed account page" do
     with_msp_page
-    with_capabilities(["msp.admin.users"])
 
     result = execute_msp_query
 
@@ -20,13 +19,13 @@ class MspUserManagementTest < ActiveSupport::TestCase
     restore_stubs
   end
 
-  test "rejects MSP user management when actor lacks msp.admin.users on the MSP organization" do
-    with_msp_page
-    with_capabilities([])
-
+  test "propagates denial from the ordinary account authorization on the page" do
+    save_original(:MspManagedOrganization, :page)
+    MspManagedOrganization.define_singleton_method(:page) do |*args, **kwargs|
+      raise ActiveResource::ForbiddenAccess.new(Struct.new(:code, :message, :body).new("403", "Forbidden", ""))
+    end
     result = execute_msp_query
-
-    assert_match(/Not authorized for MSP organization/, result.fetch("errors").first.fetch("message"))
+    assert result["errors"].present?, result.inspect
   ensure
     restore_stubs
   end
@@ -49,6 +48,7 @@ class MspUserManagementTest < ActiveSupport::TestCase
   def with_msp_page
     save_original(:MspManagedOrganization, :page)
     MspManagedOrganization.define_singleton_method(:page) do |msp_account_id, user_id:, continuance: nil|
+      raise "wrong actor" unless user_id == ACTOR_USER_ID
       {
         "msp_organization_id" => MSP_ORGANIZATION_ID,
         "msp_account_id" => msp_account_id,
@@ -56,16 +56,6 @@ class MspUserManagementTest < ActiveSupport::TestCase
         "total_count" => 1,
         "continuance" => nil
       }
-    end
-  end
-
-  def with_capabilities(capabilities)
-    save_original(:CapabilityGrant, :capabilities)
-    CapabilityGrant.define_singleton_method(:capabilities) do |scope_type, scope_id, user_id:|
-      raise "wrong scope #{scope_type}/#{scope_id}" unless scope_type == "Organization" && scope_id == MSP_ORGANIZATION_ID
-      raise "wrong user #{user_id}" unless user_id == ACTOR_USER_ID
-
-      capabilities
     end
   end
 

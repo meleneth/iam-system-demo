@@ -3,6 +3,9 @@ Rails.application.routes.draw do
 
   get "internal/admin_users/organization/:organization_id", to: "internal/admin_users#organization"
 
+  get "capabilities/Group/:group_id", to: "capabilities#group"
+  post "capabilities/Group", to: "capabilities#groups"
+
   get "capabilities/Organization/:organization_id", to: "capabilities#organization"
   get "capabilities/Account/:account_id", to: "capabilities#account"
   post "capabilities/Organization", to: "capabilities#organizations"

@@ -85,7 +85,7 @@ class GroupUsersController < ApplicationController
 
     account_ids = owning_groups.map { |_group_id, account_id| account_id.to_s }.uniq
 
-    if User.user_can(user_id, "Account", "account.users.read", account_ids)
+    if User.can_read_groups?(user_id, owning_groups)
       return
     end
 

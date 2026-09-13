@@ -4,6 +4,18 @@ require "faraday"
 require "json"
 
 class User
+  # Evaluate each target independently when the collection mixes account grants
+  # and exact-group grants. Batching must not change those individual decisions.
+  def self.can_read_groups?(user_id, groups)
+    accounts = groups.map(&:last).map(&:to_s).uniq
+    return true if user_can(user_id, "Account", "account.users.read", accounts)
+
+    groups.all? do |group_id, account_id|
+      user_can(user_id, "Group", "group.read", [group_id.to_s]) ||
+        user_can(user_id, "Account", "account.users.read", [account_id.to_s])
+    end
+  end
+
   def self.user_can(user_id, scope_type, permission, scope_id)
     scope_ids = Array(scope_id).map(&:to_s).uniq
     return true if scope_ids.empty?

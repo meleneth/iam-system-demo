@@ -8,9 +8,9 @@ require "time"
 require_relative "benchmark_environment"
 
 class ArticleCollection
-  APPS = %w[user-management-service account-service account-auth-service authorization-service organization-service user-service group-service].freeze
+  APPS = %w[user-management-service account-service account-auth-service authorization-service organization-service organization-auth-service user-service group-service group-auth-service].freeze
   INFRA = %w[user-db account-db authz-db organization-db group-db accountcache authcache orgcache groupcache otel-collector jaeger].freeze
-  CONFIG_KEYS = %w[RAILS_ENV RAILS_MAX_THREADS RAILS_MIN_THREADS WEB_CONCURRENCY IAM_DEMO_BATCH_SIZE IAM_DEMO_RETRIEVAL_MODE GLOBAL_IAM_DEMO_USE_REDIS AUTHORIZATION_CHECK_MODE ACCOUNT_SERVICE_API_BASE_URL AUTHORIZATION_SERVICE_API_BASE_URL ORGANIZATION_SERVICE_API_BASE_URL].freeze
+  CONFIG_KEYS = %w[RAILS_ENV RAILS_MAX_THREADS RAILS_MIN_THREADS WEB_CONCURRENCY IAM_DEMO_BATCH_SIZE IAM_DEMO_RETRIEVAL_MODE GLOBAL_IAM_DEMO_USE_REDIS AUTHORIZATION_CHECK_MODE ACCOUNT_SERVICE_API_BASE_URL AUTHORIZATION_SERVICE_API_BASE_URL ORGANIZATION_SERVICE_API_BASE_URL GROUP_SERVICE_API_BASE_URL].freeze
 
   def initialize
     @stack_env = BenchmarkEnvironment.values
@@ -49,7 +49,7 @@ class ArticleCollection
     $stdout.flush
     command({}, File.join(@out, "ports.log"), "ruby", "scripts/check_stack_ports.rb")
     unless ENV.fetch("SKIP_BUILD", "0") == "1"
-      command({}, File.join(@out, "build.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "build", *APPS.reject { |app| app == "account-auth-service" })
+      command({}, File.join(@out, "build.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "build", *APPS.reject { |app| app.end_with?("-auth-service") })
     end
     command({}, File.join(@out, "startup.log"), @stack_env.fetch("BENCHMARK_WRAPPER"), "up", "-d", "--wait", *(INFRA + capture(@stack_env.fetch("BENCHMARK_WRAPPER"), "config", "--services").split.select { |name| name.match?(/-db(?:-|$)/) }).uniq)
     # Existing queue-drain convention is accepted; do not reseed or reconcile data.
@@ -175,7 +175,7 @@ class ArticleCollection
       { "RAILS_ENV" => @stack_env.fetch("RAILS_ENV"), "IAM_DEMO_BATCH_SIZE" => item.fetch("batch_size").to_s, "AUTHORIZATION_CHECK_MODE" => item.fetch("auth") }.each do |key, expected|
         raise "#{service}: #{key} mismatch" unless config[key] == expected
       end
-      if %w[account-service account-auth-service authorization-service organization-service].include?(service)
+      if %w[account-service account-auth-service authorization-service organization-service organization-auth-service].include?(service)
         raise "#{service}: Redis mismatch" unless config["GLOBAL_IAM_DEMO_USE_REDIS"] == item.fetch("redis")
       end
     end

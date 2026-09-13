@@ -20,17 +20,17 @@ Never convert a request made as a real actor/user into an `IAM_SYSTEM` request t
 
 This repository is not a complete production IAM implementation. The demo is proving that the query model collapses authorization correctly across services and cache modes.
 
-MSP authority is organization-level. Do not model MSP ownership as `msp_account_id -> managed_account_id`; that account-level reflected-grant model is known-invalid and should be removed rather than preserved.
+MSP relationships link a provider account to a client **organization**, never directly to client account IDs. They add virtual account inheritance alongside physical parent_account_id inheritance. MSP accounts must never occur in client parent_account_id chains. Normal group-owned Account grants on the provider account or its ancestors reflect into managed client accounts; no special MSP permission is required.
 
 The intended app-facing authorization proof is an authorization-service capabilities API:
 
 - `GET /capabilities/Organization/:organization_id`
 - `GET /capabilities/Account/:account_id`
 
-Those endpoints should return arrays of string capability names. Organization capabilities are direct organization-scoped grants. Account capabilities include direct/cascaded account grants using the same parent-chain semantics as `/can`.
+Those endpoints should return arrays of string capability names. Organization capabilities are direct organization-scoped grants. Account capabilities include direct/cascaded group-owned account grants using the same physical and virtual ancestry semantics as `/can`. Group scope is also supported.
 
 `/can` is still the internal service-to-service authorization workhorse. Keep it stable unless the task is explicitly changing that contract.
 
-MSP-specific grants such as `msp.admin.users` are visible only in MSP organization context. Account-context capability results must not include `msp.*` grants.
+Grants belong to groups, never directly to users. Resolve explicit memberships through group-service. Do not create or require `msp.admin.users`; MSP access uses ordinary capabilities. Group capabilities combine exact Group grants with grants covering the group’s owning account.
 
 When auth-service needs relationship facts to answer authorization questions, use a narrow `IAM_SYSTEM_AUTH` path for that specific auth-context lookup only. Do not make `IAM_SYSTEM_AUTH` a general replacement for `IAM_SYSTEM`.

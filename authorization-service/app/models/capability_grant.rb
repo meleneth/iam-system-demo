@@ -1,6 +1,4 @@
 class CapabilityGrant < ApplicationRecord
-  validates :user_id, presence: true
-  validates :permission, presence: true
-  validates :scope_type, presence: true
-  validates :scope_id, presence: true
+  validates :group_id, :permission, :scope_id, presence: true
+  validates :scope_type, inclusion: { in: %w[Account Group Organization] }
 end

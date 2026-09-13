@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  post "/internal/auth/memberships", to: "internal/auth/contexts#memberships"
+  post "/internal/auth/group_contexts", to: "internal/auth/contexts#groups"
   post "/group_users/search(.:format)", to: "group_users#search"
   post "/groups/search(.:format)", to: "groups#search"
 

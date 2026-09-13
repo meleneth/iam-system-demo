@@ -65,7 +65,8 @@ class AuthorizationCorrectnessGate
       check("#{fixture.fetch('name')} mixed Organization list denial") do
         allowed = request("ORGANIZATION_SERVICE", "/organization_accounts?organization_id=#{own_org}", actor: actor)
         exact!(allowed.code, "200")
-        exact!(JSON.parse(allowed.body).map { |r| r.fetch("account_id") }, [own_account])
+        expected_accounts = fixture.fetch("targets").fetch("organization_account_ids", [own_account])
+        exact!(JSON.parse(allowed.body).map { |r| r.fetch("account_id") }.sort, expected_accounts.sort)
         denied = request("ORGANIZATION_SERVICE", "/organization_accounts?organization_id[]=#{own_org}&organization_id[]=#{other_org}", actor: actor)
         exact!(denied.code, "403")
       end
