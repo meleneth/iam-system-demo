@@ -2,7 +2,9 @@
 
 # Article evidence collection plan
 
-Status: production seeding completed successfully on 2026-09-10 at 10:42 UTC:
+Current reseed default: 1,000,000 users, with four production instances per seed worker type (20 total). The commands below use the seeder default; set `USER_COUNT` explicitly only to override it.
+
+Historical run, superseded by the [production reset](reports/production-reseed-preparation.md): seeding completed on 2026-09-10 at 10:42 UTC:
 2,000,000 jobs, all five seed queues drained, and all ten seed workers stopped.
 Elapsed seed time including queue drain was 27,212.111 seconds (7h 33m 32s).
 The fresh production manifest replaces the stale manifest from the cancelled run.
@@ -72,7 +74,7 @@ its schemas and applications without resetting any existing data:
 ./seed_workers.sh prod start
 set -o pipefail
 mkdir -p reports/raw
-./dc_prod run --rm --no-deps -T -e USER_COUNT=2000000 -e DEMO_PROGRESS_INTERVAL=10000 user-management-service bin/rails runner scripts/demo_user_seeder.rb 2>&1 | tee "reports/raw/seeding-$(date -u +%Y%m%dT%H%M%SZ).log"
+./dc_prod run --rm --no-deps -T -e DEMO_PROGRESS_INTERVAL=10000 user-management-service bin/rails runner scripts/demo_user_seeder.rb 2>&1 | tee "reports/raw/seeding-$(date -u +%Y%m%dT%H%M%SZ).log"
 ./seed_workers.sh prod stop
 ```
 

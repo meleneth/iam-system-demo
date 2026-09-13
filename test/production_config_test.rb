@@ -14,7 +14,7 @@ class ProductionConfigTest < Minitest::Test
       end
       services[app] = { "image" => app, "environment" => env }
       services["#{queue}-worker"] = { "image" => app, "command" => ["./bin/rails", "runner", "#{klass}.new.run"],
-        "depends_on" => { app => {} }, "environment" => env.merge(queue_key => "http://eventstream:4566/000000000000/#{queue}") }
+        "deploy" => { "replicas" => 4 }, "depends_on" => { app => {} }, "environment" => env.merge(queue_key => "http://eventstream:4566/000000000000/#{queue}") }
     end
     @dev = Marshal.load(Marshal.dump(@prod))
     @eventstream = { "Queues" => ProductionConfig::CONSUMERS.keys.map { |q| { "Name" => q } },
@@ -31,6 +31,17 @@ class ProductionConfigTest < Minitest::Test
 
   def test_complete_config_passes
     assert_equal 30, check
+  end
+
+  def test_wrong_worker_replica_count_is_rejected
+    group_worker["deploy"]["replicas"] = 2
+    assert_match(/expected 4 production worker instances/, assert_raises(RuntimeError) { check }.message)
+  end
+
+  def test_replica_count_is_summed_across_named_workers
+    group_worker["deploy"]["replicas"] = 2
+    @prod["services"]["group_create-worker-peer"] = Marshal.load(Marshal.dump(group_worker))
+    assert_equal 31, check
   end
 
   def test_missing_group_worker_is_rejected_even_if_dev_also_omits_it

@@ -1,0 +1,28 @@
+prod-verify-reset.log
+user-service: all migrations applied, all domain tables empty
+account-service: all migrations applied, all domain tables empty
+authorization-service: all migrations applied, all domain tables empty
+Active grants: id, group_id, permission, scope_type, scope_id, created_at, updated_at
+organization-service: all migrations applied, all domain tables empty
+group-service: all migrations applied, all domain tables empty
+Production reset and migration checks passed.
+
+prod-empty-smoke.log
+ Container gp-authorization-service-run-8ea0dc6416bb Creating 
+ Container gp-authorization-service-run-8ea0dc6416bb Created 
+PASS authorization-service /capabilities/Organization/ab100000-0000-4000-8000-000000000001
+PASS group-auth-service /internal/auth/memberships
+PASS organization-auth-service /internal/auth/account_providers
+EMPTY QUEUE user_create {"ApproximateNumberOfMessages":"0","ApproximateNumberOfMessagesNotVisible":"0"}
+EMPTY QUEUE grants_create {"ApproximateNumberOfMessages":"0","ApproximateNumberOfMessagesNotVisible":"0"}
+EMPTY QUEUE group_create {"ApproximateNumberOfMessages":"0","ApproximateNumberOfMessagesNotVisible":"0"}
+EMPTY QUEUE organization_create {"ApproximateNumberOfMessages":"0","ApproximateNumberOfMessagesNotVisible":"0"}
+EMPTY QUEUE account_create {"ApproximateNumberOfMessages":"0","ApproximateNumberOfMessagesNotVisible":"0"}
+
+prod-verify-workers.log
+account: 4 running workers, current image, no restarts
+grants: 4 running workers, current image, no restarts
+groups: 4 running workers, current image, no restarts
+organization: 4 running workers, current image, no restarts
+user: 4 running workers, current image, no restarts
+Total: 20 running production seed workers.

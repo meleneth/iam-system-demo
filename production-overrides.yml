@@ -370,42 +370,56 @@ services:
       - "${USER_MANAGEMENT_DEMO_FIXTURE_OUTPUT_PATH}:/rails/tmp/demo-fixtures"
       - user-management-storage:/rails/storage
   organization-create-service-worker-1:
+    deploy:
+      replicas: 2
     environment:
       RAILS_ENV: production
       CACHE_DATABASE_URL: ${ORGANIZATION_DB_CACHE_DATABASE_URL}
       CABLE_DATABASE_URL: ${ORGANIZATION_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${ORGANIZATION_DB_QUEUE_DATABASE_URL}
   organization-create-service-worker-2:
+    deploy:
+      replicas: 2
     environment:
       RAILS_ENV: production
       CACHE_DATABASE_URL: ${ORGANIZATION_DB_CACHE_DATABASE_URL}
       CABLE_DATABASE_URL: ${ORGANIZATION_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${ORGANIZATION_DB_QUEUE_DATABASE_URL}
   account-create-service-worker-1:
+    deploy:
+      replicas: 2
     environment:
       RAILS_ENV: production
       CACHE_DATABASE_URL: ${ACCOUNT_DB_CACHE_DATABASE_URL}
       CABLE_DATABASE_URL: ${ACCOUNT_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${ACCOUNT_DB_QUEUE_DATABASE_URL}
   account-create-service-worker-2:
+    deploy:
+      replicas: 2
     environment:
       RAILS_ENV: production
       CACHE_DATABASE_URL: ${ACCOUNT_DB_CACHE_DATABASE_URL}
       CABLE_DATABASE_URL: ${ACCOUNT_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${ACCOUNT_DB_QUEUE_DATABASE_URL}
   user-create-service-worker-1:
+    deploy:
+      replicas: 2
     environment:
       RAILS_ENV: production
       CACHE_DATABASE_URL: ${USER_DB_CACHE_DATABASE_URL}
       CABLE_DATABASE_URL: ${USER_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${USER_DB_QUEUE_DATABASE_URL}
   user-create-service-worker-2:
+    deploy:
+      replicas: 2
     environment:
       RAILS_ENV: production
       CACHE_DATABASE_URL: ${USER_DB_CACHE_DATABASE_URL}
       CABLE_DATABASE_URL: ${USER_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${USER_DB_QUEUE_DATABASE_URL}
   grants-create-service-worker-01:
+    deploy:
+      replicas: 2
     environment:
       ACCOUNT_SERVICE_API_BASE_URL: http://account-auth-service:80
       RAILS_ENV: production
@@ -413,6 +427,8 @@ services:
       CABLE_DATABASE_URL: ${AUTHZ_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${AUTHZ_DB_QUEUE_DATABASE_URL}
   grants-create-service-worker-02:
+    deploy:
+      replicas: 2
     environment:
       ACCOUNT_SERVICE_API_BASE_URL: http://account-auth-service:80
       RAILS_ENV: production
@@ -420,12 +436,16 @@ services:
       CABLE_DATABASE_URL: ${AUTHZ_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${AUTHZ_DB_QUEUE_DATABASE_URL}
   groups-create-service-worker-01:
+    deploy:
+      replicas: 2
     environment:
       RAILS_ENV: production
       CACHE_DATABASE_URL: ${GROUP_DB_CACHE_DATABASE_URL}
       CABLE_DATABASE_URL: ${GROUP_DB_CABLE_DATABASE_URL}
       QUEUE_DATABASE_URL: ${GROUP_DB_QUEUE_DATABASE_URL}
   groups-create-service-worker-02:
+    deploy:
+      replicas: 2
     environment:
       RAILS_ENV: production
       CACHE_DATABASE_URL: ${GROUP_DB_CACHE_DATABASE_URL}

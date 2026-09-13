@@ -5,6 +5,7 @@ ruby scripts/check_stack_ports.rb
 ruby scripts/check_production_config.rb
 mkdir -p data/production/demo-fixtures
 apps=(user-service account-service authorization-service organization-service group-service user-management-service)
+auth_services=(account-auth-service group-auth-service organization-auth-service)
 if [[ "${SKIP_BUILD:-0}" != 1 ]]; then
   ./dc_prod build "${apps[@]}"
 fi
@@ -15,11 +16,11 @@ mapfile -t databases < <(printf '%s\n' "$services" | ruby -ne 'puts $_ if /-db(?
 for service in "${apps[@]}"; do
   ./dc_prod run --rm --no-deps "$service" bin/rails db:prepare
 done
-./dc_prod up -d --no-deps "${apps[@]}" account-auth-service
-for service in "${apps[@]}" account-auth-service; do
+./dc_prod up -d --no-deps "${apps[@]}" "${auth_services[@]}"
+for service in "${apps[@]}" "${auth_services[@]}"; do
   ready=0
   for ((attempt=0; attempt<90; attempt++)); do
-    if ./dc_prod exec -T "$service" curl -fsS --max-time 2 http://localhost:3000/up >/dev/null 2>&1; then
+    if ./dc_prod exec -T "$service" curl -fsS --max-time 2 -H "Host: $service" http://localhost:3000/up >/dev/null 2>&1; then
       ready=1
       break
     fi

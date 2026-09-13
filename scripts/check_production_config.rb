@@ -26,6 +26,8 @@ module ProductionConfig
     CONSUMERS.each do |queue, (app, worker_class, queue_key)|
       workers = services.select { |_, s| Array(s["command"]).include?("#{worker_class}.new.run") }
       raise "No production consumer for #{queue}" if workers.empty?
+      replicas = workers.values.sum { |worker| Integer(worker.fetch("deploy", {}).fetch("replicas", 1)) }
+      raise "#{queue}: expected 4 production worker instances, found #{replicas}" unless replicas == 4
       owner = services.fetch(app)
       workers.each do |name, worker|
         env = worker.fetch("environment")

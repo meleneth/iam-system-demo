@@ -40,10 +40,10 @@ Restart everything after the database prepare step:
 
 This seeds the named fixture accounts plus random filler, spreads the fixture events through the full job stream, and writes timing/demo files under `./data/development/demo-fixtures/latest`.
 
-For the full timing dataset:
+For the full timing dataset (the default is 1,000,000 users):
 
 ```bash
-./dc_dev run --rm -e USER_COUNT=2000000 -e DEMO_PROGRESS_INTERVAL=10000 user-management-service bin/rails runner scripts/demo_user_seeder.rb
+./dc_dev run --rm -e DEMO_PROGRESS_INTERVAL=10000 user-management-service bin/rails runner scripts/demo_user_seeder.rb
 ```
 
 For a quick smoke test only, use:
