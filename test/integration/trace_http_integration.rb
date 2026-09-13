@@ -18,6 +18,8 @@ class RequestTracingTest < Minitest::Test
     c.add_span_processor(OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(EXPORTER))
   end
 
+  require_relative "../../account-service/lib/http_request_tracing"
+
   class Widget < ActiveResource::Base
     self.format = :json
   end
@@ -59,7 +61,7 @@ class RequestTracingTest < Minitest::Test
     assert received.all? { |row| row[1] == "real-actor" }
     assert_equal '{"ids":[1]}', received[1][2]
     refute OpenTelemetry::Trace.current_span.context.valid?
-    refute spans.any? { |span| span.name.match?(/http\.(connection|request\.write|response)|Controller#|rack\.response/) }
+    refute spans.any? { |span| span.name.match?(/\Aconnect\z|HTTP CONNECT|http\.(connection|request\.write|response)|Controller#|rack\.response/) }
   ensure
     server&.stop(true)
   end

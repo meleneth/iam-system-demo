@@ -8,7 +8,7 @@ import sys
 
 collection = Path(sys.argv[1]).resolve()
 entries = json.loads((collection / 'trace-index.json').read_text())
-forbidden = re.compile(r'http\.(?:connection|request\.write|response\.)|rack\.response|Controller#|materializ|serializ|\.encode|\.decode|payload\.build|params\.parse', re.I)
+forbidden = re.compile(r'^connect$|HTTP CONNECT|http\.(?:connection|request\.write|response\.)|rack\.response|Controller#|materializ|serializ|\.encode|\.decode|payload\.build|params\.parse', re.I)
 results = []
 for entry in entries:
     path = Path(entry['output'])

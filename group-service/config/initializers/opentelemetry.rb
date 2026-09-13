@@ -24,5 +24,7 @@ OpenTelemetry::SDK.configure do |c|
   )
 end
 
+require_relative "../../lib/http_request_tracing"
+
 ApplicationSqlTracing.install
 Rails.application.config.middleware.insert_before 0, *OpenTelemetry::Instrumentation::Rack::Instrumentation.instance.middleware_args

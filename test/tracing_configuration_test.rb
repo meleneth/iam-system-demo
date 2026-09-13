@@ -27,9 +27,11 @@ class TracingConfigurationTest < Minitest::Test
   end
 
   def test_sql_helpers_are_identical_in_isolated_service_build_contexts
-    copies = Dir[File.expand_path("../*-service/lib/application_sql_tracing.rb", __dir__)]
-    assert_equal 6, copies.size
-    assert_equal 1, copies.map { |path| File.read(path) }.uniq.size
+    %w[application_sql_tracing http_request_tracing].each do |name|
+      copies = Dir[File.expand_path("../*-service/lib/#{name}.rb", __dir__)]
+      assert_equal 6, copies.size
+      assert_equal 1, copies.map { |path| File.read(path) }.uniq.size
+    end
     assert_empty Dir[File.expand_path("../*-service/lib/*_phases.rb", __dir__)]
   end
   def test_solid_cache_is_removed_but_active_record_query_cache_is_preserved
