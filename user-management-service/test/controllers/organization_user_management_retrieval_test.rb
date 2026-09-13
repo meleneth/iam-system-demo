@@ -4,6 +4,7 @@ require "minitest/mock"
 class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
   ACTOR_ID = "00000000-0000-4000-8000-000000000001"
   ORGANIZATION_ID = "00000000-0000-4000-8000-000000000002"
+  GROUP_IDS = %w[00000000-0000-4000-8000-000000000020 00000000-0000-4000-8000-000000000021].freeze
   ACCOUNT_IDS = [
     "00000000-0000-4000-8000-000000000003",
     "00000000-0000-4000-8000-000000000004"
@@ -21,8 +22,8 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
     assert_equal ACCOUNT_IDS, serial_calls.fetch(:accounts)
     assert_equal [ACCOUNT_IDS], batched_calls.fetch(:users)
     assert_equal ACCOUNT_IDS.map { |id| [id] }, serial_calls.fetch(:users)
-    assert_equal [ACCOUNT_IDS], batched_calls.fetch(:groups)
-    assert_equal ACCOUNT_IDS.map { |id| [id] }, serial_calls.fetch(:groups)
+    assert_equal [GROUP_IDS.reverse], batched_calls.fetch(:groups)
+    assert_equal GROUP_IDS.reverse.map { |id| [id] }, serial_calls.fetch(:groups)
     assert_equal 1, batched_calls.fetch(:group_users).length
     assert_equal 2, serial_calls.fetch(:group_users).length
     assert batched_calls.fetch(:headers).all? { |headers| headers == { "pad-user-id" => ACTOR_ID } }
@@ -83,9 +84,24 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
     ENV["IAM_DEMO_RETRIEVAL_MODE"] = old_mode
   end
 
+  test "cross-account memberships return the same groups across account pages" do
+    %w[serial batched].each do |mode|
+      whole, = payload_for(mode)
+      pages = ACCOUNT_IDS.flat_map { |id| payload_for(mode, account_ids: [id]).first.fetch(:users) }
+      assert_equal whole.fetch(:users), pages
+      assert_equal GROUP_IDS.reverse, pages.map { |user| user.fetch("groups").sole.fetch("id") }
+    end
+  end
+
+  test "group authorization failures propagate with the original actor" do
+    %w[serial batched].each do |mode|
+      assert_raises(ActiveResource::ForbiddenAccess) { payload_for(mode, deny_groups: true) }
+    end
+  end
+
   private
 
-  def payload_for(mode)
+  def payload_for(mode, account_ids: ACCOUNT_IDS, deny_groups: false)
     old_mode = ENV["IAM_DEMO_RETRIEVAL_MODE"]
     ENV["IAM_DEMO_RETRIEVAL_MODE"] = mode
     calls = { accounts: [], users: [], groups: [], group_users: [], headers: [] }
@@ -102,7 +118,7 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
       GroupUser.new(
         id: "00000000-0000-4000-8000-00000000003#{index}",
         user_id: user.id,
-        group_id: groups[index].id
+        group_id: groups[1 - index].id
       )
     end
     with_headers = lambda do |headers, &block|
@@ -123,9 +139,10 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
       users.select { |user| ids.include?(user.account_id) }
     end
     group_search = lambda do |params|
-      ids = params.fetch(:account_id)
+      raise ActiveResource::ForbiddenAccess.new(nil) if deny_groups
+      ids = params.fetch(:id)
       calls[:groups] << ids
-      groups.select { |group| ids.include?(group.account_id) }
+      groups.select { |group| ids.include?(group.id) }
     end
     group_user_search = lambda do |params|
       ids = params.fetch(:user_id)
@@ -146,7 +163,7 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
                       controller.instance_variable_set(:@actor_user_id, ACTOR_ID)
                       controller.instance_variable_set(:@organization_id, ORGANIZATION_ID)
                       controller.instance_variable_set(:@mode, "organization")
-                      controller.send(:data_payload, account_ids: ACCOUNT_IDS, total_account_count: ACCOUNT_IDS.length)
+                      controller.send(:data_payload, account_ids: account_ids, total_account_count: ACCOUNT_IDS.length)
                     end
                   end
                 end

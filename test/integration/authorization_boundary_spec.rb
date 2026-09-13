@@ -1,6 +1,7 @@
 require "rspec/core"
 require "net/http"
 require "json"
+require "base64"
 require_relative "authorization_fixture"
 
 RSpec.describe "Persisted cross-service authorization boundaries" do
@@ -32,6 +33,32 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
     expect(parsed(own).fetch("account_id")).to eq(id(:cohort_b))
     expect_denied(request("organization-service", "/organization_accounts/#{membership_id}"))
     expect_denied(request("organization-service", "/organization_accounts/#{membership_id}", actor: nil))
+  end
+
+  it "keeps account-only relationship authority equal across row and filtered lookups" do
+    filters = ["account_id=#{id(:child_a)}", "organization_id=#{id(:client_a)}&account_id=#{id(:child_a)}"]
+    rows = filters.map do |filter|
+      response = request("organization-service", "/organization_accounts?#{filter}", actor: :child_reader)
+      expect(response.code).to eq("200")
+      parsed(response).fetch(0)
+    end
+    expect(rows.first).to eq(rows.last)
+    response = request("organization-service", "/organization_accounts/#{rows.first.fetch('id')}", actor: :child_reader)
+    expect(parsed(response)).to eq(rows.first)
+  end
+
+  it "keeps uppercase UUID decisions equal across capability and /can reads, cold and warm" do
+    2.times do
+      %i[child_a root_b].each do |target|
+        expected = target == :child_a ? %w[account.read account.users.read] : []
+        response = request("authorization-service", "/capabilities/Account/#{id(target).upcase}", actor: :child_reader)
+        expect(parsed(response)).to eq(expected)
+        next if ENV["AUTHORIZATION_CHECK_MODE"] == "capabilities"
+
+        response = request("authorization-service", "/can/Account/account.read", actor: :child_reader, body: {scope_id: [id(target).upcase]})
+        expect(response.code).to eq(expected.empty? ? "403" : "200")
+      end
+    end
   end
 
   it "does not treat account read authority as permission to enumerate all organization accounts" do
@@ -182,6 +209,19 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
     expect(request("user-management-service", "/accounts/#{id(:cohort_a)}?as=#{id(:admin_a)}").code).to eq("200")
     expect(request("user-management-service", "/frontdoor/random_record").code).to eq("404")
     expect(request("user-management-service", "/debug").code).to eq("404")
+  end
+
+  it "renders a membership whose group belongs to an account on an earlier HTML page" do
+    cursor = Base64.urlsafe_encode64(JSON.generate(v: 1, cursor: {index: 1}), padding: false)
+    path = "/organization_user_management/partition?organization_id=#{id(:msp_a)}&as=#{id(:admin_a)}&continuance=#{cursor}"
+    response = request("user-management-service", path)
+    expect(response.code).to eq("200")
+    raw = response.body.match(/<script[^>]*type=['"]application\/json['"][^>]*>(.*?)<\/script>/m)[1]
+    payload = JSON.parse(raw)
+    expect(payload.fetch("accounts").map { |row| row.fetch("id") }).to eq([id(:cohort_a)])
+    admin = payload.fetch("users").find { |row| row.fetch("id") == id(:admin_a) }
+    expect(admin.fetch("groups").map { |row| row.fetch("id") }).to eq([id(:provider_admins_a)])
+    expect(admin.fetch("groups").first.fetch("account_id")).to eq(id(:provider_root_a))
   end
 
   it "gives a shared exact-group grant to both members and denies a nonmember" do

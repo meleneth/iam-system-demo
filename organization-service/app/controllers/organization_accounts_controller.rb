@@ -16,19 +16,8 @@ class OrganizationAccountsController < ApplicationController
     pad_user_id = request.headers["HTTP_PAD_USER_ID"]
     raise AuthorizationDenied, "no pad-user-id header sent" unless pad_user_id
 
-    if pad_user_id != "IAM_SYSTEM"
-      if filters[:organization_id]
-        unless organization_accounts_read?(pad_user_id, filters[:organization_id])
-          raise AuthorizationDenied, "no authorization for #{pad_user_id} organization.read.accounts #{filters[:organization_id]}"
-        end
-      end
-      if filters[:account_id]
-        unless User.user_can(pad_user_id, "Account", "account.read",  filters[:account_id])
-          raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{filters[:account_id]}"
-        end
-      end
-    end
-    results = OrganizationAccount.where(filters)
+    results = OrganizationAccount.where(filters).to_a
+    results.each { |relationship| authorize_relationship_read!(pad_user_id, relationship) }
 
     render json: results
   end
@@ -69,11 +58,7 @@ class OrganizationAccountsController < ApplicationController
   def show
     actor = request.headers["HTTP_PAD_USER_ID"]
     raise AuthorizationDenied if actor.blank?
-    unless actor == "IAM_SYSTEM" ||
-        organization_accounts_read?(actor, @organization_account.organization_id) ||
-        User.user_can(actor, "Account", "account.read", @organization_account.account_id)
-      raise AuthorizationDenied
-    end
+    authorize_relationship_read!(actor, @organization_account)
     render json: @organization_account
   end
 
@@ -103,6 +88,20 @@ class OrganizationAccountsController < ApplicationController
   end
 
   private
+
+  def authorize_relationship_read!(actor, relationship)
+    return if actor == "IAM_SYSTEM"
+
+    # Reuse organization decisions within this response, even for large listings.
+    @relationship_organization_reads ||= {}
+    organization_id = relationship.organization_id
+    organization_allowed = @relationship_organization_reads.fetch(organization_id) do
+      @relationship_organization_reads[organization_id] = organization_accounts_read?(actor, organization_id)
+    end
+    return if organization_allowed || User.user_can(actor, "Account", "account.read", relationship.account_id)
+
+    raise AuthorizationDenied
+  end
 
   def authorize_account_read!(pad_user_id, account_ids)
     return if pad_user_id == "IAM_SYSTEM"

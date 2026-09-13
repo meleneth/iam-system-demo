@@ -91,4 +91,35 @@ RSpec.describe "Organization accounts", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body.fetch("account_to_organization")).to eq(account_id => organization_id)
   end
+  %w[organization account neither].each do |grant_scope|
+    it "keeps row and filter lookups equivalent with #{grant_scope} authority" do
+      allow(User).to receive(:user_can) do |actor, scope, permission, id|
+        actor == actor_user_id && (
+          (grant_scope == "organization" && scope == "Organization" && permission == "organization.read.accounts" && id == organization_id) ||
+          (grant_scope == "account" && scope == "Account" && permission == "account.read" && id == account_id)
+        )
+      end
+      relationship = OrganizationAccount.find_by!(account_id: account_id)
+      expected_status = grant_scope == "neither" ? :forbidden : :ok
+      get "/organization_accounts/#{relationship.id}", headers: {"pad-user-id" => actor_user_id}
+      expect(response).to have_http_status(expected_status)
+      [{organization_id: organization_id}, {account_id: account_id},
+       {organization_id: organization_id, account_id: account_id}].each do |filters|
+        get "/organization_accounts", params: filters, headers: {"pad-user-id" => actor_user_id}
+        expect(response).to have_http_status(expected_status)
+        expect(response.parsed_body.map { |row| row.fetch("id") }).to eq([relationship.id]) unless grant_scope == "neither"
+      end
+    end
+  end
+
+  it "rejects a collection containing a relationship outside the actor's scope" do
+    other_account = SecureRandom.uuid
+    OrganizationAccount.create!(organization_id: organization_id, account_id: other_account)
+    allow(User).to receive(:user_can) do |actor, scope, permission, id|
+      actor == actor_user_id && scope == "Account" && permission == "account.read" && id == account_id
+    end
+    get "/organization_accounts", params: {organization_id: organization_id}, headers: {"pad-user-id" => actor_user_id}
+    expect(response).to have_http_status(:forbidden)
+  end
+
 end

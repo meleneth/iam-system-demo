@@ -87,7 +87,7 @@ RSpec.describe Authorization::Capabilities do
     expect(service.for_organization(organization_id)).to eq(["organization.read.accounts"])
     expect(redis.sets).to contain_exactly(
       [
-        "group-grants-v1:capabilities:#{user_id}:Organization:#{organization_id}",
+        "group-grants-v2:capabilities:#{user_id}:Organization:#{organization_id}",
         "[\"organization.read.accounts\"]",
         300
       ]
@@ -135,8 +135,8 @@ RSpec.describe Authorization::Capabilities do
       [%i[get get], %i[set set]]
     )
     expect(redis.sets).to contain_exactly(
-      ["group-grants-v1:can:#{user_id}:Account:#{permission}:#{account_ids.first}", "true", 300],
-      ["group-grants-v1:can:#{user_id}:Account:#{permission}:#{account_ids.last}", "false", 300]
+      ["group-grants-v2:can:#{user_id}:Account:#{permission}:#{account_ids.first}", "true", 300],
+      ["group-grants-v2:can:#{user_id}:Account:#{permission}:#{account_ids.last}", "false", 300]
     )
   end
 
@@ -155,8 +155,8 @@ RSpec.describe Authorization::Capabilities do
     positive_id = SecureRandom.uuid
     negative_id = SecureRandom.uuid
     missing_id = SecureRandom.uuid
-    redis.seed("group-grants-v1:can:#{user_id}:Account:#{permission}:#{positive_id}", "true")
-    redis.seed("group-grants-v1:can:#{user_id}:Account:#{permission}:#{negative_id}", "false")
+    redis.seed("group-grants-v2:can:#{user_id}:Account:#{permission}:#{positive_id}", "true")
+    redis.seed("group-grants-v2:can:#{user_id}:Account:#{permission}:#{negative_id}", "false")
     allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with([missing_id]).and_return(
       [[OpenStruct.new(id: missing_id)]]
@@ -169,10 +169,10 @@ RSpec.describe Authorization::Capabilities do
 
     expect(result).to eq(Set[positive_id])
     expect(redis.pipelines.first.map { |operation| operation.fetch(:key) }).to eq(
-      [positive_id, negative_id, missing_id].map { |account_id| "group-grants-v1:can:#{user_id}:Account:#{permission}:#{account_id}" }
+      [positive_id, negative_id, missing_id].map { |account_id| "group-grants-v2:can:#{user_id}:Account:#{permission}:#{account_id}" }
     )
     expect(redis.pipelines.last.map { |operation| operation.fetch(:key) }).to eq(
-      ["group-grants-v1:can:#{user_id}:Account:#{permission}:#{missing_id}"]
+      ["group-grants-v2:can:#{user_id}:Account:#{permission}:#{missing_id}"]
     )
   end
 
@@ -336,9 +336,9 @@ RSpec.describe Authorization::Capabilities do
     expect(described_class.new(user_id: user_id, redis: redis).account_ids_with_permission([account_id], write_permission)).to be_empty
 
     expect(redis.sets.map(&:first)).to contain_exactly(
-      "group-grants-v1:can:#{user_id}:Account:#{read_permission}:#{account_id}",
-      "group-grants-v1:can:#{other_user_id}:Account:#{read_permission}:#{account_id}",
-      "group-grants-v1:can:#{user_id}:Account:#{write_permission}:#{account_id}"
+      "group-grants-v2:can:#{user_id}:Account:#{read_permission}:#{account_id}",
+      "group-grants-v2:can:#{other_user_id}:Account:#{read_permission}:#{account_id}",
+      "group-grants-v2:can:#{user_id}:Account:#{write_permission}:#{account_id}"
     )
   end
 
@@ -436,6 +436,23 @@ RSpec.describe Authorization::Capabilities do
     expect(scoped.for_account(target)).to eq(["account.read", "direct.read"])
     redis.advance(1)
     expect(scoped.for_account(target)).to eq(["direct.read"])
+  end
+
+  it "shares canonical cache entries between UUID spellings without changing requested result IDs" do
+    account = "ab100000-0000-4000-8000-000000000001"
+    CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.read", scope_type: "Account", scope_id: account)
+    allow(Account).to receive(:with_headers).and_yield
+    expect(Account).to receive(:with_parents_batch).with([account]).twice.and_return([[OpenStruct.new(id: account, parent_account_id: nil)]])
+    2.times do
+      [account.upcase, account].each do |spelling|
+        expect(service.for_account(spelling)).to eq(["account.read"])
+        expect(service.account_ids_with_permission([spelling], "account.read")).to eq(Set[spelling])
+      end
+    end
+    expect(redis.sets.map(&:first)).to contain_exactly(
+      "group-grants-v2:capabilities:#{user_id}:Account:#{account}",
+      "group-grants-v2:can:#{user_id}:Account:account.read:#{account}"
+    )
   end
 
 end

@@ -1,4 +1,4 @@
-> Current authorization model: group-owned grants and virtual MSP inheritance, as specified in [CORE_INVARIANTS.md](CORE_INVARIANTS.md). Historical benchmark evidence predating this change must be regenerated after reseeding and correctness validation. See [implementation and migration](reports/group-grants-implementation.md).
+> Current authorization model: group-owned grants and virtual MSP inheritance, as specified in [CORE_INVARIANTS.md](CORE_INVARIANTS.md). Historical benchmark evidence predating this change must be regenerated after reseeding and correctness validation. See [implementation and migration](reports/group-grants-implementation.md) and the [follow-up invariant fixes](reports/core-invariant-fixes.md).
 
 > **Authorization correction, 2026-09-13:** Historical implementation/performance descriptions below are superseded where they conflict with the [correctness investigation](reports/authorization-correctness/README.md). Organization batches require every target; hierarchy responses authorize every returned ancestor; GraphQL actors are field-scoped; MSP pages preserve the actor and authorize all targets before counts; unrestricted frontdoor discovery has been removed. Article performance claims remain blocked pending reruns.
 
@@ -167,7 +167,7 @@ For account scope, authorization-service answers the batch using `Authorization:
 4. Ask organization-service for provider relationships for those target accounts with `IAM_SYSTEM_AUTH`. Each relationship is resolved through the target’s client organization.
 5. Fetch the provider account’s physical ancestry and any further virtual provider edges. Reject malformed/cyclic graphs.
 6. Match the requested permission against grants belonging to the actor’s groups on any covered account scope. There is no MSP role prerequisite.
-7. Cache final answers by actor, account and permission under the `group-grants-v1` namespace. Membership and relationship facts remain owned by their services.
+7. Cache final answers by actor, account and permission under the `group-grants-v2` namespace. Membership and relationship facts remain owned by their services.
 
 ```mermaid
 sequenceDiagram
@@ -882,9 +882,9 @@ GET /up
 | account-service | `account_with_parents:<account_id>` | Account parent-chain payloads | Allowed: account-service owns accounts. |
 | account-service | `org_cachekeys:<organization_id>` | Cache-key invalidation set for account parent chains | Derived/indexing support inside owning service boundary. |
 | organization-service | `account_ids_by_organization:<organization_id>` | Account IDs in an organization | Allowed: organization-service owns organization membership. |
-| authorization-service | `group-grants-v1:capabilities:<user>:Organization:<org_id>` | Derived organization capability names | Allowed: auth owns grants and derived answers. |
-| authorization-service | `group-grants-v1:capabilities:<user>:Account:<account_id>` | Derived account capability names | Allowed: auth owns derived group-grant answers. |
-| authorization-service | `group-grants-v1:can:<user>:Account:<permission>:<account_id>` | Derived true/false decision | Allowed: auth owns derived answers. |
+| authorization-service | `group-grants-v2:capabilities:<user>:Organization:<org_id>` | Derived organization capability names | Allowed: auth owns grants and derived answers. |
+| authorization-service | `group-grants-v2:capabilities:<user>:Account:<account_id>` | Derived account capability names | Allowed: auth owns derived group-grant answers. |
+| authorization-service | `group-grants-v2:can:<user>:Account:<permission>:<account_id>` | Derived true/false decision | Allowed: auth owns derived answers. |
 
 Do not add caches in authorization-service for account parent records, organization membership lists, user rows, group rows, or group membership rows.
 

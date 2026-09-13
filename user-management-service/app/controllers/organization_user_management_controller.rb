@@ -65,8 +65,8 @@ class OrganizationUserManagementController < ApplicationController
 
   def data_payload(account_ids:, total_account_count:)
     users = users_for(account_ids)
-    groups = groups_for(account_ids)
     group_users = group_users_for(users.map { |user| user.fetch("id") })
+    groups = groups_for(group_users.map { |membership| membership.fetch("group_id") }.uniq)
     group_names_by_id = groups.index_by { |group| group.fetch("id") }
     groups_by_user_id = group_users.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |group_user, memo|
       group = group_names_by_id.fetch(group_user.fetch("group_id"))
@@ -102,11 +102,11 @@ class OrganizationUserManagementController < ApplicationController
     end
   end
 
-  def groups_for(account_ids)
-    return [] if account_ids.empty?
+  def groups_for(group_ids)
+    return [] if group_ids.empty?
 
     Group.with_headers(service_headers) do
-      retrieve_by_join_key(Group, :account_id, account_ids).map { |group| resource_attributes(group) }
+      retrieve_by_join_key(Group, :id, group_ids).map { |group| resource_attributes(group) }
     end
   end
 

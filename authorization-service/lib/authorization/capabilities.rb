@@ -17,6 +17,7 @@ module Authorization
     end
 
     def for_organization(organization_id)
+      organization_id = organization_id.to_s.downcase
       cached(scope_type: "Organization", scope_id: organization_id) do
         CapabilityGrant.where(
           group_id: group_ids,
@@ -27,6 +28,7 @@ module Authorization
     end
 
     def for_account(account_id)
+      account_id = account_id.to_s.downcase
       cached(scope_type: "Account", scope_id: account_id) do
         scopes = account_scope_ids_for([account_id.to_s]).fetch(account_id.to_s)
         CapabilityGrant.where(group_id: group_ids, scope_type: "Account", scope_id: scopes)
@@ -35,6 +37,7 @@ module Authorization
     end
 
     def for_group(group_id)
+      group_id = group_id.to_s.downcase
       cached(scope_type: "Group", scope_id: group_id) do
         group = @group_context_client.groups([group_id]).find { |row| row.fetch("id").to_s == group_id.to_s }
         next [] unless group
@@ -46,6 +49,14 @@ module Authorization
     end
 
     def account_ids_with_permission(account_ids, permission)
+      requested = Array(account_ids).map(&:to_s).uniq
+      authorized = canonical_account_ids_with_permission(requested.map(&:downcase), permission)
+      requested.select { |id| authorized.include?(id.downcase) }.to_set
+    end
+
+    private
+
+    def canonical_account_ids_with_permission(account_ids, permission)
       account_ids = Array(account_ids).map(&:to_s).uniq
       return Set.new if account_ids.empty?
       valid_account_ids = account_ids.select { |account_id| valid_account_id?(account_id) }
@@ -101,8 +112,6 @@ module Authorization
       authorized
     end
 
-    private
-
     def group_ids
       @group_ids ||= @group_context_client.group_ids_for(@user_id)
     end
@@ -152,7 +161,11 @@ module Authorization
       end
 
       key = cache_key(scope_type, scope_id)
-      raw = @redis.get(key)
+      raw = begin
+        @redis.get(key)
+      rescue Redis::BaseError
+        nil
+      end
       if raw.present?
         IamDemo::CacheMetrics.record(
           cache: "capabilities",
@@ -171,7 +184,11 @@ module Authorization
       )
 
       capabilities = yield
-      @redis.set(key, capabilities.to_json, ex: TTL_SECONDS)
+      begin
+        @redis.set(key, capabilities.to_json, ex: TTL_SECONDS)
+      rescue Redis::BaseError
+        # A failed cache write does not change the authoritative result.
+      end
       capabilities
     end
 
@@ -238,15 +255,20 @@ module Authorization
         end
         frontier = valid.filter_map { |id| providers[id] }.uniq.reject { |id| hierarchies.key?(id) }
       end
-      raise "Provider hierarchy exceeds maximum depth" unless frontier.empty?
 
       requested.to_h do |target|
         scopes = []
         visited = Set.new
         current = target
         while current
+          unless visited.add?(current)
+            scopes = []
+            break
+          end
+          # Bound the path itself, including nodes already loaded by another target.
+          raise "Provider hierarchy exceeds maximum depth" if visited.size > MAX_ACCOUNT_HIERARCHY_DEPTH
           chain = hierarchies.fetch(current, [])
-          if chain.empty? || !visited.add?(current)
+          if chain.empty?
             scopes = []
             break
           end
@@ -262,11 +284,11 @@ module Authorization
     end
 
     def cache_key(scope_type, scope_id)
-      "group-grants-v1:capabilities:#{@user_id}:#{scope_type}:#{scope_id}"
+      "group-grants-v2:capabilities:#{@user_id}:#{scope_type}:#{scope_id}"
     end
 
     def account_permission_cache_key(permission, account_id)
-      "group-grants-v1:can:#{@user_id}:Account:#{permission}:#{account_id}"
+      "group-grants-v2:can:#{@user_id}:Account:#{permission}:#{account_id}"
     end
   end
 end

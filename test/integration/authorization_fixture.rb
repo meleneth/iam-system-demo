@@ -47,7 +47,7 @@ module AuthorizationFixture
     when "group-service"
       GroupUser.where(group_id: ids).delete_all
       Group.where(id: ids).delete_all
-      owners = {group_a: :root_a, group_b: :root_b, provider_admins_a: :cohort_a, provider_admins_b: :cohort_b,
+      owners = {group_a: :root_a, group_b: :root_b, provider_admins_a: :provider_root_a, provider_admins_b: :cohort_b,
                 provider_readers_a: :cohort_a, child_readers: :child_a, wrong_permissions: :root_a,
                 wrong_scopes: :root_a, mixed_grants: :cohort_b, exact_group_readers: :root_a}
       owners.each { |group, account| Group.create!(id: id(group), account_id: id(account), name: group.to_s) }
