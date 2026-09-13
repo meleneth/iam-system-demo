@@ -78,6 +78,17 @@ RSpec.describe "internal auth account contexts", type: :request do
     expect(response.parsed_body).to eq("error" => "IAM_SYSTEM_AUTH required")
   end
 
+  it "rechecks persisted ownership after a relationship is removed" do
+    create_valid_relationship!
+    OrganizationAccount.create!(organization_id: client_organization_id, account_id: target_account_id)
+    payload = {contexts: [{msp_organization_id: msp_organization_id, msp_account_id: msp_account_id, accounts: [{account_id: target_account_id, parent_account_ids: []}]}]}
+    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH"}, as: :json
+    expect(response.parsed_body.fetch("accounts").map { |row| row.fetch("account_id") }).to eq([target_account_id])
+    MspManagedOrganization.where(client_organization_id: client_organization_id).destroy_all
+    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH"}, as: :json
+    expect(response.parsed_body).to eq("accounts" => [])
+  end
+
   def create_valid_relationship!
     Organization.create!(id: msp_organization_id)
     Organization.create!(id: client_organization_id)

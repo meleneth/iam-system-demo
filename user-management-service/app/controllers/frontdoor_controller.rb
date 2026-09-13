@@ -1,5 +1,4 @@
 class FrontdoorController < ApplicationController
-  RANDOM_RECORD_ATTEMPTS = 25
   RANDOM_RECORD_DISPLAY_LIMIT = 500
 
   def index
@@ -8,49 +7,18 @@ class FrontdoorController < ApplicationController
     @experimental_links = experimental_links
   end
 
-  def random_record
-    @attempts = []
-    selection = find_random_admin_visible_org
-
-    unless selection
-      @error = "Could not find a random organization with a native admin grant after #{RANDOM_RECORD_ATTEMPTS} attempts."
-      return render :random_record
-    end
-
-    return redirect_to random_record_detail_path(
-      organization_id: selection.fetch(:organization).id,
-      account_id: selection.fetch(:account_id)
-    )
-  end
-
   def random_record_detail
-    permitted = params.permit(:organization_id, :account_id)
-    # AUTH HACKING: required for demo functionality. Stable refresh needs to rehydrate the selected org ID from the URL;
-    # a production caller should not be able to turn an arbitrary org ID into org details without prior authorization.
-    organization = Organization.with_headers("pad-user-id" => "IAM_SYSTEM") do
-      Organization.find(permitted.fetch(:organization_id))
+    permitted = params.permit(:organization_id, :account_id, :as)
+    @actor_user_id = permitted.require(:as)
+    @selected_account_id = permitted.require(:account_id)
+    @organization = Organization.with_headers("pad-user-id" => @actor_user_id) do
+      Organization.find(permitted.require(:organization_id))
     end
-    selection = selection_for_random_account(organization, permitted.fetch(:account_id))
-
-    unless selection
-      @error = "Could not find a native admin grant for organization #{organization.id}."
-      @attempts = [
-        {
-          organization_id: organization.id,
-          account_id: permitted.fetch(:account_id),
-          admin_user_id: nil,
-          msp_managed: false
-        }
-      ]
-      return render :random_record
+    links = OrganizationAccount.with_headers("pad-user-id" => @actor_user_id) do
+      OrganizationAccount.find(:all, params: {organization_id: @organization.id, account_id: @selected_account_id})
     end
-
-    @organization = selection.fetch(:organization)
-    @selected_account_id = selection.fetch(:account_id)
-    @admin_user_id = selection.fetch(:admin_user_id)
-
+    raise ActiveResource::ResourceNotFound unless links.any?
     load_native_org_detail
-
     render :random_record
   end
 
@@ -63,56 +31,12 @@ class FrontdoorController < ApplicationController
 
   private
 
-  def find_random_admin_visible_org
-    RANDOM_RECORD_ATTEMPTS.times do
-      # AUTH HACKING: required for demo functionality. This deliberately enumerates an org ID the caller does not already know,
-      # which would violate the production security model.
-      Organization.with_headers("pad-user-id" => "IAM_SYSTEM") do
-        organization = Organization.random_internal
-        # AUTH HACKING: required for demo functionality. This deliberately discovers an account ID inside that org,
-        # which a normal caller should not be able to learn unless already authorized in that context.
-        OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
-          random_account = OrganizationAccount.random_account_for_organization(organization.id)
-          selection = selection_for_random_account(organization, random_account.fetch(:account_id))
-          @attempts << {
-            organization_id: organization.id,
-            account_id: random_account.fetch(:account_id),
-            admin_user_id: selection&.fetch(:admin_user_id, nil),
-            msp_managed: false
-          }
-          return selection if selection
-        end
-      end
-    end
-
-    nil
-  end
-
-  def selection_for_random_account(organization, account_id)
-    admin = admin_for_organization(organization.id)
-    return nil unless admin
-
-    {
-      organization: organization,
-      account_id: account_id,
-      admin_user_id: admin.fetch(:user_id)
-    }
-  end
-
-  def admin_for_organization(organization_id)
-    # AUTH HACKING: required for demo functionality. This discovers an admin user ID for an org the caller may not
-    # otherwise know; production callers must arrive with an identity, not ask the system to reveal one.
-    CapabilityGrant.with_headers("pad-user-id" => "IAM_SYSTEM") do
-      CapabilityGrant.admin_user_for_organization(organization_id)
-    end
-  end
-
   def load_native_org_detail
-    Organization.with_headers("pad-user-id" => @admin_user_id) do
+    Organization.with_headers("pad-user-id" => @actor_user_id) do
       @organization = Organization.find(@organization.id)
     end
 
-    OrganizationAccount.with_headers("pad-user-id" => @admin_user_id) do
+    OrganizationAccount.with_headers("pad-user-id" => @actor_user_id) do
       @account_count = OrganizationAccount.accounts_counts(@organization.id).fetch(:accounts_count).to_i
       @organization_account_links = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
     end
@@ -126,7 +50,7 @@ class FrontdoorController < ApplicationController
   end
 
   def user_counts_for(account_ids)
-    User.with_headers("pad-user-id" => @admin_user_id) do
+    User.with_headers("pad-user-id" => @actor_user_id) do
       account_ids.each_slice(IamDemo.batch_size).each_with_object({}) do |ids, counts|
         counts.merge!(User.users_count(ids).transform_keys(&:to_s))
       end
@@ -134,7 +58,7 @@ class FrontdoorController < ApplicationController
   end
 
   def fetch_accounts_for(account_ids)
-    Account.with_headers("pad-user-id" => @admin_user_id) do
+    Account.with_headers("pad-user-id" => @actor_user_id) do
       account_ids.each_slice(IamDemo.batch_size).flat_map { |ids| Account.search(id: ids) }.index_by { |account| account.id.to_s }
     end
   end

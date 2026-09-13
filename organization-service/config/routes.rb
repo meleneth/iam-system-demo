@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   post "organization_account_ids/for_account_ids(.:format)", to: "organization_accounts#for_accounts"
   get "internal/random/organization", to: "internal/random_records#organization"
   get "internal/random/organizations/:organization_id/account", to: "internal/random_records#organization_account"
+  get "msp_managed_organizations/:msp_account_id", to: "internal/msp_managed_organizations#authorized_show"
   get "internal/msp_managed_organizations/:msp_account_id",
       to: "internal/msp_managed_organizations#show"
 

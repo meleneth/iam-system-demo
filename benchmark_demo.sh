@@ -67,6 +67,13 @@ if [[ ! -f "$MANIFEST" ]]; then
   exit 1
 fi
 
+if [[ -f "$OUT_DIR/timings.csv" || -f "$OUT_DIR/authorization-correctness.json" ]]; then
+  echo "Refusing to overwrite benchmark evidence in $OUT_DIR; choose a fresh OUT_DIR" >&2
+  exit 1
+fi
+mkdir -p "$OUT_DIR"
+ruby scripts/authorization_correctness_gate.rb "$OUT_DIR/authorization-correctness.json"
+
 mkdir -p "$OUT_DIR/graphql" "$OUT_DIR/traces"
 TRACE_PENDING="$OUT_DIR/traces/pending.tsv"
 : > "$TRACE_PENDING"

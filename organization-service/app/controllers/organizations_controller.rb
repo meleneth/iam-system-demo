@@ -6,10 +6,10 @@ class OrganizationsController < ApplicationController
     permitted = params.permit(:id)
     organization_id = permitted[:id]
     pad_user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise "no pad-user-id header sent" unless pad_user_id
+    raise AuthorizationDenied, "no pad-user-id header sent" unless pad_user_id
     if pad_user_id != "IAM_SYSTEM"
       unless User.user_can(pad_user_id, "Organization", "organization.read",  organization_id)
-        raise "no authorization for #{pad_user_id} organization.read #{organization_id}"
+        raise AuthorizationDenied, "no authorization for #{pad_user_id} organization.read #{organization_id}"
       end
     end
     render json: @organization

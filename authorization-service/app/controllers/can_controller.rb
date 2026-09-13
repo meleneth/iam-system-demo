@@ -14,6 +14,13 @@ class CanController < ApplicationController
     if user_id == "IAM_SYSTEM"
       return head :ok
     end
+    return render json: { error: "pad-user-id required" }, status: :bad_request if user_id.blank?
+    unless %w[Account Organization].include?(scope_type)
+      return render json: { error: "Invalid scope_type" }, status: :bad_request
+    end
+    unless params[:scope_id].is_a?(Array)
+      return render json: { error: "scope_id must be an explicit array" }, status: :bad_request
+    end
     authorized = false
 
     case scope_type
@@ -24,13 +31,15 @@ class CanController < ApplicationController
       # An empty collection requires no account authority and is intentionally allowed.
       authorized = requested_account_ids.all? { |account_id| authorized_account_ids.include?(account_id) }
     when "Organization"
-      # No hierarchy, just one org
-      authorized = CapabilityGrant.exists?(
+      requested_organization_ids = Array(scope_id).map(&:to_s).uniq
+      granted_organization_ids = CapabilityGrant.where(
         user_id: user_id,
         permission: permission,
         scope_type: "Organization",
-        scope_id: scope_id
-      )
+        scope_id: requested_organization_ids
+      ).distinct.pluck(:scope_id).map(&:to_s)
+      authorized = requested_organization_ids.any? &&
+        (requested_organization_ids - granted_organization_ids).empty?
     else
       return render json: { error: "Invalid scope_type" }, status: :bad_request
     end

@@ -133,13 +133,16 @@ class HierarchyComparison
 end
 
 require_relative "benchmark_environment"
+require_relative "authorization_correctness_gate"
 
 if $PROGRAM_NAME == __FILE__
   ENV.update(BenchmarkEnvironment.values)
   manifest_path = ENV.fetch("MANIFEST")
   manifest = JSON.parse(File.read(manifest_path))
   out = ENV.fetch("OUT_DIR", "reports/raw/hierarchies-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}")
+  raise "Refusing to overwrite benchmark evidence: #{out}" if File.exist?(File.join(out, "timings.csv"))
   FileUtils.mkdir_p(out)
+  AuthorizationCorrectnessGate.new.run(output: File.join(out, "authorization-correctness.json"))
   FileUtils.cp(manifest_path, File.join(out, "fixture_manifest.json"))
   redis = ENV.fetch("GLOBAL_IAM_DEMO_USE_REDIS", "false")
   raise "GLOBAL_IAM_DEMO_USE_REDIS must be true or false" unless %w[true false].include?(redis)

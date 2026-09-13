@@ -1,0 +1,121 @@
+ Container gt-authz-db-1 Running 
+ Container gt-organization-db-1 Running 
+ Container gt-account-db-1 Running 
+ Container gt-authcache-1 Running 
+ Container gt-group-db-1 Running 
+ Container gt-user-db-1 Running 
+ Container gt-authorization-service-run-a15ec4bc1ff5 Creating 
+ Container gt-authorization-service-run-a15ec4bc1ff5 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:31.077589 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:31.078164 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:54:31.078384 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-authorization-service-run-93a2fe84ec2f Creating 
+ Container gt-authorization-service-run-93a2fe84ec2f Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:32.585302 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:32.585996 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:54:32.586258 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-organization-service-run-671b21667a76 Creating 
+ Container gt-organization-service-run-671b21667a76 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:34.518282 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:34.518935 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:54:34.519207 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-organization-service-run-86667f6b59a4 Creating 
+ Container gt-organization-service-run-86667f6b59a4 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:36.055994 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:36.056710 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:54:36.056992 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-account-service-run-0aa07f05731e Creating 
+ Container gt-account-service-run-0aa07f05731e Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:38.147904 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:38.149121 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:54:38.149435 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-account-service-run-04152e39ffb5 Creating 
+ Container gt-account-service-run-04152e39ffb5 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:39.719753 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:39.720376 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:54:39.720673 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-user-service-run-a21da05f3106 Creating 
+ Container gt-user-service-run-a21da05f3106 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:41.536457 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:41.537075 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+ Container gt-user-service-run-007e34a1d771 Creating 
+ Container gt-user-service-run-007e34a1d771 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:43.068466 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:43.069307 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+ Container gt-group-service-run-f2975a6a1243 Creating 
+ Container gt-group-service-run-f2975a6a1243 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2.1/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:44.853222 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:44.853823 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+ Container gt-group-service-run-2247971bebbc Creating 
+ Container gt-group-service-run-2247971bebbc Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2.1/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:54:46.323318 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:54:46.323923 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+ Container gt-authorization-service-run-c24fd5b1fd24 Creating 
+ Container gt-authorization-service-run-c24fd5b1fd24 Created 
+ Container gt-authorization-service-run-1584951497e2 Creating 
+ Container gt-authorization-service-run-1584951497e2 Created 
+ Container gt-organization-service-run-331bb36ac986 Creating 
+ Container gt-organization-service-run-331bb36ac986 Created 
+ Container gt-account-service-run-a85195fe98ba Creating 
+ Container gt-account-service-run-a85195fe98ba Created 
+ Container gt-user-service-run-5d7ba08fd76c Creating 
+ Container gt-user-service-run-5d7ba08fd76c Created 
+ Container gt-group-service-run-9e14e013881b Creating 
+ Container gt-group-service-run-9e14e013881b Created 
+ Container gt-user-management-service-run-f8331ff772f2 Creating 
+ Container gt-user-management-service-run-f8331ff772f2 Created 
+ Container gt-authorization-service-run-e18d1ce7d8e7 Creating 
+ Container gt-authorization-service-run-e18d1ce7d8e7 Created 
+ Container gt-authorization-service-run-e3d6a087ea00 Creating 
+ Container gt-authorization-service-run-e3d6a087ea00 Created 
+
+Persisted cross-service authorization boundaries
+  allows the actor's organization and denies a mixed organization list across unrelated MSPs
+  authorizes individual organization membership records through the same real primitive
+  does not treat account read authority as permission to enumerate all organization accounts
+  keeps mixed account decisions separate across principals, scopes and permissions, cold and warm
+  does not disclose parent account objects to an actor authorized only on the child
+  checks real permissions before returning users, groups, searches, and counts
+  requires both the specific MSP grant and the target's ownership relationship
+  does not disclose a managed account page or its count on MSP role alone
+  keeps GraphQL nested fields scoped to each root field's principal
+  never combines an MSP grant in one organization with an operational grant in another
+  walks all authorized MSP pages without exposing another MSP's identities or metadata
+  authorizes counts and group memberships for every target after another principal warms caches
+  treats missing context as failure and empty searches as empty, never unrestricted
+  does not discover and impersonate a target organization's administrator in the demo frontdoor
+  keeps the HTML organization partition and account view scoped to their explicit actor
+
+Finished in 5.12 seconds (files took 0.11105 seconds to load)
+15 examples, 0 failures
+
+ Container gt-authorization-service-run-d7b46eaa6052 Creating 
+ Container gt-authorization-service-run-d7b46eaa6052 Created 
+/workspace/scripts/benchmark_hierarchies.rb:4: warning: csv used to be loaded from the standard library, but is not part of the default gems since Ruby 3.4.0.
+You can add csv to your Gemfile or gemspec to fix this error.
+/usr/local/lib/ruby/4.0.0/bundled_gems.rb:60:in 'Kernel.require': cannot load such file -- csv (LoadError)
+	from /usr/local/lib/ruby/4.0.0/bundled_gems.rb:60:in 'block (2 levels) in Kernel#replace_require'
+	from /workspace/scripts/benchmark_hierarchies.rb:4:in '<top (required)>'
+	from /workspace/test/integration/authorization_smoke_benchmark.rb:5:in 'Kernel#require_relative'
+	from /workspace/test/integration/authorization_smoke_benchmark.rb:5:in '<main>'
+

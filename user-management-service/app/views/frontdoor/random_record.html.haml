@@ -1,82 +1,51 @@
 .space-y-8
   %section
-    %p.text-sm.font-semibold.uppercase.tracking-wide.text-sky-700.dark:text-sky-300 Random Record
-    %h1.mt-2.text-3xl.font-bold Organization Detail
-    %p.mt-3.max-w-3xl.text-gray-700.dark:text-gray-300
-      Discovery uses IAM_SYSTEM because this page intentionally hacks around normal authorization to find IDs the caller does not already know. After it discovers a real admin user, ordinary non-MSP detail expansion uses that admin identity.
+    %h1.text-3xl.font-bold Organization Detail
+    %p.mt-3 Account and user information visible to the requesting user.
+  %section.grid.gap-4.md:grid-cols-4
+    .rounded.border.border-gray-200.p-4.dark:border-gray-700
+      %span.block.text-sm.text-gray-600.dark:text-gray-300 Organization
+      %span.mt-1.block.break-all.font-mono.text-xs= @organization.id
+      %span.mt-2.block.font-semibold= @organization.name
+    .rounded.border.border-gray-200.p-4.dark:border-gray-700
+      %span.block.text-sm.text-gray-600.dark:text-gray-300 Requesting User
+      %span.mt-1.block.break-all.font-mono.text-xs= @actor_user_id
+    .rounded.border.border-gray-200.p-4.dark:border-gray-700
+      %span.block.text-sm.text-gray-600.dark:text-gray-300 Accounts
+      %span.mt-1.block.text-2xl.font-bold= @account_count
+    .rounded.border.border-gray-200.p-4.dark:border-gray-700
+      %span.block.text-sm.text-gray-600.dark:text-gray-300 Users
+      %span.mt-1.block.text-2xl.font-bold= @total_user_count
 
-  %section.rounded.border.border-amber-300.bg-amber-50.p-4.text-amber-950.dark:border-amber-700.dark:bg-amber-950.dark:text-amber-100
-    %h2.text-lg.font-semibold Demo-Only Auth Hacking
-    %p.mt-2.text-sm
-      This random explorer is not a production feature. It enumerates organization IDs, account IDs, and admin user IDs specifically so the demo can jump into interesting records during a live seed. A real caller should not be able to discover those identifiers unless they already know them or are already authorized in that context.
-    %p.mt-2.text-sm
-      The page switches to the discovered admin after bootstrap.
+  %section
+    %h2.text-xl.font-semibold Useful Links
+    .mt-4.grid.gap-3.md:grid-cols-2
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: random_record_detail_path(@organization.id, @selected_account_id, as: @actor_user_id) } Refresh This Record
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: account_view_path(@selected_account_id, as: @actor_user_id) } Open Selected Account Page
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: organization_user_management_path(organization_id: @organization.id, as: @actor_user_id) } Organization User Management
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: "/graphiql" } GraphiQL
+      %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: "http://localhost:11160/search?service=user-management-service" } Jaeger User Management Traces
 
-  - if @error
-    %section.rounded.border.border-red-200.bg-red-50.p-4.text-red-900.dark:border-red-800.dark:bg-red-950.dark:text-red-100
-      %h2.font-semibold No Admin-Visible Organization Found
-      %p.mt-2= @error
-      - if @attempts.present?
-        %table.mt-4.w-full.text-left.text-sm
-          %thead
-            %tr
-              %th.py-1 Organization
-              %th.py-1 Random Account
-              %th.py-1 Admin User
-          %tbody
-            - @attempts.each do |attempt|
-              %tr.border-t.border-red-200.dark:border-red-800
-                %td.py-1.font-mono.text-xs= attempt[:organization_id]
-                %td.py-1.font-mono.text-xs= attempt[:account_id]
-                %td.py-1.font-mono.text-xs= attempt[:admin_user_id] || 'none'
-      %p.mt-4
-        %a.font-medium.text-sky-700.hover:underline.dark:text-sky-300{ href: random_record_path } Try another random record
-  - else
-    %section.grid.gap-4.md:grid-cols-4
-      .rounded.border.border-gray-200.p-4.dark:border-gray-700
-        %span.block.text-sm.text-gray-600.dark:text-gray-300 Organization
-        %span.mt-1.block.break-all.font-mono.text-xs= @organization.id
-        %span.mt-2.block.font-semibold= @organization.name
-      .rounded.border.border-gray-200.p-4.dark:border-gray-700
-        %span.block.text-sm.text-gray-600.dark:text-gray-300 Admin User
-        %span.mt-1.block.break-all.font-mono.text-xs= @admin_user_id
-      .rounded.border.border-gray-200.p-4.dark:border-gray-700
-        %span.block.text-sm.text-gray-600.dark:text-gray-300 Accounts
-        %span.mt-1.block.text-2xl.font-bold= @account_count
-      .rounded.border.border-gray-200.p-4.dark:border-gray-700
-        %span.block.text-sm.text-gray-600.dark:text-gray-300 Users
-        %span.mt-1.block.text-2xl.font-bold= @total_user_count
-
-    %section
-      %h2.text-xl.font-semibold Useful Links
-      .mt-4.grid.gap-3.md:grid-cols-2
-        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: random_record_path } Pick Another Random Record
-        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: random_record_detail_path(@organization.id, @selected_account_id) } Refresh This Record
-        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: account_view_path(@selected_account_id, as: @admin_user_id) } Open Selected Account Page
-        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: organization_user_management_path(organization_id: @organization.id, as: @admin_user_id) } Organization User Management
-        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: "/graphiql" } GraphiQL
-        %a.rounded.border.border-gray-200.p-3.font-medium.transition.hover:border-sky-500.hover:bg-sky-50.dark:border-gray-700.dark:hover:border-sky-400.dark:hover:bg-gray-800{ href: "http://localhost:11160/search?service=user-management-service" } Jaeger User Management Traces
-
-    %section
-      %h2.text-xl.font-semibold Account User Counts
-      %p.mt-2.text-sm.text-gray-600.dark:text-gray-300
-        Showing #{@display_account_ids.length} of #{@account_ids.length} accounts. User counts are computed for the full organization as #{@admin_user_id}.
-      .mt-4.overflow-x-auto.rounded.border.border-gray-200.dark:border-gray-700
-        %table.w-full.text-left.text-sm
-          %thead.bg-gray-50.dark:bg-gray-800
-            %tr
-              %th.px-3.py-2 Account
-              %th.px-3.py-2 Name
-              %th.px-3.py-2 Parent
-              %th.px-3.py-2 Users
-              %th.px-3.py-2
-          %tbody
-            - @display_account_ids.each do |account_id|
-              - account = @accounts_by_id[account_id]
-              %tr.border-t.border-gray-200.dark:border-gray-700{ class: account_id == @selected_account_id ? 'bg-sky-50 dark:bg-gray-800' : nil }
-                %td.px-3.py-2.font-mono.text-xs= account_id
-                %td.px-3.py-2= account&.name || 'unloaded'
-                %td.px-3.py-2.font-mono.text-xs= account&.parent_account_id.presence || '-'
-                %td.px-3.py-2= @user_counts_by_account_id.fetch(account_id, 0)
-                %td.px-3.py-2
-                  %a.font-medium.text-sky-700.hover:underline.dark:text-sky-300{ href: account_view_path(account_id, as: @admin_user_id) } Open
+  %section
+    %h2.text-xl.font-semibold Account User Counts
+    %p.mt-2.text-sm.text-gray-600.dark:text-gray-300
+      Showing #{@display_account_ids.length} of #{@account_ids.length} accounts. User counts are computed for the full organization as #{@actor_user_id}.
+    .mt-4.overflow-x-auto.rounded.border.border-gray-200.dark:border-gray-700
+      %table.w-full.text-left.text-sm
+        %thead.bg-gray-50.dark:bg-gray-800
+          %tr
+            %th.px-3.py-2 Account
+            %th.px-3.py-2 Name
+            %th.px-3.py-2 Parent
+            %th.px-3.py-2 Users
+            %th.px-3.py-2
+        %tbody
+          - @display_account_ids.each do |account_id|
+            - account = @accounts_by_id[account_id]
+            %tr.border-t.border-gray-200.dark:border-gray-700{ class: account_id == @selected_account_id ? 'bg-sky-50 dark:bg-gray-800' : nil }
+              %td.px-3.py-2.font-mono.text-xs= account_id
+              %td.px-3.py-2= account&.name || 'unloaded'
+              %td.px-3.py-2.font-mono.text-xs= account&.parent_account_id.presence || '-'
+              %td.px-3.py-2= @user_counts_by_account_id.fetch(account_id, 0)
+              %td.px-3.py-2
+                %a.font-medium.text-sky-700.hover:underline.dark:text-sky-300{ href: account_view_path(account_id, as: @actor_user_id) } Open

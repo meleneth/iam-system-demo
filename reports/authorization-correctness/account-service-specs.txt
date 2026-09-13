@@ -1,0 +1,54 @@
+ Container gt-account-service-run-54e7866e2e5a Creating 
+ Container gt-account-service-run-54e7866e2e5a Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T16:23:22.404804 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T16:23:22.405471 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T16:23:22.405781 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+..............**********......
+
+Pending: (Failures listed here are expected and do not affect your suite's status)
+
+  1) /accounts GET /index renders a successful response
+     # Add a hash of attributes valid for your model
+     # ./spec/requests/accounts_spec.rb:36
+
+  2) /accounts GET /show renders a successful response
+     # Add a hash of attributes valid for your model
+     # ./spec/requests/accounts_spec.rb:44
+
+  3) /accounts POST /create with valid parameters creates a new Account
+     # Add a hash of attributes valid for your model
+     # ./spec/requests/accounts_spec.rb:53
+
+  4) /accounts POST /create with valid parameters renders a JSON response with the new account
+     # Add a hash of attributes valid for your model
+     # ./spec/requests/accounts_spec.rb:60
+
+  5) /accounts POST /create with invalid parameters does not create a new Account
+     # Add a hash of attributes invalid for your model
+     # ./spec/requests/accounts_spec.rb:69
+
+  6) /accounts POST /create with invalid parameters renders a JSON response with errors for the new account
+     # Add a hash of attributes invalid for your model
+     # ./spec/requests/accounts_spec.rb:76
+
+  7) /accounts PATCH /update with valid parameters updates the requested account
+     # Add a hash of attributes valid for your model
+     # ./spec/requests/accounts_spec.rb:91
+
+  8) /accounts PATCH /update with valid parameters renders a JSON response with the account
+     # Add a hash of attributes valid for your model
+     # ./spec/requests/accounts_spec.rb:99
+
+  9) /accounts PATCH /update with invalid parameters renders a JSON response with errors for the account
+     # Add a hash of attributes valid for your model
+     # ./spec/requests/accounts_spec.rb:109
+
+  10) /accounts DELETE /destroy destroys the requested account
+     # Add a hash of attributes valid for your model
+     # ./spec/requests/accounts_spec.rb:120
+
+Finished in 0.34029 seconds (files took 0.9143 seconds to load)
+30 examples, 0 failures, 10 pending
+

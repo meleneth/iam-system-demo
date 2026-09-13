@@ -20,6 +20,9 @@ module BenchmarkEnvironment
       key = name == "ACCOUNT_SERVICE" ? "ACCOUNT_SERVICE_WEB_PORT" : "#{name}_WEB_PORT"
       result["#{name}_BASE_URL"] = "http://localhost:#{port.call(key, fallback)}"
     end
+    { "ORGANIZATION_SERVICE" => (stack == "prod" ? "11380" : "11250") }.each do |name, fallback|
+      result["#{name}_BASE_URL"] = "http://localhost:#{port.call("#{name}_WEB_PORT", fallback)}"
+    end
     %w[GLOBAL_IAM_DEMO_USE_REDIS AUTHORIZATION_CHECK_MODE IAM_DEMO_BATCH_SIZE IAM_DEMO_RETRIEVAL_MODE].each do |key|
       result[key] = settings[key] if settings[key]
     end

@@ -32,9 +32,10 @@ class AccountsController < ApplicationController
 
     pad_user_id = request.headers['HTTP_PAD_USER_ID']
     if pad_user_id != "IAM_SYSTEM"
-      raise "no authorization for #{pad_user_id} account.read #{account_id}" unless User.user_can(pad_user_id, "Account", "account.read",  account_id)
+      raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{account_id}" unless User.user_can(pad_user_id, "Account", "account.read",  account_id)
     end
 
+    authorize_hierarchy_records!(pad_user_id, [results])
     results.load if results.respond_to?(:load)
     render json: results
   end
@@ -50,6 +51,7 @@ class AccountsController < ApplicationController
       end
     end
     results = fetch_accounts_with_parents(account_ids)
+    authorize_hierarchy_records!(pad_user_id, results)
     results.load if results.respond_to?(:load)
     render json: results
   end
@@ -57,12 +59,12 @@ class AccountsController < ApplicationController
   # GET /accounts/1
   def show
     pad_user_id = request.headers['HTTP_PAD_USER_ID']
-    raise "Must pass a pad-user-id header" unless pad_user_id
+    raise AuthorizationDenied, "Must pass a pad-user-id header" unless pad_user_id
     if pad_user_id == "IAM_SYSTEM"
       OpenTelemetry::Trace.current_span.add_event("Skipping auth for system user")
     else
       OpenTelemetry::Trace.current_span.add_event("Checking auth for user #{pad_user_id}")
-      raise "no authorization for #{pad_user_id} account.read #{@account.id}" unless User.user_can(pad_user_id, "Account", "account.read",  @account.id)
+      raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{@account.id}" unless User.user_can(pad_user_id, "Account", "account.read",  @account.id)
     end
     render json: @account
   end
@@ -94,6 +96,14 @@ class AccountsController < ApplicationController
 
   private
 
+  def authorize_hierarchy_records!(actor, hierarchies)
+    return if actor == "IAM_SYSTEM"
+    ids = Array(hierarchies).flatten.compact.map { |row| row.fetch("id").to_s }.uniq
+    raise AuthorizationDenied if actor.blank?
+    return if ids.empty?
+    raise AuthorizationDenied unless User.user_can(actor, "Account", "account.read", ids)
+  end
+
   # Use callbacks to share common setup or constraints between actions.
   def set_account
     @account = Account.find(params.expect(:id))
@@ -106,7 +116,7 @@ class AccountsController < ApplicationController
 
   def authorize_account_collection_read!(accounts)
     pad_user_id = request.headers['HTTP_PAD_USER_ID']
-    raise "Must pass a pad-user-id header" unless pad_user_id
+    raise AuthorizationDenied, "Must pass a pad-user-id header" unless pad_user_id
 
     if pad_user_id == "IAM_SYSTEM"
       OpenTelemetry::Trace.current_span.add_event("Skipping auth for system user")
@@ -118,7 +128,7 @@ class AccountsController < ApplicationController
     return if account_ids.empty?
 
     OpenTelemetry::Trace.current_span.add_event("Checking batched auth for user #{pad_user_id} account.read #{account_ids.size} accounts")
-    raise "no authorization for #{pad_user_id} account.read #{account_ids}" unless User.user_can(pad_user_id, "Account", "account.read", account_ids)
+    raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{account_ids}" unless User.user_can(pad_user_id, "Account", "account.read", account_ids)
   end
 
   def fetch_account_with_parents(account_id)

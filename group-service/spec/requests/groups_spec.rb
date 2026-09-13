@@ -31,7 +31,7 @@ RSpec.describe "/groups", type: :request do
         .and_return(true)
 
       post "/groups/search",
-           params: { id: Group.pluck(:id) },
+           params: { id: Group.where(account_id: [account_id, other_account_id]).pluck(:id) },
            headers: { "pad-user-id" => actor_user_id },
            as: :json
 

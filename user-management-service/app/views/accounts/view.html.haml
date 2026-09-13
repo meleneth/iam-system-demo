@@ -52,12 +52,12 @@ This account has the following users:
       %td parent_account_id
   %tbody
     - @accounts.each do |account|
-      - @users_by_account_id[account.id].each do |user|
+      - Array(@users_by_account_id[account.id]).each do |user|
         %tr
           %td= account.id
           %td= account.name
           %td= user.email
-          %td= @group_names_by_user_id[user.id].join(", ")
+          %td= Array(@group_names_by_user_id[user.id]).join(", ")
           %td= account.parent_account_id
 
 %br

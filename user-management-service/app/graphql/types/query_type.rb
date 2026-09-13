@@ -33,7 +33,7 @@ module Types
     end
 
     def organization(id:, as:)
-      context[:as] = as
+      context.scoped_set!(:as, as)
       context[:tracer] = TRACER
       otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
       context[:otel_ctx] = otel_ctx
@@ -43,7 +43,7 @@ module Types
     end
 
     def account(id:, as:)
-      context[:as] = as
+      context.scoped_set!(:as, as)
       context[:tracer] = TRACER
       otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
       context[:otel_ctx] = otel_ctx
@@ -66,7 +66,7 @@ module Types
     end
 
     def accounts(ids:, as:)
-      context[:as] = as
+      context.scoped_set!(:as, as)
       context[:tracer] = TRACER
       otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
       context[:otel_ctx] = otel_ctx
@@ -75,11 +75,11 @@ module Types
     end
 
     def msp_user_management(msp_account_id:, as:, continuance: nil)
-      context[:as] = as
+      context.scoped_set!(:as, as)
       context[:tracer] = TRACER
       context[:otel_ctx] ||= OpenTelemetry::Context.current
 
-      page = MspManagedOrganization.page(msp_account_id, continuance: continuance)
+      page = MspManagedOrganization.page(msp_account_id, user_id: as, continuance: continuance)
       msp_organization_id = page["msp_organization_id"]
       raise GraphQL::ExecutionError, "Unknown MSP account #{msp_account_id}" if msp_organization_id.blank?
 

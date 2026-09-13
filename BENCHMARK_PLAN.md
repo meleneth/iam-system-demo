@@ -1,3 +1,5 @@
+> **2026-09-13: publication blocked by confirmed authorization failures.** Historical results below are preserved, but do not establish correct isolation or performance of the repaired program. See the [investigation, regressions and rerun requirements](reports/authorization-correctness/README.md).
+
 # Article evidence collection plan
 
 Status: production seeding completed successfully on 2026-09-10 at 10:42 UTC:

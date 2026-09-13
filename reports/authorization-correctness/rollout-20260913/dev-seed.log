@@ -1,0 +1,33 @@
+time="2026-09-13T09:39:38-07:00" level=warning msg="Found orphan containers (gd-user-management-service-run-758a86997166) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container gd-user-management-service-run-639883edd4bd Creating 
+ Container gd-user-management-service-run-639883edd4bd Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+/rails/scripts/demo_user_seeder.rb:979:in 'DemoFixtureArtifacts#fixture': Unknown fixture: wide_org (RuntimeError)
+	from /rails/scripts/demo_user_seeder.rb:784:in 'DemoFixtureArtifacts#rest_curl_examples'
+	from /rails/scripts/demo_user_seeder.rb:740:in 'DemoFixtureArtifacts#write!'
+	from /rails/scripts/demo_user_seeder.rb:52:in 'DemoUserSeeder#seed!'
+	from /tmp/seed_small_dev.rb:14:in '<main>'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:44:in 'Kernel.load'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:44:in 'block in Rails::Command::RunnerCommand#perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/execution_wrapper.rb:91:in 'ActiveSupport::ExecutionWrapper.wrap'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:70:in 'Rails::Command::RunnerCommand#conditional_executor'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:43:in 'Rails::Command::RunnerCommand#perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor/command.rb:28:in 'Thor::Command#run'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor/invocation.rb:127:in 'Thor::Invocation#invoke_command'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command/base.rb:178:in 'Rails::Command::Base#invoke_command'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor.rb:538:in 'Thor.dispatch'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command/base.rb:73:in 'Rails::Command::Base.perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:65:in 'block in Rails::Command.invoke'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:143:in 'Rails::Command.with_argv'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:63:in 'Rails::Command.invoke'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands.rb:18:in '<main>'
+	from /usr/local/lib/ruby/4.0.0/bundled_gems.rb:60:in 'Kernel.require'
+	from /usr/local/lib/ruby/4.0.0/bundled_gems.rb:60:in 'block (2 levels) in Kernel#replace_require'
+	from /usr/local/bundle/ruby/4.0.0/gems/bootsnap-1.18.6/lib/bootsnap/load_path_cache/core_ext/kernel_require.rb:30:in 'Kernel#require'
+	from /rails/bin/rails:4:in '<main>'
+I, [2026-09-13T16:39:39.789286 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T16:39:39.790366 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T16:39:39.823307 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::GraphQL was successfully installed with the following options {schemas: [], enable_platform_field: false, enable_platform_authorized: false, enable_platform_resolve_type: false, legacy_platform_span_names: false, legacy_tracing: false}
+Building fixture payloads...
+

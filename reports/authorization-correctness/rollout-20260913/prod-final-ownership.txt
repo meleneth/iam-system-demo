@@ -1,0 +1,4 @@
+CREATE UNIQUE INDEX index_organization_accounts_on_account_id ON public.organization_accounts USING btree (account_id)
+04958630-853b-4ae8-9013-ddc93eb75577|duplicate account membership projection
+7655a00b-44e9-4005-8a85-cf8d20390d38|duplicate account membership projection
+8d48ca48-dcde-456e-bc02-81ed6ea1bc35|duplicate account membership projection

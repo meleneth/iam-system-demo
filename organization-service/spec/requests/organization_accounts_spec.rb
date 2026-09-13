@@ -79,6 +79,10 @@ RSpec.describe "Organization accounts", type: :request do
       .with(actor_user_id, "Account", "account.read", [account_id])
       .and_return(true)
 
+    expect(User).to receive(:user_can)
+      .with(actor_user_id, "Organization", "organization.read.accounts", organization_id)
+      .and_return(true)
+
     post "/organization_account_ids/for_account_ids",
          params: { account_ids: [account_id] },
          headers: { "pad-user-id" => actor_user_id },

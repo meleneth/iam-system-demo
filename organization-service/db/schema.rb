@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_30_062000) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_13_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -26,12 +26,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_062000) do
     t.index ["msp_organization_id"], name: "index_msp_managed_organizations_on_msp_organization_id"
   end
 
+  create_table "organization_account_projection_archives", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.jsonb "original_row", null: false
+    t.string "reason", null: false
+  end
+
   create_table "organization_accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "organization_id"
     t.uuid "account_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_organization_accounts_on_account_id"
+    t.index ["account_id"], name: "index_organization_accounts_on_account_id", unique: true
     t.index ["organization_id"], name: "index_organization_accounts_on_organization_id"
   end
 

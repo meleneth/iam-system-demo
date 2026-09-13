@@ -6,6 +6,6 @@ class OrganizationAccount < ApplicationRecord
   include Mel::Filterable
 
   belongs_to :organization, class_name: "Organization", optional: false
-  validates :account_id, presence: true
+  validates :account_id, presence: true, uniqueness: true
   filterable_fields :account_id, :organization_id
 end

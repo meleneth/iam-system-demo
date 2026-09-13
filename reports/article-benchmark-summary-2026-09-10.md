@@ -1,3 +1,5 @@
+> **2026-09-13: publication blocked by confirmed authorization failures.** Historical results below are preserved, but do not establish correct isolation or performance of the repaired program. See the [investigation, regressions and rerun requirements](authorization-correctness/README.md).
+
 # Article benchmark summary — 2026-09-10
 
 All 17 cases completed: both smoke gates and 13 measured cases passed; two measured cases failed. The strongest supported results are fewer hierarchy HTTP requests, faster batched deep retrieval, and substantially faster large MSP walks with Redis. Capabilities mode has workload-specific performance and reliability problems; it did not fail universally.

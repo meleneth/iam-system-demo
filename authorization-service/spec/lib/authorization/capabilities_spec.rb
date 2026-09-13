@@ -8,6 +8,8 @@ RSpec.describe Authorization::Capabilities do
 
     def initialize
       @values = {}
+      @expires = {}
+      @now = 0
       @sets = []
       @pipelines = []
       @active_pipeline = nil
@@ -27,7 +29,12 @@ RSpec.describe Authorization::Capabilities do
       @active_pipeline = nil
     end
 
+    def advance(seconds)
+      @now += seconds
+    end
+
     def get(key)
+      @values.delete(key) if @expires[key] && @expires[key] <= @now
       result = @values[key]
       @active_pipeline << { command: :get, key: key, result: result } if @active_pipeline
       result
@@ -36,6 +43,7 @@ RSpec.describe Authorization::Capabilities do
     def set(key, value, ex:)
       @sets << [key, value, ex]
       @values[key] = value
+      @expires[key] = @now + ex
       @active_pipeline << { command: :set, key: key, value: value, ex: ex, result: "OK" } if @active_pipeline
       "OK"
     end
@@ -402,4 +410,60 @@ RSpec.describe Authorization::Capabilities do
       expect(generated_service.account_ids_with_permission(requested_ids.shuffle(random: random), permission)).to eq(expected)
     end
   end
+  it "observes grant revocation after the documented five-minute decision TTL, without refreshing a hit" do
+    account_id = SecureRandom.uuid
+    grant = CapabilityGrant.create!(user_id: user_id, permission: "account.users.read", scope_type: "Account", scope_id: account_id)
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).with([account_id]).and_return([[Account.new(id: account_id, parent_account_id: nil)]])
+    expect(service.for_account(account_id)).to eq(["account.users.read"])
+    expect(service.account_ids_with_permission([account_id], "account.users.read")).to eq(Set[account_id])
+    grant.destroy!
+    redis.advance(299)
+    expect(service.for_account(account_id)).to eq(["account.users.read"])
+    expect(service.account_ids_with_permission([account_id], "account.users.read")).to eq(Set[account_id])
+    redis.advance(1)
+    expect(service.for_account(account_id)).to eq([])
+    expect(service.account_ids_with_permission([account_id], "account.users.read")).to eq(Set.new)
+  end
+
+  it "never caches an allow when the hierarchy dependency fails" do
+    target = SecureRandom.uuid
+    CapabilityGrant.create!(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: target)
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).and_raise(IOError, "owning service unavailable")
+    expect { service.account_ids_with_permission([target], "account.read") }.to raise_error(IOError)
+    expect(redis.sets).to eq([])
+  end
+
+  it "never treats an unavailable MSP relationship service as a wildcard relationship" do
+    target, cohort, msp = Array.new(3) { SecureRandom.uuid }
+    CapabilityGrant.create!(user_id: user_id, permission: "msp.admin.users", scope_type: "Organization", scope_id: msp)
+    CapabilityGrant.create!(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: cohort)
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).and_return([[Account.new(id: target, parent_account_id: nil)]])
+    client = instance_double(Authorization::AccountContextClient)
+    allow(client).to receive(:account_contexts).and_raise(IOError, "relationship service unavailable")
+    subject = described_class.new(user_id: user_id, redis: redis, account_context_client: client)
+    expect { subject.account_ids_with_permission([target], "account.read") }.to raise_error(IOError)
+    expect(redis.sets).to eq([])
+  end
+
+  it "expires cached MSP authority after a relationship removal and preserves direct account grants" do
+    target, cohort, msp = Array.new(3) { SecureRandom.uuid }
+    CapabilityGrant.create!(user_id: user_id, permission: "msp.admin.users", scope_type: "Organization", scope_id: msp)
+    CapabilityGrant.create!(user_id: user_id, permission: "account.read", scope_type: "Account", scope_id: cohort)
+    CapabilityGrant.create!(user_id: user_id, permission: "direct.read", scope_type: "Account", scope_id: target)
+    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
+    allow(Account).to receive(:with_parents_batch).and_return([[Account.new(id: target, parent_account_id: nil)]])
+    client = instance_double(Authorization::AccountContextClient)
+    allow(client).to receive(:account_contexts).and_return({"accounts" => [{"account_id" => target, "msp_account_id" => cohort, "msp_organization_id" => msp}]})
+    scoped = described_class.new(user_id: user_id, redis: redis, account_context_client: client)
+    expect(scoped.for_account(target)).to eq(["account.read", "direct.read"])
+    allow(client).to receive(:account_contexts).and_return({"accounts" => []})
+    redis.advance(299)
+    expect(scoped.for_account(target)).to eq(["account.read", "direct.read"])
+    redis.advance(1)
+    expect(scoped.for_account(target)).to eq(["direct.read"])
+  end
+
 end

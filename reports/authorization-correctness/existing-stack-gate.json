@@ -1,0 +1,134 @@
+{
+  "passed": false,
+  "checked_at": "2026-09-13T10:42:35Z",
+  "manifest_sha256": "412d6de187c8ac3e2f025bd2deb6f728cc1ebc012cd18f89538928353284b9fb",
+  "stack": "prod",
+  "checks": [
+    {
+      "name": "deep_chain account identities pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "deep_chain account identities pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "wide_org account identities pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "wide_org account identities pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "dense_account account identities pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "dense_account account identities pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "branching_tree account identities pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "branching_tree account identities pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "sparse_enterprise account identities pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "sparse_enterprise account identities pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_100k account identities pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_100k account identities pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_50k account identities pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_50k account identities pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_10k account identities pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_10k account identities pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_100k mixed Organization list denial",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11380 (Operation not permitted - socket(2) for \"localhost\" port 11380)"
+    },
+    {
+      "name": "massive_fanout_100k owned client allow / unrelated MSP denial pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_100k owned client allow / unrelated MSP denial pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_50k mixed Organization list denial",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11380 (Operation not permitted - socket(2) for \"localhost\" port 11380)"
+    },
+    {
+      "name": "massive_fanout_50k owned client allow / unrelated MSP denial pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_50k owned client allow / unrelated MSP denial pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_10k mixed Organization list denial",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11380 (Operation not permitted - socket(2) for \"localhost\" port 11380)"
+    },
+    {
+      "name": "massive_fanout_10k owned client allow / unrelated MSP denial pass 0",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    },
+    {
+      "name": "massive_fanout_10k owned client allow / unrelated MSP denial pass 1",
+      "passed": false,
+      "error": "Failed to open TCP connection to localhost:11360 (Operation not permitted - socket(2) for \"localhost\" port 11360)"
+    }
+  ],
+  "limitation": "Sampled seed identities and boundaries; full measured response identity validation and the cross-service regression matrix remain required."
+}

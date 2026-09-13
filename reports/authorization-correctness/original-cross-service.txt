@@ -1,0 +1,146 @@
+ Container gt-authcache-1 Running 
+ Container gt-authz-db-1 Running 
+ Container gt-account-db-1 Running 
+ Container gt-group-db-1 Running 
+ Container gt-user-db-1 Running 
+ Container gt-organization-db-1 Running 
+ Container gt-authorization-service-run-b8445a8f3b10 Creating 
+ Container gt-authorization-service-run-b8445a8f3b10 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:45.977897 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:45.978430 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:28:45.978645 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-authorization-service-run-fbb9eda8e4af Creating 
+ Container gt-authorization-service-run-fbb9eda8e4af Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:47.246926 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:47.247749 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:28:47.247985 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-organization-service-run-b53ca77733cf Creating 
+ Container gt-organization-service-run-b53ca77733cf Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:48.907715 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:48.908327 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:28:48.908577 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-organization-service-run-fc27670a6d27 Creating 
+ Container gt-organization-service-run-fc27670a6d27 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:50.274791 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:50.275433 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:28:50.275679 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-account-service-run-71fd28a514b7 Creating 
+ Container gt-account-service-run-71fd28a514b7 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:52.029079 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:52.029629 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:28:52.029844 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-account-service-run-34403199579e Creating 
+ Container gt-account-service-run-34403199579e Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:53.463849 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:53.464561 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:28:53.464910 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-user-service-run-aff318215a5b Creating 
+ Container gt-user-service-run-aff318215a5b Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:55.049927 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:55.051067 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+ Container gt-user-service-run-e3b7574a65cb Creating 
+ Container gt-user-service-run-e3b7574a65cb Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:56.399387 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:56.400349 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+ Container gt-group-service-run-6ee94b3ce1b7 Creating 
+ Container gt-group-service-run-6ee94b3ce1b7 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2.1/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:57.910661 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:57.911201 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+ Container gt-group-service-run-e015904684cd Creating 
+ Container gt-group-service-run-e015904684cd Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2.1/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:28:59.343356 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:28:59.344008 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+ Container gt-authorization-service-run-87436e06cbd8 Creating 
+ Container gt-authorization-service-run-87436e06cbd8 Created 
+ Container gt-organization-service-run-6620de05827f Creating 
+ Container gt-organization-service-run-6620de05827f Created 
+ Container gt-account-service-run-77f55a226b43 Creating 
+ Container gt-account-service-run-77f55a226b43 Created 
+ Container gt-user-service-run-361967d302c9 Creating 
+ Container gt-user-service-run-361967d302c9 Created 
+ Container gt-group-service-run-75d9db8f143a Creating 
+ Container gt-group-service-run-75d9db8f143a Created 
+ Container gt-authorization-service-run-800f598aa1c6 Creating 
+ Container gt-authorization-service-run-800f598aa1c6 Created 
+ Container gt-authorization-service-run-4742f04ff57f Creating 
+ Container gt-authorization-service-run-4742f04ff57f Created 
+
+Persisted cross-service authorization boundaries
+  allows the actor's organization and denies a mixed organization list across unrelated MSPs (FAILED - 1)
+  authorizes individual organization membership records through the same real primitive (FAILED - 2)
+  does not treat account read authority as permission to enumerate all organization accounts (FAILED - 3)
+  keeps mixed account decisions separate across principals, scopes and permissions, cold and warm
+  does not disclose parent account objects to an actor authorized only on the child (FAILED - 4)
+  checks real permissions before returning users, groups, searches, and counts (FAILED - 5)
+
+Failures:
+
+  1) Persisted cross-service authorization boundaries allows the actor's organization and denies a mixed organization list across unrelated MSPs
+     Failure/Error: expect(response.code.to_i).to eq(403), "expected forbidden, received #{response.code}: #{response.body.to_s[0, 300]}"
+       expected forbidden, received 200: [{"id":"c2e955d8-aa60-48e0-8f1c-6b872c369640","organization_id":"a1700000-0000-4000-8000-000000000001","account_id":"a1700000-0000-4000-8000-000000000005","created_at":"2026-09-13T10:28:50.633Z","updated_at":"2026-09-13T10:28:50.633Z"},{"id":"ad51e2fa-3a67-4f81-b381-6b33fd9393e7","organization_id":"
+     # /workspace/test/integration/authorization_boundary_spec.rb:18:in 'RSpec::ExampleGroups::PersistedCrossServiceAuthorizationBoundaries#expect_denied'
+     # /workspace/test/integration/authorization_boundary_spec.rb:25:in 'block (2 levels) in <top (required)>'
+
+  2) Persisted cross-service authorization boundaries authorizes individual organization membership records through the same real primitive
+     Failure/Error: expect(response.code.to_i).to eq(403), "expected forbidden, received #{response.code}: #{response.body.to_s[0, 300]}"
+       expected forbidden, received 200: {"id":"ad51e2fa-3a67-4f81-b381-6b33fd9393e7","organization_id":"a1700000-0000-4000-8000-000000000002","account_id":"a1700000-0000-4000-8000-000000000006","created_at":"2026-09-13T10:28:50.644Z","updated_at":"2026-09-13T10:28:50.644Z"}
+     # /workspace/test/integration/authorization_boundary_spec.rb:18:in 'RSpec::ExampleGroups::PersistedCrossServiceAuthorizationBoundaries#expect_denied'
+     # /workspace/test/integration/authorization_boundary_spec.rb:33:in 'block (2 levels) in <top (required)>'
+
+  3) Persisted cross-service authorization boundaries does not treat account read authority as permission to enumerate all organization accounts
+     Failure/Error: expect(response.code.to_i).to eq(403), "expected forbidden, received #{response.code}: #{response.body.to_s[0, 300]}"
+       expected forbidden, received 200: {"organizations":{"a1700000-0000-4000-8000-000000000003":["a1700000-0000-4000-8000-000000000007","a1700000-0000-4000-8000-000000000008","a1700000-0000-4000-8000-000000000009","a1700000-0000-4000-8000-000000000010","a1700000-0000-4000-8000-000000000020"]},"account_to_organization":{"a1700000-0000-400
+     # /workspace/test/integration/authorization_boundary_spec.rb:18:in 'RSpec::ExampleGroups::PersistedCrossServiceAuthorizationBoundaries#expect_denied'
+     # /workspace/test/integration/authorization_boundary_spec.rb:38:in 'block (2 levels) in <top (required)>'
+
+  4) Persisted cross-service authorization boundaries does not disclose parent account objects to an actor authorized only on the child
+     Failure/Error: expect(response.code.to_i).to eq(403), "expected forbidden, received #{response.code}: #{response.body.to_s[0, 300]}"
+       expected forbidden, received 200: [[{"id":"a1700000-0000-4000-8000-000000000007","parent_account_id":null,"name":"root_a","level":1},{"id":"a1700000-0000-4000-8000-000000000008","parent_account_id":"a1700000-0000-4000-8000-000000000007","name":"child_a","level":0}]]
+     # /workspace/test/integration/authorization_boundary_spec.rb:18:in 'RSpec::ExampleGroups::PersistedCrossServiceAuthorizationBoundaries#expect_denied'
+     # /workspace/test/integration/authorization_boundary_spec.rb:56:in 'block (2 levels) in <top (required)>'
+
+  5) Persisted cross-service authorization boundaries checks real permissions before returning users, groups, searches, and counts
+     Failure/Error: expect(response.code.to_i).to eq(403), "expected forbidden, received #{response.code}: #{response.body.to_s[0, 300]}"
+
+       expected forbidden, received 500: Puma caught this error: no authorization for a1700000-0000-4000-8000-000000000015 account.users.read ["a1700000-0000-4000-8000-000000000007", "a1700000-0000-4000-8000-000000000011"] (RuntimeError)
+       /rails/app/controllers/groups_controller.rb:83:in 'GroupsController#authorize_group_collection_read!'
+       /
+     # /workspace/test/integration/authorization_boundary_spec.rb:18:in 'RSpec::ExampleGroups::PersistedCrossServiceAuthorizationBoundaries#expect_denied'
+     # /workspace/test/integration/authorization_boundary_spec.rb:70:in 'block (4 levels) in <top (required)>'
+     # /workspace/test/integration/authorization_boundary_spec.rb:64:in 'Array#each'
+     # /workspace/test/integration/authorization_boundary_spec.rb:64:in 'block (3 levels) in <top (required)>'
+     # /workspace/test/integration/authorization_boundary_spec.rb:63:in 'Integer#times'
+     # /workspace/test/integration/authorization_boundary_spec.rb:63:in 'block (2 levels) in <top (required)>'
+
+Finished in 2.2 seconds (files took 0.10565 seconds to load)
+6 examples, 5 failures
+
+Failed examples:
+
+rspec /workspace/test/integration/authorization_boundary_spec.rb:21 # Persisted cross-service authorization boundaries allows the actor's organization and denies a mixed organization list across unrelated MSPs
+rspec /workspace/test/integration/authorization_boundary_spec.rb:28 # Persisted cross-service authorization boundaries authorizes individual organization membership records through the same real primitive
+rspec /workspace/test/integration/authorization_boundary_spec.rb:37 # Persisted cross-service authorization boundaries does not treat account read authority as permission to enumerate all organization accounts
+rspec /workspace/test/integration/authorization_boundary_spec.rb:55 # Persisted cross-service authorization boundaries does not disclose parent account objects to an actor authorized only on the child
+rspec /workspace/test/integration/authorization_boundary_spec.rb:62 # Persisted cross-service authorization boundaries checks real permissions before returning users, groups, searches, and counts
+
+

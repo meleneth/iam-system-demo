@@ -8,7 +8,7 @@ module Resolvers
     argument :as, ID, required: true
 
     def resolve(ids:, as:)
-      context[:as] = as
+      context.scoped_set!(:as, as)
 
       hierarchies = []
       Account.with_headers('pad-user-id' => as) do
@@ -23,7 +23,7 @@ module Resolvers
           User.search(account_id: ids)
         end
       end
-      context[:users_by_account_id] = users.group_by(&:account_id)
+      context.scoped_set!(:users_by_account_id, users.group_by(&:account_id))
 
       hierarchies
     end

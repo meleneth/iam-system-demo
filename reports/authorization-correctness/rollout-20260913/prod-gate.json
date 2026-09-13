@@ -1,0 +1,113 @@
+{
+  "passed": true,
+  "checked_at": "2026-09-13T16:36:42Z",
+  "manifest_sha256": "412d6de187c8ac3e2f025bd2deb6f728cc1ebc012cd18f89538928353284b9fb",
+  "stack": "prod",
+  "checks": [
+    {
+      "name": "deep_chain account identities pass 0",
+      "passed": true
+    },
+    {
+      "name": "deep_chain account identities pass 1",
+      "passed": true
+    },
+    {
+      "name": "wide_org account identities pass 0",
+      "passed": true
+    },
+    {
+      "name": "wide_org account identities pass 1",
+      "passed": true
+    },
+    {
+      "name": "dense_account account identities pass 0",
+      "passed": true
+    },
+    {
+      "name": "dense_account account identities pass 1",
+      "passed": true
+    },
+    {
+      "name": "branching_tree account identities pass 0",
+      "passed": true
+    },
+    {
+      "name": "branching_tree account identities pass 1",
+      "passed": true
+    },
+    {
+      "name": "sparse_enterprise account identities pass 0",
+      "passed": true
+    },
+    {
+      "name": "sparse_enterprise account identities pass 1",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_100k account identities pass 0",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_100k account identities pass 1",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_50k account identities pass 0",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_50k account identities pass 1",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_10k account identities pass 0",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_10k account identities pass 1",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_100k mixed Organization list denial",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_100k owned client allow / unrelated MSP denial pass 0",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_100k owned client allow / unrelated MSP denial pass 1",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_50k mixed Organization list denial",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_50k owned client allow / unrelated MSP denial pass 0",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_50k owned client allow / unrelated MSP denial pass 1",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_10k mixed Organization list denial",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_10k owned client allow / unrelated MSP denial pass 0",
+      "passed": true
+    },
+    {
+      "name": "massive_fanout_10k owned client allow / unrelated MSP denial pass 1",
+      "passed": true
+    },
+    {
+      "name": "branching fixture's last leaf is outside the first root admin's authority",
+      "passed": true
+    }
+  ],
+  "limitation": "Sampled seed identities and boundaries; full measured response identity validation and the cross-service regression matrix remain required."
+}

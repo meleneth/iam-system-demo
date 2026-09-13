@@ -1,3 +1,5 @@
+> **Authorization correction, 2026-09-13:** Historical implementation/performance descriptions below are superseded where they conflict with the [correctness investigation](reports/authorization-correctness/README.md). Organization batches require every target; hierarchy responses authorize every returned ancestor; GraphQL actors are field-scoped; MSP pages preserve the actor and authorize all targets before counts; unrestricted frontdoor discovery has been removed. Article performance claims remain blocked pending reruns.
+
 # Final Architecture
 
 This document records the IAM demo architecture as implemented. It focuses on the guiding principles, service-owned tables, cross-service authorization model, special REST requests, and the cache boundaries that make the benchmarked pathological queries work.

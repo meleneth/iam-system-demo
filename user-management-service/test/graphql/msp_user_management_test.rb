@@ -48,7 +48,7 @@ class MspUserManagementTest < ActiveSupport::TestCase
 
   def with_msp_page
     save_original(:MspManagedOrganization, :page)
-    MspManagedOrganization.define_singleton_method(:page) do |msp_account_id, continuance: nil|
+    MspManagedOrganization.define_singleton_method(:page) do |msp_account_id, user_id:, continuance: nil|
       {
         "msp_organization_id" => MSP_ORGANIZATION_ID,
         "msp_account_id" => msp_account_id,

@@ -1,10 +1,8 @@
 Rails.application.routes.draw do
-  get 'debug', to: 'accounts#debug', as: 'debug'
   get 'accounts/:id', to: 'accounts#view', as: 'account_view'
   get 'slow_accounts/:id', to: 'accounts#slow_view', as: 'slow_account_view'
   get 'slowest_accounts/:id', to: 'accounts#slowest_view', as: 'slowest_account_view'
   get "frontdoor/index"
-  get "frontdoor/random_record", to: "frontdoor#random_record", as: :random_record
   get "frontdoor/random_record/:organization_id/:account_id", to: "frontdoor#random_record_detail", as: :random_record_detail
   get "organization_user_management", to: "organization_user_management#show", as: :organization_user_management
   get "organization_user_management/partition", to: "organization_user_management#partition", as: :organization_user_management_partition

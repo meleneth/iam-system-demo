@@ -1,3 +1,5 @@
+> Authorization correctness is a publication blocker. See the [implemented repairs, policy, regression evidence and benchmark status](reports/authorization-correctness/README.md). Run `scripts/test_authorization_boundaries.sh` before collecting performance evidence. Do not run that isolated test fixture concurrently with service specs that prepare the same test databases.
+
 README still under construction, more detail coming!
 
 PLEASE NOTE:

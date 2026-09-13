@@ -1,3 +1,5 @@
+> **2026-09-13: publication blocked by confirmed authorization failures.** Historical results below are preserved, but do not establish correct isolation or performance of the repaired program. See the [investigation, regressions and rerun requirements](reports/authorization-correctness/README.md).
+
 # Article benchmark readiness — 2026-09-09 follow-up
 
 The audit compared this repository with the six-part GraphQL Auth Explosion

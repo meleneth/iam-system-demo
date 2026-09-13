@@ -12,6 +12,9 @@ class BenchmarkTest < Minitest::Test
     @dir = Dir.mktmpdir("iam-benchmark-test")
     FileUtils.cp(File.join(ROOT, "benchmark_demo.sh"), @dir)
     FileUtils.cp_r(File.join(ROOT, "scripts"), @dir)
+    # This harness test stubs the external correctness executable, not an IAM
+    # decision. The real gate is exercised by cross-service RSpec before timing.
+    File.write(File.join(@dir, "scripts/authorization_correctness_gate.rb"), "exit(ENV['FAKE_CORRECTNESS_FAILURE'] == '1' ? 1 : 0)\n")
     FileUtils.mkdir_p(File.join(@dir, "bin"))
     fixtures = %w[deep_chain wide_org dense_account branching_tree massive_fanout_100k massive_fanout_50k massive_fanout_10k].map do |name|
       { name: name, organization_id: "org", targets: { leaf_account_id: "leaf", root_account_id: "root", account_id: "account", msp_account_id: "msp", admin_user_id: "actor" } }
@@ -106,4 +109,11 @@ class BenchmarkTest < Minitest::Test
     assert_includes sample["notes"], "outcome=timeout"
     assert_equal "partial response", File.read(File.join(@dir, sample["response_file"]))
   end
+  def test_failed_correctness_gate_prevents_cache_flushes_and_measurement
+    assert_raises(Errno::ENOENT) { run_benchmark("FAKE_CORRECTNESS_FAILURE" => "1") }
+    refute @status.success?
+    refute File.exist?(File.join(@dir, "events.log"))
+    refute File.exist?(File.join(@dir, "out/timings.csv"))
+  end
+
 end

@@ -9,10 +9,10 @@ class Organizations::AccountsCountController < ApplicationController
     end
 
     pad_user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise "no pad-user-id header sent" unless pad_user_id
+    raise AuthorizationDenied, "no pad-user-id header sent" unless pad_user_id
 
     if pad_user_id != "IAM_SYSTEM" && !organization_accounts_read?(pad_user_id, org_id)
-      raise "no authorization for #{pad_user_id} organization.read.accounts #{org_id}"
+      raise AuthorizationDenied, "no authorization for #{pad_user_id} organization.read.accounts #{org_id}"
     end
 
     count = OrganizationAccount.where(organization_id: org_id)

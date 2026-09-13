@@ -1,0 +1,210 @@
+ Container gt-account-db-1 Running 
+ Container gt-user-db-1 Running 
+ Container gt-organization-db-1 Running 
+ Container gt-group-db-1 Running 
+ Container gt-authcache-1 Running 
+ Container gt-authz-db-1 Running 
+ Container gt-authorization-service-run-1f116cb78793 Creating 
+ Container gt-authorization-service-run-1f116cb78793 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:45:20.399570 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:45:20.400161 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:45:20.400380 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-authorization-service-run-0fbfccde1b66 Creating 
+ Container gt-authorization-service-run-0fbfccde1b66 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:45:21.739018 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:45:21.739590 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:45:21.739846 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-organization-service-run-f352e7eaeeee Creating 
+ Container gt-organization-service-run-f352e7eaeeee Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+I, [2026-09-13T10:45:23.659757 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:45:23.660503 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:45:23.660778 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+ Container gt-organization-service-run-11c7654eeaf3 Creating 
+ Container gt-organization-service-run-11c7654eeaf3 Created 
+/usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/initializable.rb:3: warning: tsort was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.1.0
+You can add tsort to your Gemfile or gemspec to silence this warning.
+/usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:63:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.new_client': We could not find your database: organization-db_test. Available database configurations can be found in config/database.yml. (ActiveRecord::NoDatabaseError)
+
+To resolve this error:
+
+- Did you not create the database, or did you delete it? To create the database, run:
+
+    bin/rails db:create
+
+- Has the database name changed? Verify that config/database.yml contains the correct database name.
+
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:939:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#connect'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:951:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#reconnect'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:667:in 'block in ActiveRecord::ConnectionAdapters::AbstractAdapter#reconnect!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/concurrency/null_lock.rb:9:in 'ActiveSupport::Concurrency::NullLock#synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:666:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#reconnect!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:771:in 'block in ActiveRecord::ConnectionAdapters::AbstractAdapter#verify!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/concurrency/null_lock.rb:9:in 'ActiveSupport::Concurrency::NullLock#synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:761:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#verify!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:779:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#connect!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:985:in 'block in ActiveRecord::ConnectionAdapters::AbstractAdapter#with_raw_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/concurrency/null_lock.rb:9:in 'ActiveSupport::Concurrency::NullLock#synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:984:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#with_raw_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:636:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#get_database_version'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/pool_config.rb:40:in 'block in ActiveRecord::ConnectionAdapters::PoolConfig#server_version'
+	from /usr/local/lib/ruby/4.0.0/monitor.rb:201:in 'Monitor#synchronize'
+	from /usr/local/lib/ruby/4.0.0/monitor.rb:201:in 'MonitorMixin#mon_synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/pool_config.rb:40:in 'ActiveRecord::ConnectionAdapters::PoolConfig#server_version'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract/connection_pool.rb:224:in 'ActiveRecord::ConnectionAdapters::ConnectionPool#server_version'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:855:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#database_version'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:280:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#supports_identity_columns?'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:1039:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#column_definitions'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract/schema_statements.rb:109:in 'ActiveRecord::ConnectionAdapters::SchemaStatements#columns'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:345:in 'block (2 levels) in ActiveRecord::ConnectionAdapters::SchemaCache#columns'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract/connection_pool.rb:412:in 'ActiveRecord::ConnectionAdapters::ConnectionPool#with_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:344:in 'block in ActiveRecord::ConnectionAdapters::SchemaCache#columns'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:343:in 'Hash#fetch'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:343:in 'ActiveRecord::ConnectionAdapters::SchemaCache#columns'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:354:in 'block in ActiveRecord::ConnectionAdapters::SchemaCache#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:353:in 'Hash#fetch'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:353:in 'ActiveRecord::ConnectionAdapters::SchemaCache#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:54:in 'ActiveRecord::ConnectionAdapters::SchemaReflection#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:198:in 'ActiveRecord::ConnectionAdapters::BoundSchemaReflection#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:592:in 'ActiveRecord::ModelSchema::ClassMethods#load_schema!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/counter_cache.rb:187:in 'ActiveRecord::CounterCache::ClassMethods#load_schema!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/encryption/encryptable_record.rb:127:in 'ActiveRecord::Encryption::EncryptableRecord::ClassMethods#load_schema!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:539:in 'block in ActiveRecord::ModelSchema::ClassMethods#load_schema'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:536:in 'Monitor#synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:536:in 'ActiveRecord::ModelSchema::ClassMethods#load_schema'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:428:in 'ActiveRecord::ModelSchema::ClassMethods#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/attributes.rb:244:in 'block in ActiveRecord::Attributes::ClassMethods#_default_attributes'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract/connection_pool.rb:418:in 'ActiveRecord::ConnectionAdapters::ConnectionPool#with_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_handling.rb:310:in 'ActiveRecord::ConnectionHandling#with_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/attributes.rb:243:in 'ActiveRecord::Attributes::ClassMethods#_default_attributes'
+	from /usr/local/bundle/ruby/4.0.0/gems/activemodel-8.0.2/lib/active_model/attribute_registration.rb:38:in 'ActiveModel::AttributeRegistration::ClassMethods#attribute_types'
+	from /usr/local/bundle/ruby/4.0.0/gems/activemodel-8.0.2/lib/active_model/attribute_registration.rb:49:in 'ActiveModel::AttributeRegistration::ClassMethods#type_for_attribute'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/type_caster/map.rb:16:in 'ActiveRecord::TypeCaster::Map#type_for_attribute'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/arel/table.rb:107:in 'Arel::Table#type_for_attribute'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/table_metadata.rb:18:in 'ActiveRecord::TableMetadata#type'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:59:in 'ActiveRecord::PredicateBuilder#build'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:54:in 'ActiveRecord::PredicateBuilder#[]'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:145:in 'block in ActiveRecord::PredicateBuilder#expand_from_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:87:in 'Hash#each'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:87:in 'Enumerable#flat_map'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:87:in 'ActiveRecord::PredicateBuilder#expand_from_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:25:in 'ActiveRecord::PredicateBuilder#build_from_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/query_methods.rb:1643:in 'ActiveRecord::QueryMethods#build_where_clause'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/query_methods.rb:1044:in 'ActiveRecord::QueryMethods#where!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/query_methods.rb:1039:in 'ActiveRecord::QueryMethods#where'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/querying.rb:24:in 'ActiveRecord::Querying#where'
+	from /workspace/test/integration/authorization_fixture.rb:11:in 'AuthorizationFixture.seed!'
+	from /workspace/test/integration/authorization_fixture.rb:60:in '<main>'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:44:in 'Kernel.load'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:44:in 'block in Rails::Command::RunnerCommand#perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/execution_wrapper.rb:91:in 'ActiveSupport::ExecutionWrapper.wrap'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:70:in 'Rails::Command::RunnerCommand#conditional_executor'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:43:in 'Rails::Command::RunnerCommand#perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor/command.rb:28:in 'Thor::Command#run'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor/invocation.rb:127:in 'Thor::Invocation#invoke_command'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command/base.rb:178:in 'Rails::Command::Base#invoke_command'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor.rb:538:in 'Thor.dispatch'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command/base.rb:73:in 'Rails::Command::Base.perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:65:in 'block in Rails::Command.invoke'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:143:in 'Rails::Command.with_argv'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:63:in 'Rails::Command.invoke'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands.rb:18:in '<main>'
+	from /usr/local/lib/ruby/4.0.0/bundled_gems.rb:60:in 'Kernel.require'
+	from /usr/local/lib/ruby/4.0.0/bundled_gems.rb:60:in 'block (2 levels) in Kernel#replace_require'
+	from /usr/local/bundle/ruby/4.0.0/gems/bootsnap-1.18.6/lib/bootsnap/load_path_cache/core_ext/kernel_require.rb:30:in 'Kernel#require'
+	from /rails/bin/rails:4:in '<main>'
+/usr/local/bundle/ruby/4.0.0/gems/pg-1.5.9/lib/pg/connection.rb:709:in 'PG::Connection#async_connect_or_reset': connection to server at "172.20.0.6", port 5432 failed: FATAL:  database "organization-db_test" does not exist (PG::ConnectionBad)
+DETAIL:  It seems to have just been dropped or renamed.
+
+	from /usr/local/bundle/ruby/4.0.0/gems/pg-1.5.9/lib/pg/connection.rb:844:in 'PG::Connection.connect_to_hosts'
+	from /usr/local/bundle/ruby/4.0.0/gems/pg-1.5.9/lib/pg/connection.rb:772:in 'PG::Connection.new'
+	from /usr/local/bundle/ruby/4.0.0/gems/pg-1.5.9/lib/pg.rb:63:in 'PG.connect'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:58:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.new_client'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:939:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#connect'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:951:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#reconnect'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:667:in 'block in ActiveRecord::ConnectionAdapters::AbstractAdapter#reconnect!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/concurrency/null_lock.rb:9:in 'ActiveSupport::Concurrency::NullLock#synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:666:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#reconnect!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:771:in 'block in ActiveRecord::ConnectionAdapters::AbstractAdapter#verify!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/concurrency/null_lock.rb:9:in 'ActiveSupport::Concurrency::NullLock#synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:761:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#verify!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:779:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#connect!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:985:in 'block in ActiveRecord::ConnectionAdapters::AbstractAdapter#with_raw_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/concurrency/null_lock.rb:9:in 'ActiveSupport::Concurrency::NullLock#synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:984:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#with_raw_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:636:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#get_database_version'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/pool_config.rb:40:in 'block in ActiveRecord::ConnectionAdapters::PoolConfig#server_version'
+	from /usr/local/lib/ruby/4.0.0/monitor.rb:201:in 'Monitor#synchronize'
+	from /usr/local/lib/ruby/4.0.0/monitor.rb:201:in 'MonitorMixin#mon_synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/pool_config.rb:40:in 'ActiveRecord::ConnectionAdapters::PoolConfig#server_version'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract/connection_pool.rb:224:in 'ActiveRecord::ConnectionAdapters::ConnectionPool#server_version'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract_adapter.rb:855:in 'ActiveRecord::ConnectionAdapters::AbstractAdapter#database_version'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:280:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#supports_identity_columns?'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/postgresql_adapter.rb:1039:in 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#column_definitions'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract/schema_statements.rb:109:in 'ActiveRecord::ConnectionAdapters::SchemaStatements#columns'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:345:in 'block (2 levels) in ActiveRecord::ConnectionAdapters::SchemaCache#columns'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract/connection_pool.rb:412:in 'ActiveRecord::ConnectionAdapters::ConnectionPool#with_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:344:in 'block in ActiveRecord::ConnectionAdapters::SchemaCache#columns'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:343:in 'Hash#fetch'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:343:in 'ActiveRecord::ConnectionAdapters::SchemaCache#columns'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:354:in 'block in ActiveRecord::ConnectionAdapters::SchemaCache#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:353:in 'Hash#fetch'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:353:in 'ActiveRecord::ConnectionAdapters::SchemaCache#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:54:in 'ActiveRecord::ConnectionAdapters::SchemaReflection#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/schema_cache.rb:198:in 'ActiveRecord::ConnectionAdapters::BoundSchemaReflection#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:592:in 'ActiveRecord::ModelSchema::ClassMethods#load_schema!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/counter_cache.rb:187:in 'ActiveRecord::CounterCache::ClassMethods#load_schema!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/encryption/encryptable_record.rb:127:in 'ActiveRecord::Encryption::EncryptableRecord::ClassMethods#load_schema!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:539:in 'block in ActiveRecord::ModelSchema::ClassMethods#load_schema'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:536:in 'Monitor#synchronize'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:536:in 'ActiveRecord::ModelSchema::ClassMethods#load_schema'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/model_schema.rb:428:in 'ActiveRecord::ModelSchema::ClassMethods#columns_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/attributes.rb:244:in 'block in ActiveRecord::Attributes::ClassMethods#_default_attributes'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_adapters/abstract/connection_pool.rb:418:in 'ActiveRecord::ConnectionAdapters::ConnectionPool#with_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/connection_handling.rb:310:in 'ActiveRecord::ConnectionHandling#with_connection'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/attributes.rb:243:in 'ActiveRecord::Attributes::ClassMethods#_default_attributes'
+	from /usr/local/bundle/ruby/4.0.0/gems/activemodel-8.0.2/lib/active_model/attribute_registration.rb:38:in 'ActiveModel::AttributeRegistration::ClassMethods#attribute_types'
+	from /usr/local/bundle/ruby/4.0.0/gems/activemodel-8.0.2/lib/active_model/attribute_registration.rb:49:in 'ActiveModel::AttributeRegistration::ClassMethods#type_for_attribute'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/type_caster/map.rb:16:in 'ActiveRecord::TypeCaster::Map#type_for_attribute'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/arel/table.rb:107:in 'Arel::Table#type_for_attribute'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/table_metadata.rb:18:in 'ActiveRecord::TableMetadata#type'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:59:in 'ActiveRecord::PredicateBuilder#build'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:54:in 'ActiveRecord::PredicateBuilder#[]'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:145:in 'block in ActiveRecord::PredicateBuilder#expand_from_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:87:in 'Hash#each'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:87:in 'Enumerable#flat_map'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:87:in 'ActiveRecord::PredicateBuilder#expand_from_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/predicate_builder.rb:25:in 'ActiveRecord::PredicateBuilder#build_from_hash'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/query_methods.rb:1643:in 'ActiveRecord::QueryMethods#build_where_clause'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/query_methods.rb:1044:in 'ActiveRecord::QueryMethods#where!'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/relation/query_methods.rb:1039:in 'ActiveRecord::QueryMethods#where'
+	from /usr/local/bundle/ruby/4.0.0/gems/activerecord-8.0.2/lib/active_record/querying.rb:24:in 'ActiveRecord::Querying#where'
+	from /workspace/test/integration/authorization_fixture.rb:11:in 'AuthorizationFixture.seed!'
+	from /workspace/test/integration/authorization_fixture.rb:60:in '<main>'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:44:in 'Kernel.load'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:44:in 'block in Rails::Command::RunnerCommand#perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/activesupport-8.0.2/lib/active_support/execution_wrapper.rb:91:in 'ActiveSupport::ExecutionWrapper.wrap'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:70:in 'Rails::Command::RunnerCommand#conditional_executor'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands/runner/runner_command.rb:43:in 'Rails::Command::RunnerCommand#perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor/command.rb:28:in 'Thor::Command#run'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor/invocation.rb:127:in 'Thor::Invocation#invoke_command'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command/base.rb:178:in 'Rails::Command::Base#invoke_command'
+	from /usr/local/bundle/ruby/4.0.0/gems/thor-1.3.2/lib/thor.rb:538:in 'Thor.dispatch'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command/base.rb:73:in 'Rails::Command::Base.perform'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:65:in 'block in Rails::Command.invoke'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:143:in 'Rails::Command.with_argv'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/command.rb:63:in 'Rails::Command.invoke'
+	from /usr/local/bundle/ruby/4.0.0/gems/railties-8.0.2/lib/rails/commands.rb:18:in '<main>'
+	from /usr/local/lib/ruby/4.0.0/bundled_gems.rb:60:in 'Kernel.require'
+	from /usr/local/lib/ruby/4.0.0/bundled_gems.rb:60:in 'block (2 levels) in Kernel#replace_require'
+	from /usr/local/bundle/ruby/4.0.0/gems/bootsnap-1.18.6/lib/bootsnap/load_path_cache/core_ext/kernel_require.rb:30:in 'Kernel#require'
+	from /rails/bin/rails:4:in '<main>'
+I, [2026-09-13T10:45:25.178447 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Net::HTTP was successfully installed with the following options {untraced_hosts: []}
+I, [2026-09-13T10:45:25.179189 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Rack was successfully installed with the following options {allowed_request_headers: [], allowed_response_headers: [], application: nil, record_frontend_span: false, untraced_endpoints: ["/up"], url_quantization: nil, untraced_requests: nil, response_propagators: [], use_rack_events: false, allowed_rack_request_headers: {}, allowed_rack_response_headers: {}}
+I, [2026-09-13T10:45:25.179454 #1]  INFO -- : Instrumentation: OpenTelemetry::Instrumentation::Redis was successfully installed with the following options {peer_service: nil, trace_root_spans: true, db_statement: :obfuscate}
+

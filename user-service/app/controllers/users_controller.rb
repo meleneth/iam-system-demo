@@ -79,7 +79,7 @@ class UsersController < ApplicationController
 
   def authorize_user_collection_read!(users)
     user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise "no pad-user-id header sent" unless user_id
+    raise AuthorizationDenied, "no pad-user-id header sent" unless user_id
     return if user_id == "IAM_SYSTEM"
 
     account_ids = account_ids_for(users)

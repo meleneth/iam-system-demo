@@ -3,11 +3,16 @@ require 'async'
 class AccountsController < ApplicationController
   TRACER = OpenTelemetry.tracer_provider.tracer('accounts-controller', '1.0.0')
 
-  def debug
-    Account.with_headers("pad-user-id" => "IAM_SYSTEM") do
-      @accounts_to_load = ['43ef7000-f81d-4402-a513-263bc6016be0', '194f08f2-3763-4a54-b07f-0d378cbb3d4d']
-      @hierarchies = Account.with_parents_batch(@accounts_to_load) # returns [[Account, Account...], ...]
+  around_action :with_actor_headers, only: %i[view slow_view slowest_view]
+
+  def with_actor_headers
+    @as_user_id = params.require(:as)
+    operation = -> { yield }
+    [Account, Organization, OrganizationAccount, User, Group, GroupUser].reverse_each do |resource|
+      nested = operation
+      operation = -> { resource.with_headers("pad-user-id" => @as_user_id) { nested.call } }
     end
+    operation.call
   end
 
   def view

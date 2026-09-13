@@ -46,8 +46,9 @@ Commit runtime and collector changes, then run `scripts/refresh_article_traces.r
 It rebuilds through the selected repository Compose wrapper, unless explicitly
 using already rebuilt images with `SKIP_BUILD=1`.
 
-Each environment profile is started once and receives two complete workload
-warmups before measurements. Their results and traces are recorded separately.
+Each environment profile is started once and receives two workload
+warmup passes before measurements. Warmup results are recorded separately; organization/GraphQL warmup traces are
+also archived to verify that the preceding work settled.
 Warmups settle before measurements, including when an enclosing request fails.
 Puma PIDs and process start ticks are checked before/after warmup and after the
 measured requests; a process change invalidates the warmed measurement.

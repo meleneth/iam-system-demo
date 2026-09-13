@@ -10,7 +10,7 @@ module Resolvers
 
     def resolve(id:, as:)
       # Stash auth + tracer in context so field resolvers can reuse
-      context[:as]     = as
+      context.scoped_set!(:as, as)
       context[:tracer] = TRACER
       otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
       context[:otel_ctx] = otel_ctx

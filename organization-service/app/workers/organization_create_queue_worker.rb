@@ -62,7 +62,7 @@ class OrganizationCreateQueueWorker
       if organization_account
         puts "[organization-create-queue-worker] OrgAccount already exists: #{organization_id} -> #{account_id}"
       else
-        organization_account = OrganizationAccount.create!(
+        organization_account = OrganizationAccount.find_or_create_by!(
           organization_id: organization_id,
           account_id: account_id
         )

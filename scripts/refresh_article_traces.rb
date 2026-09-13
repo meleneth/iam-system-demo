@@ -14,6 +14,8 @@
 require_relative "collect_article_evidence"
 require_relative "benchmark_hierarchies"
 require_relative "benchmark_response"
+require_relative "authorization_correctness_gate"
+require_relative "gallery_correctness"
 
 class ArticleTraceRefresh < ArticleCollection
   CASES = {
@@ -47,7 +49,7 @@ class ArticleTraceRefresh < ArticleCollection
       return
     end
     dirty_code = capture("git", "diff", "HEAD", "--name-only", "--", "*-service", "scripts").strip
-    raise "Commit runtime/collector changes before collecting: #{dirty_code}" unless dirty_code.empty?
+    raise "Commit runtime/collector changes before collecting: #{dirty_code}" unless dirty_code.empty? || ENV["GALLERY_CORRECTNESS_REVIEW"] == "1"
     raise "Missing fixture manifest: #{@manifest}" unless File.file?(@manifest)
     raise "Output already exists; choose a new COLLECTION_DIR: #{@out}" if File.exist?(@out)
     @fixtures = JSON.parse(File.read(@manifest)).fetch("fixtures").to_h { |f| [f.fetch("name"), f] }
@@ -62,6 +64,10 @@ class ArticleTraceRefresh < ArticleCollection
         "cold_cache_policy" => "Redis DB 1 only; no Rails or PostgreSQL restart" },
       "working_tree_status" => capture("git", "status", "--short"), "cases" => @cases))
     File.write(File.join(@out, "working-tree.patch"), capture("git", "diff", "HEAD", "--", ".", ":(exclude)*.env"))
+    source_files = Dir.glob("{*-service,scripts}/**/*", File::FNM_DOTMATCH).select { |p| File.file?(p) && !p.match?(%r{/(?:\.git|tmp|log|storage|node_modules)/}) }
+    write_json(File.join(@out, "source-sha256.json"), source_files.to_h { |p| [p, Digest::SHA256.file(p).hexdigest] })
+    untracked = capture("git", "ls-files", "--others", "--exclude-standard", "--", "*-service", "scripts").lines.map(&:strip)
+    untracked.each { |p| target = File.join(@out, "untracked-source", p); FileUtils.mkdir_p(File.dirname(target)); FileUtils.cp(p, target) }
     puts "Trace refresh: #{@out}"
     command({}, File.join(@out, "ports.log"), "ruby", "scripts/check_stack_ports.rb")
     unless ENV.fetch("SKIP_BUILD", "0") == "1"
@@ -86,6 +92,7 @@ class ArticleTraceRefresh < ArticleCollection
         config = runtime_configuration(@env)
         verify_configuration!(item, config)
         write_json(File.join(@directory, "runtime.json"), config)
+        AuthorizationCorrectnessGate.new(settings: @stack_env).run(output: File.join(@directory, "authorization-gate.json"))
         @warm_processes = rails_processes
         warm_case(item)
         verify_warm_processes!("after-warmup")
@@ -260,13 +267,21 @@ class ArticleTraceRefresh < ArticleCollection
       page = JSON.parse(File.read(response_file)).fetch("data").fetch("mspUserManagement")
       result["outcome"] = "msp_page_not_ready" if page["loading"] || Array(page["accounts"]).empty?
     end
+    if result["outcome"] == "ok"
+      fixture_name = body ? (@case.fetch("id") == "graphql-cache-b200" ? "massive_fanout_10k" : "deep_chain") : @case.fetch("fixture")
+      begin
+        result["correctness"] = GalleryCorrectness.validate(File.read(response_file), fixture: @fixtures.fetch(fixture_name), batch_size: @case.fetch("batch_size"), graphql: !body.nil?)
+      rescue StandardError => error
+        result.merge!("outcome" => "correctness_failure", "correctness_error" => error.message)
+      end
+    end
     result.merge!("trace_id" => trace_id, "url" => url, "http_status" => code.to_i,
       "client_elapsed_seconds" => Float(elapsed), "warmup" => warmup)
     write_json(File.join(directory, "result.json"), result)
     if archive
       enqueue(id, trace_id, parent_id, File.join(directory, "trace.json"))
       @index.last[:request_outcome] = result.fetch("outcome")
-      @index.last[:publishable] = archive && result.fetch("outcome") == "ok"
+      @index.last[:publishable] = ENV["GALLERY_CORRECTNESS_REVIEW"] != "1" && archive && result.fetch("outcome") == "ok"
       write_json(File.join(@out, "trace-index.json"), @index)
     end
     if warmup

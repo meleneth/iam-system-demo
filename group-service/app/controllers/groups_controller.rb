@@ -70,7 +70,7 @@ class GroupsController < ApplicationController
 
   def authorize_group_collection_read!(groups)
     user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise "no pad-user-id header sent" unless user_id
+    raise AuthorizationDenied, "no pad-user-id header sent" unless user_id
     return if user_id == "IAM_SYSTEM"
 
     account_ids = Array(groups).map(&:account_id).map(&:to_s).uniq
@@ -80,6 +80,6 @@ class GroupsController < ApplicationController
       return
     end
 
-    raise "no authorization for #{user_id} account.users.read #{account_ids}"
+    raise AuthorizationDenied, "no authorization for #{user_id} account.users.read #{account_ids}"
   end
 end
