@@ -237,8 +237,8 @@ This is the object-loading contract the services are supposed to enforce. "Ownin
 | Group membership row | group-service | `account.users.read` or `group.read` | Owning Account or exact Group | `GET /group_users/:id` |
 | Group membership collection/search | group-service | `account.users.read` or `group.read` | Each membership’s owning Account or Group scope | `GET /group_users`, `POST /group_users/search` |
 | Organization row | organization-service | `organization.read` | Organization ID | `GET /organizations/:id` |
-| Organization account membership by organization | organization-service | `organization.read.accounts` or legacy `organization.accounts.read` | Organization ID | `GET /organization_accounts?organization_id=...` |
-| Organization account count | organization-service | `organization.read.accounts` or legacy `organization.accounts.read` | Organization ID | `GET /organizations/accounts/counts/:organization_id` |
+| Organization account membership by organization | organization-service | `organization.read.accounts` | Organization ID | `GET /organization_accounts?organization_id=...` |
+| Organization account count | organization-service | `organization.read.accounts` | Organization ID | `GET /organizations/accounts/counts/:organization_id` |
 | Organization context by account IDs | organization-service | `account.read` | Requested account IDs | `POST /organization_account_ids/for_account_ids` |
 | MSP managed-account page | organization-service | `IAM_SYSTEM` only | MSP account ID | `GET /internal/msp_managed_organizations/:msp_account_id` |
 | MSP relationship context for auth | organization-service | `IAM_SYSTEM_AUTH` only | Provided MSP organization/account + target account contexts | `POST /internal/auth/account_contexts` |
@@ -585,7 +585,7 @@ Purpose: count accounts in an organization.
 Caller identity:
 
 - `IAM_SYSTEM` may read directly.
-- Real actors require `organization.read.accounts` or `organization.accounts.read`.
+- Real actors require `organization.read.accounts`.
 
 #### `GET /internal/random/organization`
 

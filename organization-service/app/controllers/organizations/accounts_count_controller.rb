@@ -25,7 +25,6 @@ class Organizations::AccountsCountController < ApplicationController
   private
 
   def organization_accounts_read?(pad_user_id, organization_id)
-    User.user_can(pad_user_id, "Organization", "organization.read.accounts", organization_id) ||
-      User.user_can(pad_user_id, "Organization", "organization.accounts.read", organization_id)
+    User.user_can(pad_user_id, "Organization", "organization.read.accounts", organization_id)
   end
 end

@@ -1,5 +1,11 @@
 # Agent Instructions
 
+## Commits
+
+Always commit completed changes before handing work back to the user. Do not
+wait for a separate request to commit. Include only the task's changes; leave
+unrelated existing changes untouched.
+
 ## Docker Compose
 
 Use the repository wrapper scripts for Compose operations:

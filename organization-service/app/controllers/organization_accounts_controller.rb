@@ -113,8 +113,7 @@ class OrganizationAccountsController < ApplicationController
 
   def organization_accounts_read?(pad_user_id, organization_id)
     Array(organization_id).all? do |id|
-      User.user_can(pad_user_id, "Organization", "organization.read.accounts", id) ||
-        User.user_can(pad_user_id, "Organization", "organization.accounts.read", id)
+      User.user_can(pad_user_id, "Organization", "organization.read.accounts", id)
     end
   end
 

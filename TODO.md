@@ -71,7 +71,7 @@ Decisions locked:
 - Cache final capability arrays for 5 minutes by user_id, scope_type, and scope_id.
 - Redis-disabled mode computes from SQL plus live organization-service relationship facts; auth-service does not keep a second SQL projection of MSP relationships.
 - Demo dataset can use one MSP cohort; tests must prove multi-cohort isolation.
-- organization.read.accounts is the canonical org-scoped capability for reading organization account membership; organization.accounts.read is accepted temporarily for old seeded data.
+- organization.read.accounts is the only org-scoped capability for reading organization account membership.
 
 Completed slices:
 - Added app-facing /capabilities Organization and Account endpoints.
@@ -85,5 +85,4 @@ Completed slices:
 
 Open questions:
 - How Redis cache should represent org-level MSP capability expansion, and how no-cache SQL path stays semantically equivalent.
-- Whether the temporary organization.accounts.read alias should be removed after the next full reseed.
 - Whether to repair group-service's missing spec helper as a separate test-harness cleanup.

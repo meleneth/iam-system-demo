@@ -44,19 +44,32 @@ RSpec.describe "Organization accounts", type: :request do
     expect(response.parsed_body.map { |row| row.fetch("account_id") }).to eq([account_id])
   end
 
-  it "accepts the legacy organization.accounts.read grant while old seed data exists" do
-    expect(User).to receive(:user_can)
-      .with(actor_user_id, "Organization", "organization.read.accounts", organization_id)
-      .and_return(false)
-    expect(User).to receive(:user_can)
-      .with(actor_user_id, "Organization", "organization.accounts.read", organization_id)
-      .and_return(true)
+  it "rejects noncanonical organization account permissions for relationships, counts, and context" do
+    allow(User).to receive(:user_can) do |actor, scope, permission, id|
+      actor == actor_user_id && (
+        (scope == "Organization" && permission == "organization.accounts.read" && id == organization_id) ||
+        (scope == "Account" && permission == "account.read" && id == [account_id])
+      )
+    end
 
     get "/organization_accounts",
         params: { organization_id: organization_id },
         headers: { "pad-user-id" => actor_user_id }
 
-    expect(response).to have_http_status(:ok)
+    expect(response).to have_http_status(:forbidden)
+
+    relationship = OrganizationAccount.find_by!(account_id: account_id)
+    get "/organization_accounts/#{relationship.id}", headers: { "pad-user-id" => actor_user_id }
+    expect(response).to have_http_status(:forbidden)
+
+    get "/organizations/accounts/counts/#{organization_id}", headers: { "pad-user-id" => actor_user_id }
+    expect(response).to have_http_status(:forbidden)
+
+    post "/organization_account_ids/for_account_ids",
+         params: { account_ids: [account_id] },
+         headers: { "pad-user-id" => actor_user_id },
+         as: :json
+    expect(response).to have_http_status(:forbidden)
   end
 
   it "checks organization.read.accounts before returning account counts" do
