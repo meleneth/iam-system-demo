@@ -69,6 +69,34 @@ collection directory. Never point a production run at the development manifest.
 Production has separate databases and initially has no article fixtures. Prepare
 its schemas and applications without resetting any existing data:
 
+### Limited seed for trace inspection
+
+`DEMO_SEED_PROFILE=limited` seeds exactly 15,526 users: `deep_chain` (500),
+`wide_org` (5,020), `massive_fanout_10k` (10,000), and `trace_isolation_msp` (6).
+It preserves the full dataset's shared fixture IDs and adds a second independent
+MSP for the trace runner's authorization gate. It publishes no random filler and
+rejects a nonzero `USER_COUNT` or `DEMO_SKIP_FIXTURES=1`.
+
+After preparing production with `./prepare_prod.sh`:
+
+```bash
+./seed_workers.sh prod start
+./dc_prod run --rm --no-deps -T -e DEMO_SEED_PROFILE=limited user-management-service bin/rails runner scripts/demo_user_seeder.rb
+./seed_workers.sh prod stop
+ruby scripts/refresh_article_traces.rb
+```
+
+The seeder writes the normal manifest and examples under
+`data/production/demo-fixtures/latest`. The trace runner uses that manifest,
+checks authorization boundaries, warms each profile, and saves 13 source traces
+from seven configurations. It does not run the full benchmark matrix. These
+traces establish request behavior on the limited dataset, not full-dataset timings.
+Production Jaeger is at <http://localhost:11290>.
+
+The default `DEMO_SEED_PROFILE=full` retains the normal 1,000,000-user seed.
+
+### Full seed
+
 ```bash
 ./prepare_prod.sh
 ./seed_workers.sh prod start

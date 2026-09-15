@@ -15,8 +15,13 @@ STANDARD_FIXTURE_USERS_PER_ACCOUNT = 20
 LARGE_MANIFEST_SAMPLE_LIMIT = 500
 
 class DemoUserSeeder
-  def initialize(count: DEFAULT_USER_COUNT, queue_url:, include_fixtures: true, dry_run: false, output_dir: nil, random_seed: nil)
-    @count = count
+  def initialize(count: nil, queue_url:, include_fixtures: true, dry_run: false, output_dir: nil, random_seed: nil, profile: 'full')
+    raise ArgumentError, "Unknown seed profile: #{profile}" unless %w[full limited].include?(profile)
+    if profile == 'limited' && (!include_fixtures || (count && count != 0))
+      raise ArgumentError, 'Limited seeding requires fixtures and no random filler; omit USER_COUNT or set it to 0'
+    end
+    @profile = profile
+    @count = count || (profile == 'limited' ? 0 : DEFAULT_USER_COUNT)
     @queue_url = queue_url
     @include_fixtures = include_fixtures
     @dry_run = dry_run
@@ -44,7 +49,7 @@ class DemoUserSeeder
     $stdout.sync = true
 
     puts "Building fixture payloads..."
-    catalog = DemoFixtureCatalog.new
+    catalog = DemoFixtureCatalog.new(profile: @profile)
     fixture_payloads = @include_fixtures ? catalog.payloads : []
     random_count = [@count - fixture_payloads.length, 0].max
 
@@ -364,15 +369,22 @@ end
 class DemoFixtureCatalog
   attr_reader :payloads, :manifest
 
-  def initialize
+  def initialize(profile: 'full')
+    raise ArgumentError, "Unknown seed profile: #{profile}" unless %w[full limited].include?(profile)
     @payloads = []
     @manifest = {
       generated_by: 'user-management-service/scripts/demo_user_seeder.rb',
+      profile: profile,
       fixtures: []
     }
 
     build_deep_chain
     build_wide_org
+    if profile == 'limited'
+      build_massive_fanout('massive_fanout_10k', 10_000)
+      build_massive_fanout('trace_isolation_msp', 6)
+      return
+    end
     build_dense_account
     build_branching_tree
     build_sparse_enterprise
@@ -778,6 +790,7 @@ class DemoFixtureArtifacts
   end
 
   def rest_curl_examples
+    return limited_rest_curl_examples if @manifest[:profile] == 'limited'
     deep = fixture('deep_chain')
     wide = fixture('wide_org')
     dense = fixture('dense_account')
@@ -875,10 +888,11 @@ class DemoFixtureArtifacts
       'Massive fanout 100k users and groups' => '/demo_queries/massive-fanout-100k',
       'Massive fanout 50k users and groups' => '/demo_queries/massive-fanout-50k',
       'Massive fanout 10k users and groups' => '/demo_queries/massive-fanout-10k'
-    }
+    }.select { |_name, path| @fixtures.any? { |fixture| path.end_with?(fixture.fetch(:name).tr('_', '-')) } }
   end
 
   def queries
+    return limited_queries if @manifest[:profile] == 'limited'
     deep = fixture('deep_chain')
     wide = fixture('wide_org')
     dense = fixture('dense_account')
@@ -977,6 +991,34 @@ class DemoFixtureArtifacts
     @fixtures.find { |fixture| fixture.fetch(:name) == name } || raise("Unknown fixture: #{name}")
   end
 
+  def limited_rest_curl_examples
+    lines = ["#!/usr/bin/env bash", "set -euo pipefail", ""]
+    @fixtures.each do |fixture|
+      targets = fixture.fetch(:targets)
+      actor = top_level_admin_user_id(fixture)
+      lines << "# #{fixture.fetch(:name)}"
+      lines << "curl --fail-with-body -sS -H 'pad-user-id: #{actor}' '#{account_service_url}/accounts/#{targets.fetch(:top_level_account_id)}'"
+      lines << "curl --fail-with-body -sS -H 'pad-user-id: #{actor}' '#{organization_service_url}/organizations/#{fixture.fetch(:organization_id)}'"
+    end
+    lines.join("\n") + "\n"
+  end
+
+  def limited_queries
+    @fixtures.to_h do |fixture|
+      targets = fixture.fetch(:targets)
+      actor = top_level_admin_user_id(fixture).to_json
+      users = 'users { id email accountId groups { id name } }'
+      query = if fixture[:msp]
+        "{ mspUserManagement(mspAccountId: #{targets.fetch(:msp_account_id).to_json}, as: #{actor}) { loading loadedCount totalCount continuance message accounts { id #{users} } } }"
+      elsif fixture.fetch(:name) == 'deep_chain'
+        "{ accountWithParents(id: #{targets.fetch(:leaf_account_id).to_json}, as: #{actor}) { id name parentAccountId #{users} } }"
+      else
+        "{ organization(id: #{fixture.fetch(:organization_id).to_json}, as: #{actor}) { id name accounts { id name #{users} } } }"
+      end
+      [fixture.fetch(:name), query]
+    end
+  end
+
   def top_level_admin_user_id(fixture)
     targets = fixture.fetch(:targets)
     targets.fetch(:top_level_admin_user_id) { targets.fetch(:admin_user_id) }
@@ -1010,7 +1052,8 @@ end
 if $PROGRAM_NAME == __FILE__
   queue_url = ENV.fetch('USER_SEED_QUEUE_URL', 'http://eventstream:4566/000000000000/user-seed')
   DemoUserSeeder.new(
-    count: ENV.fetch('USER_COUNT', DEFAULT_USER_COUNT).to_i,
+    count: ENV.key?('USER_COUNT') ? Integer(ENV.fetch('USER_COUNT')) : nil,
+    profile: ENV.fetch('DEMO_SEED_PROFILE', 'full'),
     queue_url: queue_url,
     include_fixtures: ENV.fetch('DEMO_SKIP_FIXTURES', '0') != '1',
     dry_run: ENV.fetch('DEMO_DRY_RUN', '0') == '1',
