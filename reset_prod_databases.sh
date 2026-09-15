@@ -46,7 +46,7 @@ SQL
 done
 
 echo 'Truncating User Management SQLite databases...'
-./dc_prod run --rm --no-deps user-management-service bin/rails runner <<'RUBY'
+./dc_prod run --rm --no-deps user-management-service bin/rails runner - <<'RUBY'
 ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |configuration|
   connection_class = Class.new(ActiveRecord::Base) do
     self.abstract_class = true
