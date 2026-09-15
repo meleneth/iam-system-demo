@@ -92,6 +92,9 @@ checks authorization boundaries, warms each profile, and saves 13 source traces
 from seven configurations. It does not run the full benchmark matrix. These
 traces establish request behavior on the limited dataset, not full-dataset timings.
 Production Jaeger is at <http://localhost:11290>.
+User-management GraphQL request spans are named `GraphQL` (or `GraphQL <operationName>`)
+and include the submitted query text in the `graphql.document` tag. Expand the
+request span's tags in Jaeger to inspect the query alongside its downstream calls.
 
 The default `DEMO_SEED_PROFILE=full` retains the normal 1,000,000-user seed.
 

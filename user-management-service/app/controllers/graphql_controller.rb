@@ -12,6 +12,12 @@ class GraphqlController < ApplicationController
     variables = prepare_variables(params[:variables])
     query = params[:query]
     operation_name = params[:operationName]
+    request_span = OpenTelemetry::Trace.current_span
+    if query.is_a?(String)
+      request_span.set_attribute('graphql.document', query)
+      request_span.name = operation_name.present? ? "GraphQL #{operation_name}" : 'GraphQL'
+    end
+    request_span.set_attribute('graphql.operation.name', operation_name) if operation_name.present?
     context = {
       otel_ctx: otel_ctx
       # Query context goes here, for example:
