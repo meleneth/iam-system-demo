@@ -67,6 +67,8 @@ for mode in ['can', 'capabilities']:
         assert record['spans'] > 2
         record['sha256'] = digest(directory / (record['trace_id'] + '.json'))
     trace_profiles.append({'mode': mode, 'traces': records})
+schema_files = sorted((RAW / 'schema').glob('graphql-*.json'))
+assert len(schema_files) == 6, 'Incomplete GraphQL surface inventory'
 sources = []
 for service in ROOT.glob('*-service'):
     for directory in ['app', 'lib', 'config']:
@@ -77,6 +79,8 @@ sources.extend((ROOT / 'scripts').glob('*record_authorization*'))
 summary = {'created_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
            'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
            'profiles': profiles, 'mutations': mutations, 'trace_profiles': trace_profiles,
+           'graphql_surfaces': {p.stem: read(p) for p in schema_files},
+           'graphql_surface_hashes': {str(p.relative_to(ROOT)): digest(p) for p in schema_files},
            'source_sha256': {str(p.relative_to(ROOT)): digest(p) for p in sorted(set(sources)) if p.is_file()},
            'limits': ['Fixed persisted fixture graph; immediate revocation during cache TTL is not asserted.',
                       'Caller identity/trusted-token authentication at an external boundary is outside this record authorization contract.']}

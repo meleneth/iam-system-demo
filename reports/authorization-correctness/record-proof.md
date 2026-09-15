@@ -28,7 +28,7 @@ A request containing several targets must authorize **every** target. A permissi
 | Internal random records, managed pages, admin lookup | `IAM_SYSTEM` only | Reject real actors, missing context and `IAM_SYSTEM_AUTH` |
 | GraphQL and HTML compositions | All constituent downstream checks, preserving explicit actor | Dedicated nested/compound tests plus existing boundary suite |
 
-The runtime route inventory (`record_authorization_routes.rb`) fails on an unclassified application endpoint or a documented endpoint that disappeared. It explicitly distinguishes page shells, fixture query text, metrics, framework navigation, and generator GraphQL schemas with no implemented IAM record loader. Dormant controller CRUD methods are not routed.
+The runtime inventory (`record_authorization_routes.rb`) fails on an unclassified application endpoint, a documented endpoint that disappeared, or a changed set of reachable GraphQL object/interface fields. It explicitly distinguishes page shells, fixture query text, metrics, framework navigation, and generator GraphQL schemas with no implemented IAM record loader. Dormant controller CRUD methods are not routed.
 
 ## Independent fixtures and expected results
 

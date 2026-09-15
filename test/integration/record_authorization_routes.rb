@@ -72,3 +72,27 @@ end
 missing = policies.keys - rows.map { |r| r.fetch(:target) }
 raise "Documented routes missing: #{missing}" unless missing.empty?
 File.write("/evidence/routes-#{service}.json", JSON.pretty_generate(rows) + "\n")
+
+# GraphQL can add a record-loading surface without adding an HTTP route.
+# Pin reachable object/interface fields as well as routes so that change also
+# requires an explicit coverage review.
+schema = "#{service.tr('-', '_').camelize}Schema".constantize
+expected_fields = {'Mutation' => %w[testField]}
+if service == 'user-management-service'
+  expected_fields.merge!(
+    'Query' => %w[account accountWithParents accountHierarchies accounts organization mspUserManagement],
+    'Account' => %w[id name parentAccountId users usersCount groupsCount],
+    'User' => %w[id accountId email groups], 'Group' => %w[id name],
+    'Organization' => %w[id name accounts accountsCount],
+    'MspUserManagement' => %w[loading loadedCount totalCount message continuance accounts],
+    'MspManagedAccount' => %w[id users]
+  )
+else
+  expected_fields.merge!('Query' => %w[node nodes testField], 'Node' => %w[id])
+end
+actual_fields = schema.types.filter_map do |name, type|
+  next if name.start_with?('__') || !(type.kind.object? || type.kind.interface?)
+  [name, type.fields.keys.sort]
+end.to_h
+raise "UNCLASSIFIED GRAPHQL SURFACE #{service}: #{actual_fields}" unless actual_fields == expected_fields.transform_values(&:sort)
+File.write("/evidence/graphql-#{service}.json", JSON.pretty_generate(actual_fields) + "\n")
