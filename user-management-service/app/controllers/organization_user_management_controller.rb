@@ -37,6 +37,7 @@ class OrganizationUserManagementController < ApplicationController
     @partition_label = partition.fetch(:label)
     @next_frame_id = "organization-user-management-partition-#{@next_continuance || "done"}"
 
+    trace_request_operation("Load user management for #{@partition_payload.fetch(:users).size} users")
     render partial: "organization_user_management/partition"
   rescue JSON::ParserError, ArgumentError
     render plain: "Invalid continuance", status: :bad_request

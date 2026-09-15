@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate warmed showcase traces: HTTP/API calls, application SQL, and Redis remain."""
+"""Validate request traces: HTTP/API ancestry, application SQL, and Redis pipelines."""
 import collections
 import json
 from pathlib import Path
@@ -8,7 +8,7 @@ import sys
 
 collection = Path(sys.argv[1]).resolve()
 entries = json.loads((collection / 'trace-index.json').read_text())
-forbidden = re.compile(r'^connect$|HTTP CONNECT|http\.(?:connection|request\.write|response\.)|rack\.response|Controller#|materializ|serializ|\.encode|\.decode|payload\.build|params\.parse', re.I)
+forbidden = re.compile(r'^connect$|HTTP CONNECT|http\.(?:connection|request\.write|response\.)|rack\.response|Controller#|materializ|serializ|\.encode|\.decode|payload\.build|params\.parse|\.cache\.', re.I)
 results = []
 for entry in entries:
     path = Path(entry['output'])
@@ -35,6 +35,11 @@ for entry in entries:
         }, (entry['id'], tags)
         assert tags.get('db.system') != 'redis' or not forbidden.search(name)
         redis += tags.get('db.system') == 'redis'
+        if tags.get('db.system') == 'redis':
+            assert tags.get('db.operation.name') == 'PIPELINED', (entry['id'], name)
+            assert tags.get('db.redis.pipeline.command_count', 0) > 0, (entry['id'], name)
+            assert name.startswith('Redis pipeline: '), (entry['id'], name)
+            assert 'db.statement' not in tags, (entry['id'], 'Per-key Redis details')
         http_clients += tags.get('otel.scope.name') == 'OpenTelemetry::Instrumentation::Net::HTTP'
         api_servers += tags.get('span.kind') == 'server'
         if tags.get('db.system') == 'postgresql':
@@ -67,6 +72,10 @@ for entry in entries:
     assert external == {entry['parent_id']}, (entry['id'], external)
     assert http_clients and api_servers and sql_queries, (entry['id'], 'Missing HTTP, API, or SQL spans')
     assert cross_service > 0, (entry['id'], 'no cross-service ancestry')
+    if entry['id'].startswith('graphql-'):
+        assert any(s['operationName'].startswith('GraphQL') and
+                   any(t['key'] == 'graphql.document' and t['value'] for t in s.get('tags', []))
+                   for s in spans), (entry['id'], 'Missing GraphQL query on request span')
     names = collections.Counter(span['operationName'] for span in spans)
     results.append(dict(id=entry['id'], trace_id=trace['traceID'], spans=len(spans),
         outcome=entry.get('request_outcome', 'ok'), cross_service_parent_links=cross_service,
@@ -74,7 +83,6 @@ for entry in entries:
         envelope_seconds=(max(s['startTime'] + s['duration'] for s in spans) - min(s['startTime'] for s in spans)) / 1e6,
         operation_counts=dict(names)))
 assert any(item['redis_spans'] for item in results), 'No Redis spans retained'
-assert any(item['application_cache_spans'] for item in results), 'No application cache spans retained'
 output = collection / 'reduced-trace-validation.json'
 output.write_text(json.dumps(results, indent=2) + '\n')
-print(f'Validated {len(results)} exports: HTTP/API ancestry, application SQL, and caches visible; phase/schema/setup timings absent. {output}')
+print(f'Validated {len(results)} exports: HTTP/API ancestry, GraphQL queries, application SQL, and Redis pipelines; cache/phase/schema/setup detail absent. {output}')

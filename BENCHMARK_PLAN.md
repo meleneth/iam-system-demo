@@ -95,6 +95,12 @@ Production Jaeger is at <http://localhost:11290>.
 User-management GraphQL request spans are named `GraphQL` (or `GraphQL <operationName>`)
 and include the submitted query text in the `graphql.document` tag. Expand the
 request span's tags in Jaeger to inspect the query alongside its downstream calls.
+Record-loading server spans and their calling HTTP spans show actual returned
+counts, such as `Load 20 users`. Authorization calls identify the permission and
+scope count. Cache tracing retains one `Redis pipeline: N GET` (or mixed-command)
+span per real pipeline, with command counts but no key/value lists. Individual
+Redis commands and application cache bookkeeping do not create spans; application
+SQL on cache misses remains visible.
 
 The default `DEMO_SEED_PROFILE=full` retains the normal 1,000,000-user seed.
 

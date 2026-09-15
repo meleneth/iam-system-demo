@@ -167,62 +167,56 @@ class OrganizationAccountsController < ApplicationController
   end
 
   def cached_account_ids_by_organization_id(organization_ids)
-    Instrumentation.trace("organization_accounts.cache.fetch", attributes: { "scope.count" => organization_ids.size }) do
-      cache_keys = organization_ids.map { |organization_id| account_ids_cache_key(organization_id) }
-      cached_values = Instrumentation.trace("organization_accounts.cache.lookup", attributes: { "scope.count" => organization_ids.size }) do
-        ORGANIZATION_CACHE.pipelined do |pipe|
-          cache_keys.each { |cache_key| pipe.get(cache_key) }
-        end
-      end
-
-      by_organization_id = {}
-      misses = []
-
-      if cache_disabled?
-        OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; treating #{organization_ids.size} organization account-id lists as misses")
-      end
-
-      organization_ids.each_with_index do |organization_id, index|
-        cached = cached_values[index]
-        if cached
-          by_organization_id[organization_id] = JSON.parse(cached)
-        else
-          misses << organization_id
-        end
-      end
-      IamDemo::CacheMetrics.record(
-        cache: "account_ids_by_organization",
-        outcome: "hit",
-        count: organization_ids.size - misses.size,
-        redis_enabled: !cache_disabled?
-      )
-      IamDemo::CacheMetrics.record(
-        cache: "account_ids_by_organization",
-        outcome: "miss",
-        count: misses.size,
-        redis_enabled: !cache_disabled?
-      )
-
-      if misses.any?
-        Instrumentation.trace("organization_accounts.cache.miss.load") do
-          OrganizationAccount.where(organization_id: misses).group_by { |org_account| org_account.organization_id.to_s }.each do |organization_id, rows|
-            by_organization_id[organization_id] = rows.map(&:account_id)
-          end
-        end
-
-        unless cache_disabled?
-          ORGANIZATION_CACHE.pipelined do |pipe|
-            misses.each do |organization_id|
-              pipe.set(account_ids_cache_key(organization_id), by_organization_id.fetch(organization_id).to_json, ex: 300)
-            end
-          end
-        else
-          OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; skipped writing #{misses.size} organization account-id lists")
-        end
-      end
-
-      by_organization_id
+    cache_keys = organization_ids.map { |organization_id| account_ids_cache_key(organization_id) }
+    cached_values = ORGANIZATION_CACHE.pipelined do |pipe|
+      cache_keys.each { |cache_key| pipe.get(cache_key) }
     end
+
+    by_organization_id = {}
+    misses = []
+
+    if cache_disabled?
+      OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; treating #{organization_ids.size} organization account-id lists as misses")
+    end
+
+    organization_ids.each_with_index do |organization_id, index|
+      cached = cached_values[index]
+      if cached
+        by_organization_id[organization_id] = JSON.parse(cached)
+      else
+        misses << organization_id
+      end
+    end
+    IamDemo::CacheMetrics.record(
+      cache: "account_ids_by_organization",
+      outcome: "hit",
+      count: organization_ids.size - misses.size,
+      redis_enabled: !cache_disabled?
+    )
+    IamDemo::CacheMetrics.record(
+      cache: "account_ids_by_organization",
+      outcome: "miss",
+      count: misses.size,
+      redis_enabled: !cache_disabled?
+    )
+
+    if misses.any?
+      OrganizationAccount.where(organization_id: misses).group_by { |org_account| org_account.organization_id.to_s }.each do |organization_id, rows|
+        by_organization_id[organization_id] = rows.map(&:account_id)
+      end
+
+      unless cache_disabled?
+        ORGANIZATION_CACHE.pipelined do |pipe|
+          misses.each do |organization_id|
+            pipe.set(account_ids_cache_key(organization_id), by_organization_id.fetch(organization_id).to_json, ex: 300)
+          end
+        end
+      else
+        OpenTelemetry::Trace.current_span.add_event("Redis cache disabled; skipped writing #{misses.size} organization account-id lists")
+      end
+    end
+
+    by_organization_id
   end
 
   def cache_disabled?

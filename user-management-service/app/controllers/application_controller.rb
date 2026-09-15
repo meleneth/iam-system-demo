@@ -1,4 +1,7 @@
+require_relative '../../lib/request_operation_tracing'
+
 class ApplicationController < ActionController::Base
+  include RequestOperationTracing
   rescue_from ActiveResource::ForbiddenAccess do
     render plain: "Forbidden", status: :forbidden
   end

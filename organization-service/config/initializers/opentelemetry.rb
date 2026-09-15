@@ -16,7 +16,6 @@ OpenTelemetry::SDK.configure do |c|
   # One HTTP client span covers direct, Faraday, and ActiveResource requests.
   c.use "OpenTelemetry::Instrumentation::Net::HTTP"
   c.use "OpenTelemetry::Instrumentation::Rack", { use_rack_events: false, untraced_endpoints: ["/up"] }
-  c.use "OpenTelemetry::Instrumentation::Redis"
   c.add_span_processor(
     OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
       OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: otel_endpoint)
@@ -25,6 +24,7 @@ OpenTelemetry::SDK.configure do |c|
 end
 
 require_relative "../../lib/http_request_tracing"
+require_relative "../../lib/redis_pipeline_tracing"
 
 ApplicationSqlTracing.install
 Rails.application.config.middleware.insert_before 0, *OpenTelemetry::Instrumentation::Rack::Instrumentation.instance.middleware_args
