@@ -563,6 +563,7 @@ GEM
     thruster (0.1.15-aarch64-linux)
     thruster (0.1.15-x86_64-linux)
     timeout (0.4.3)
+    tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.1.4)
@@ -605,6 +606,7 @@ DEPENDENCIES
   solid_cable
   solid_queue
   thruster
+  tsort
   tzinfo-data
 
 BUNDLED WITH

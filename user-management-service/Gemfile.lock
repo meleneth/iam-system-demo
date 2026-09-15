@@ -619,6 +619,7 @@ GEM
     tilt (2.6.1)
     timeout (0.4.3)
     traces (0.15.2)
+    tsort (0.2.0)
     turbo-rails (2.0.16)
       actionpack (>= 7.1.0)
       railties (>= 7.1.0)
@@ -684,6 +685,7 @@ DEPENDENCIES
   stimulus-rails
   tailwindcss-rails
   thruster
+  tsort
   turbo-rails
   tzinfo-data
   web-console
