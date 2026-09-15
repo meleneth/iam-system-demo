@@ -79,7 +79,7 @@ RSpec.describe "Account hierarchies", type: :request do
 
   it "authorizes the real actor for the complete batch before looking up hierarchies" do
     ids = [SecureRandom.uuid, SecureRandom.uuid]
-    expect(User).to receive(:user_can).with("actor", "Account", "account.read", ids).and_return(true)
+    expect(User).to receive(:user_can).with("actor", "Account", "account.read", ids, { "X-IAM-Authorization-Purpose" => "requested_accounts" }).and_return(true)
     expect_any_instance_of(AccountsController).to receive(:fetch_accounts_with_parents).with(ids).and_return([])
     post "/accounts_with_parents", params: { account_ids: ids }, headers: { "pad-user-id" => "actor" }, as: :json
     expect(response).to have_http_status(:ok)
@@ -87,10 +87,22 @@ RSpec.describe "Account hierarchies", type: :request do
 
   it "denies the entire batch without reading hierarchies when the actor lacks access" do
     ids = [SecureRandom.uuid, SecureRandom.uuid]
-    expect(User).to receive(:user_can).with("actor", "Account", "account.read", ids).and_return(false)
+    expect(User).to receive(:user_can).with("actor", "Account", "account.read", ids, { "X-IAM-Authorization-Purpose" => "requested_accounts" }).and_return(false)
     expect_any_instance_of(AccountsController).not_to receive(:fetch_accounts_with_parents)
     post "/accounts_with_parents", params: { account_ids: ids }, headers: { "pad-user-id" => "actor" }, as: :json
     expect(response).to have_http_status(:forbidden)
+  end
+
+  it "distinguishes requested account authorization from returned hierarchy authorization" do
+    start_id, ancestor_id = SecureRandom.uuid, SecureRandom.uuid
+    expect(User).to receive(:user_can).with("actor", "Account", "account.read", [start_id],
+      { "X-IAM-Authorization-Purpose" => "requested_accounts" }).ordered.and_return(true)
+    expect_any_instance_of(AccountsController).to receive(:fetch_accounts_with_parents).with([start_id])
+      .and_return([[{ "id" => ancestor_id }, { "id" => start_id }]])
+    expect(User).to receive(:user_can).with("actor", "Account", "account.read", [ancestor_id, start_id],
+      { "X-IAM-Authorization-Purpose" => "returned_hierarchy" }).ordered.and_return(true)
+    post "/accounts_with_parents", params: { account_ids: [start_id] }, headers: { "pad-user-id" => "actor" }, as: :json
+    expect(response).to have_http_status(:ok)
   end
 
   it "bounds cyclic account hierarchies inside the recursive query" do
