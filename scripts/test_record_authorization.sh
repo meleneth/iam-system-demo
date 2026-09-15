@@ -35,8 +35,17 @@ done
 fi
 services+=(user-management-service account-auth-service group-auth-service organization-auth-service)
 containers=()
+server_lifecycle=(--rm)
+sampler_options=()
+if [[ "${PROOF_MUTATION_DRIVER:-0}" == 1 ]]; then server_lifecycle=(); fi
+if [[ "${PROOF_MUTATION_DRIVER:-0}" == 1 || "${PROOF_TRACE_DRIVER:-0}" == 1 ]]; then
+  sampler_options=(-e OTEL_TRACES_SAMPLER=parentbased_traceidratio -e OTEL_TRACES_SAMPLER_ARG=0.0)
+fi
 cleanup() {
-  if ((${#containers[@]})); then docker stop "${containers[@]}" >/dev/null; fi
+  if ((${#containers[@]})); then
+    docker stop "${containers[@]}" >/dev/null || true
+    if [[ "${PROOF_MUTATION_DRIVER:-0}" == 1 ]]; then docker rm "${containers[@]}" >/dev/null || true; fi
+  fi
 }
 trap cleanup EXIT
 for service in "${services[@]}"; do
@@ -50,7 +59,7 @@ for service in "${services[@]}"; do
   elif [[ "$service" == account-auth-service ]]; then
     organization_url=http://organization-auth-service:80
   fi
-  container=$(./dc_test run --rm --no-deps --use-aliases -d \
+  container=$(./dc_test run "${server_lifecycle[@]}" --no-deps --use-aliases -d "${sampler_options[@]}" \
     -e RAILS_ENV=test \
     -e "AUTHORIZATION_CHECK_MODE=$AUTHORIZATION_CHECK_MODE" \
     -e OTEL_TRACES_EXPORTER=none \
@@ -76,6 +85,13 @@ done
     end
   end
 ' "${services[@]}"
+if [[ "${PROOF_TRACE_DRIVER:-0}" == 1 ]]; then
+  ./dc_test run --rm --no-deps -T -v "$repo_dir:/workspace:ro" -v "$proof_output:/evidence" \
+    -e "AUTHORIZATION_CHECK_MODE=$AUTHORIZATION_CHECK_MODE" -e "GLOBAL_IAM_DEMO_USE_REDIS=$GLOBAL_IAM_DEMO_USE_REDIS" \
+    -e "PROOF_SOURCE_REVISION=$(git rev-parse HEAD)" \
+    authorization-service bundle exec ruby /workspace/test/integration/record_authorization_traces.rb
+  exit
+fi
 if [[ "${PROOF_MUTATION_DRIVER:-0}" == 1 ]]; then
   : > "$proof_output/containers.txt"
   for index in "${!services[@]}"; do

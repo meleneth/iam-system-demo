@@ -24,11 +24,13 @@ profiles = []
 for mode in ['can', 'capabilities']:
     for redis in ['false', 'true']:
         directory = RAW / f'{mode}-{redis}'
+        assert (directory / 'existing-results.json').stat().st_mtime_ns >= (directory / 'results.json').stat().st_mtime_ns >= (directory / 'requests.jsonl').stat().st_mtime_ns, 'Stale proof artifacts'
         suites = [read(directory / name) for name in ['results.json', 'existing-results.json']]
         assert suites[0]['summary']['example_count'] >= 70, 'Incomplete per-record suite'
         assert suites[1]['summary']['example_count'] >= 20, 'Incomplete existing boundary suite'
         for suite in suites:
             assert suite['summary']['failure_count'] == 0 and suite['summary']['pending_count'] == 0
+            assert suite['summary'].get('errors_outside_of_examples_count', 0) == 0
             assert all(e['status'] == 'passed' for e in suite['examples'])
         ledger = [json.loads(line) for line in (directory / 'requests.jsonl').read_text().splitlines()]
         assert ledger and all(r['mode'] == mode and r['redis'] == redis for r in ledger)
@@ -55,6 +57,16 @@ for mode in ['can', 'capabilities']:
         paths = [directory / name for name in ['results.json', 'requests.jsonl', 'restored/results.json', 'restored/requests.jsonl']]
         record['hashes'] = {str(p.relative_to(ROOT)): digest(p) for p in paths}
     mutations.extend(records)
+trace_profiles = []
+for mode in ['can', 'capabilities']:
+    directory = RAW / 'traces' / mode
+    records = read(directory / 'trace-index.json')
+    assert len(records) == 52, 'Incomplete explanatory trace set'
+    for record in records:
+        assert record['status'] == ('200' if record['expected'] == 'allow' else '403')
+        assert record['spans'] > 2
+        record['sha256'] = digest(directory / (record['trace_id'] + '.json'))
+    trace_profiles.append({'mode': mode, 'traces': records})
 sources = []
 for service in ROOT.glob('*-service'):
     for directory in ['app', 'lib', 'config']:
@@ -64,7 +76,7 @@ sources.extend((ROOT / 'test/integration').glob('*authorization*.rb'))
 sources.extend((ROOT / 'scripts').glob('*record_authorization*'))
 summary = {'created_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
            'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-           'profiles': profiles, 'mutations': mutations,
+           'profiles': profiles, 'mutations': mutations, 'trace_profiles': trace_profiles,
            'source_sha256': {str(p.relative_to(ROOT)): digest(p) for p in sorted(set(sources)) if p.is_file()},
            'limits': ['Fixed persisted fixture graph; immediate revocation during cache TTL is not asserted.',
                       'Caller identity/trusted-token authentication at an external boundary is outside this record authorization contract.']}
@@ -79,5 +91,16 @@ for p in profiles:
     text += f"| {p['mode']} | {'enabled, cold then warm' if p['redis'] else 'disabled'} | {p['record_examples']} | {p['existing_examples']} | {p['requests']} |\n"
 text += '\n[Machine-readable results and source hashes](record-proof-results.json). [Local raw evidence](../raw/record-authorization/) contains HTTP ledgers, classified routes, and normal/mutated/restored test reports. Raw artifacts are gitignored; their hashes are preserved in the committed summary.\n'
 text += '\nThe new tests exposed missing actor propagation in the GraphQL organization-count source, generic errors for denied count/context requests, and incomplete slow HTML rendering. The fixes preserve the real actor and the existing authorization rules.\n'
+text += '\n### Explanatory traces\n\n[Test Jaeger](http://localhost:11030/search?service=trace-workloads) contains allow and deny samples, each cold and warm, for both protocols. These use the dedicated proof fixtures, not production data. Full links and archive hashes are in the machine-readable results.\n\n'
+text += '| Record or response | /can allow | /can deny | Capabilities allow | Capabilities deny |\n| --- | --- | --- | --- | --- |\n'
+by_record = {}
+for profile in trace_profiles:
+    for trace in profile['traces']:
+        if not trace['name'].endswith('Redis warm'):
+            continue
+        record_type = trace['name'].split(' | ')[0].split(' ', 1)[1]
+        by_record.setdefault(record_type, {})[(profile['mode'], trace['expected'])] = trace['url']
+for record_type, links in by_record.items():
+    text += '| ' + record_type + ' | ' + ' | '.join('[Open](' + links[(mode, decision)] + ')' for mode in ['can', 'capabilities'] for decision in ['allow', 'deny']) + ' |\n'
 report.write_text(text)
 print(json.dumps({'examples': sum(p['examples'] for p in profiles), 'requests': sum(p['requests'] for p in profiles), 'mutations_caught_and_restored': len(mutations)}))

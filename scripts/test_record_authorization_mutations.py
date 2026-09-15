@@ -69,6 +69,8 @@ ENV_KEYS = {s: s.replace('-', '_').upper() + '_TEST_SOURCE_PATH' for s in
 
 def run_specs(destination, example, mode):
     destination.mkdir(parents=True, exist_ok=True)
+    for name in ['results.json', 'requests.jsonl']:
+        (destination / name).unlink(missing_ok=True)
     command = ['./dc_test', 'run', '--rm', '--no-deps', '-T', '-v', f'{ROOT}:/workspace:ro',
                '-v', f'{destination}:/evidence', '-e', f'AUTHORIZATION_CHECK_MODE={mode}',
                '-e', 'GLOBAL_IAM_DEMO_USE_REDIS=false', '-e', 'PROOF_LEDGER=/evidence/requests.jsonl',
@@ -101,7 +103,10 @@ def running_profile():
     output = Path(os.environ['PROOF_OUTPUT'])
     containers = dict(line.split() for line in (output / 'containers.txt').read_text().splitlines())
     results = []
+    (output / 'summary.json').unlink(missing_ok=True)
     requested = os.environ.get('PROOF_MUTANTS', '').split(',')
+    if requested[0]:
+        assert set(requested) <= {m[0] for m in MUTANTS}, 'Unknown mutation selection'
     for name, source, before, after, example in MUTANTS:
         if requested[0] and name not in requested:
             continue
