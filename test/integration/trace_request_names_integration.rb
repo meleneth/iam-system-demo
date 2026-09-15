@@ -21,6 +21,14 @@ class UsersController < ActionController::API
   end
 end
 
+class CanController < ActionController::API
+  include RequestOperationTracing
+
+  def index
+    params[:deny] ? render(json: {error: 'forbidden'}, status: :forbidden) : head(:ok)
+  end
+end
+
 class RequestNamesTest < Minitest::Test
   EXPORTER = OpenTelemetry::SDK::Trace::Export::InMemorySpanExporter.new
   OpenTelemetry::SDK.configure do |c|
@@ -53,6 +61,28 @@ class RequestNamesTest < Minitest::Test
     assert_equal '403', response.code
     assert_nil response['X-IAM-Trace-Operation']
     refute EXPORTER.finished_spans.any? { |span| span.name.start_with?('Load ') }
+  ensure
+    server&.stop(true)
+  end
+
+  def test_authorization_purpose_labels_reach_both_http_spans_even_on_denial
+    app = OpenTelemetry::Instrumentation::Rack::Middlewares::TracerMiddleware.new(CanController.action(:index))
+    server = Puma::Server.new(app, Puma::Events.new, min_threads: 1, max_threads: 1)
+    server.add_tcp_listener('127.0.0.1', 0)
+    server.run
+    uri = URI("http://127.0.0.1:#{server.binder.ios.first.addr[1]}/can/Account/account.read")
+    [['requested_accounts', 1, false, 'requested account'],
+     ['returned_hierarchy', 25, false, 'returned hierarchy accounts'],
+     ['returned_hierarchy', 25, true, 'returned hierarchy accounts'],
+     ['arbitrary label', 1, false, 'account']].each do |purpose, count, deny, noun|
+      EXPORTER.reset
+      body = {scope_type: 'Account', permission: 'account.read', scope_id: (1..count).to_a, deny: deny}
+      response = Net::HTTP.post(uri, JSON.generate(body), {'Content-Type' => 'application/json', 'X-IAM-Authorization-Purpose' => purpose})
+      assert_equal(deny ? '403' : '200', response.code)
+      spans = EXPORTER.finished_spans.select { |span| [:client, :server].include?(span.kind) }
+      assert_equal 2, spans.size
+      assert spans.all? { |span| span.name == "Check account.read for #{count} #{noun}" }, spans.map(&:name).inspect
+    end
   ensure
     server&.stop(true)
   end

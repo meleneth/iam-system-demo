@@ -63,7 +63,7 @@ module RequestOperationTracing
                 'organization' => 'organization', 'organizations' => 'organization',
                 'group' => 'group', 'groups' => 'group' }.fetch(action_name)
       count = payload.is_a?(Hash) ? payload.size : 1
-      "Load capabilities for #{count} #{scope.pluralize(count)}"
+      "Load capabilities for #{count} #{authorization_scope_label(scope, count)}"
     when 'can'
       authorization_operation
     end
@@ -83,7 +83,20 @@ module RequestOperationTracing
 
   def authorization_operation
     count = Array(params[:scope_id]).map(&:to_s).uniq.size
-    "Check #{params[:permission]} for #{count} #{params[:scope_type].to_s.downcase.pluralize(count)}"
+    "Check #{params[:permission]} for #{count} #{authorization_scope_label(params[:scope_type].to_s.downcase, count)}"
+  end
+
+  # Caller intent is display metadata only. Accept a fixed vocabulary and never
+  # use it to select an authorization policy or trust level.
+  def authorization_scope_label(scope, count)
+    noun = scope.pluralize(count)
+    return noun unless scope == 'account'
+
+    case request.headers['X-IAM-Authorization-Purpose']
+    when 'requested_accounts' then "requested #{noun}"
+    when 'returned_hierarchy' then "returned hierarchy #{noun}"
+    else noun
+    end
   end
 
   def trace_request_operation(label)

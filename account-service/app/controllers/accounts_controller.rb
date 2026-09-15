@@ -32,7 +32,7 @@ class AccountsController < ApplicationController
 
     pad_user_id = request.headers['HTTP_PAD_USER_ID']
     if pad_user_id != "IAM_SYSTEM"
-      raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{account_id}" unless User.user_can(pad_user_id, "Account", "account.read",  account_id)
+      raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{account_id}" unless User.user_can(pad_user_id, "Account", "account.read", account_id, { "X-IAM-Authorization-Purpose" => "requested_accounts" })
     end
 
     authorize_hierarchy_records!(pad_user_id, [results])
@@ -46,7 +46,7 @@ class AccountsController < ApplicationController
     account_ids = params.permit(account_ids: [])[:account_ids]
     raise ActionController::BadRequest, "account_ids must be an array" unless account_ids.is_a?(Array)
     unless pad_user_id == "IAM_SYSTEM"
-      unless pad_user_id.present? && User.user_can(pad_user_id, "Account", "account.read", account_ids.map(&:to_s).uniq)
+      unless pad_user_id.present? && User.user_can(pad_user_id, "Account", "account.read", account_ids.map(&:to_s).uniq, { "X-IAM-Authorization-Purpose" => "requested_accounts" })
         return render json: { error: "forbidden" }, status: :forbidden
       end
     end
@@ -101,7 +101,7 @@ class AccountsController < ApplicationController
     ids = Array(hierarchies).flatten.compact.map { |row| row.fetch("id").to_s }.uniq
     raise AuthorizationDenied if actor.blank?
     return if ids.empty?
-    raise AuthorizationDenied unless User.user_can(actor, "Account", "account.read", ids)
+    raise AuthorizationDenied unless User.user_can(actor, "Account", "account.read", ids, { "X-IAM-Authorization-Purpose" => "returned_hierarchy" })
   end
 
   # Use callbacks to share common setup or constraints between actions.
