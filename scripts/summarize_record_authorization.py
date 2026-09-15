@@ -65,7 +65,21 @@ for mode in ['can', 'capabilities']:
     for record in records:
         assert record['status'] == ('200' if record['expected'] == 'allow' else '403')
         assert record['spans'] > 2
-        record['sha256'] = digest(directory / (record['trace_id'] + '.json'))
+        archive = directory / (record['trace_id'] + '.json')
+        trace = read(archive)['data'][0]
+        auth_paths = []
+        for span in trace['spans']:
+            tags = {t['key']: t['value'] for t in span['tags']}
+            service = trace['processes'][span['processID']]['serviceName']
+            if service == 'authorization-service' and tags.get('span.kind') == 'server':
+                auth_paths.append(tags['http.target'])
+            if tags.get('db.system') == 'redis':
+                assert span['operationName'].startswith('Redis pipeline:'), 'Fine-grained Redis span'
+                assert 'db.statement' not in tags, 'Redis key/value trace detail'
+        prefix = '/can/' if mode == 'can' else '/capabilities/'
+        assert auth_paths and all(path.startswith(prefix) for path in auth_paths), 'Observed authorization protocol differs from intended mode'
+        record['observed_authorization_paths'] = sorted(set(auth_paths))
+        record['sha256'] = digest(archive)
     trace_profiles.append({'mode': mode, 'traces': records})
 schema_files = sorted((RAW / 'schema').glob('graphql-*.json'))
 assert len(schema_files) == 6, 'Incomplete GraphQL surface inventory'
