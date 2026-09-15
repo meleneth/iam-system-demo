@@ -1,0 +1,2851 @@
+{
+  "created_at": "2026-09-15T19:12:12.883470+00:00",
+  "revision": "0d45c2ed39e45447444c059bb9acb9e2879d28d1",
+  "profiles": [
+    {
+      "mode": "can",
+      "redis": false,
+      "examples": 91,
+      "record_examples": 70,
+      "existing_examples": 21,
+      "requests": 5004,
+      "http_statuses": {
+        "200": 1914,
+        "403": 3090
+      },
+      "service_requests": {
+        "account-service": 536,
+        "user-service": 772,
+        "group-service": 1494,
+        "organization-service": 891,
+        "authorization-service": 1257,
+        "user-management-service": 54
+      },
+      "hashes": {
+        "reports/raw/record-authorization/can-false/routes-account-service.json": "9979631dee72ade1daebe61ce854726d48ce1559fd5bbfcc683e2c9315e8cd31",
+        "reports/raw/record-authorization/can-false/routes-authorization-service.json": "e702b52b769cdd60dc92fe2c09d198bf3bdffdb1b1f1521324e6e80a5eef226d",
+        "reports/raw/record-authorization/can-false/routes-group-service.json": "8eb593dac6b0b1790e63eb4f459b42ba5f22c50a9cb2db7935502aa34e5aee8c",
+        "reports/raw/record-authorization/can-false/routes-organization-service.json": "1c117d31b127f1ce6916ff4c20bde86e630763708e488866b6f56a87c95a6437",
+        "reports/raw/record-authorization/can-false/routes-user-management-service.json": "b4c4c31cbb8af0a29f4e5fc2df2a52265df55ff89d293c65a63b9a21e2f50872",
+        "reports/raw/record-authorization/can-false/routes-user-service.json": "3fc334cdd6deb4eecc8da362b38d2a5057c1543ec3d35c46867a47e58e3ccc98",
+        "reports/raw/record-authorization/can-false/results.json": "25d53728872735d62933c041fd52f943dcb33eb60e96bdb8022455c93fc4de40",
+        "reports/raw/record-authorization/can-false/existing-results.json": "b3b3c80947fb28a423354c8877ae3640eae106c82125afd22e33892ede246a81",
+        "reports/raw/record-authorization/can-false/requests.jsonl": "4494b96d076399345f73cc4e15f3acf5a4833965ebc0bdf0662086eb31e1b6f7"
+      }
+    },
+    {
+      "mode": "can",
+      "redis": true,
+      "examples": 91,
+      "record_examples": 70,
+      "existing_examples": 21,
+      "requests": 5004,
+      "http_statuses": {
+        "200": 1914,
+        "403": 3090
+      },
+      "service_requests": {
+        "account-service": 536,
+        "user-service": 772,
+        "group-service": 1494,
+        "organization-service": 891,
+        "authorization-service": 1257,
+        "user-management-service": 54
+      },
+      "hashes": {
+        "reports/raw/record-authorization/can-true/routes-account-service.json": "9979631dee72ade1daebe61ce854726d48ce1559fd5bbfcc683e2c9315e8cd31",
+        "reports/raw/record-authorization/can-true/routes-authorization-service.json": "e702b52b769cdd60dc92fe2c09d198bf3bdffdb1b1f1521324e6e80a5eef226d",
+        "reports/raw/record-authorization/can-true/routes-group-service.json": "8eb593dac6b0b1790e63eb4f459b42ba5f22c50a9cb2db7935502aa34e5aee8c",
+        "reports/raw/record-authorization/can-true/routes-organization-service.json": "1c117d31b127f1ce6916ff4c20bde86e630763708e488866b6f56a87c95a6437",
+        "reports/raw/record-authorization/can-true/routes-user-management-service.json": "b4c4c31cbb8af0a29f4e5fc2df2a52265df55ff89d293c65a63b9a21e2f50872",
+        "reports/raw/record-authorization/can-true/routes-user-service.json": "3fc334cdd6deb4eecc8da362b38d2a5057c1543ec3d35c46867a47e58e3ccc98",
+        "reports/raw/record-authorization/can-true/results.json": "d71ebc51336b3a80fdb0ebae80f2865d33bdee6c90356f2a7387b7ea8e241e18",
+        "reports/raw/record-authorization/can-true/existing-results.json": "b77f811df5b959dbe0a3c1f278483e76d31d9d60318bcaa972d91d607b5ec867",
+        "reports/raw/record-authorization/can-true/requests.jsonl": "f5408f40f92e874fc413af571d502a551e1d5777c762507852f95655d95476f7"
+      }
+    },
+    {
+      "mode": "capabilities",
+      "redis": false,
+      "examples": 91,
+      "record_examples": 70,
+      "existing_examples": 21,
+      "requests": 4420,
+      "http_statuses": {
+        "200": 1716,
+        "403": 2702,
+        "503": 2
+      },
+      "service_requests": {
+        "account-service": 536,
+        "user-service": 772,
+        "group-service": 1494,
+        "organization-service": 891,
+        "authorization-service": 673,
+        "user-management-service": 54
+      },
+      "hashes": {
+        "reports/raw/record-authorization/capabilities-false/routes-account-service.json": "9979631dee72ade1daebe61ce854726d48ce1559fd5bbfcc683e2c9315e8cd31",
+        "reports/raw/record-authorization/capabilities-false/routes-authorization-service.json": "e702b52b769cdd60dc92fe2c09d198bf3bdffdb1b1f1521324e6e80a5eef226d",
+        "reports/raw/record-authorization/capabilities-false/routes-group-service.json": "8eb593dac6b0b1790e63eb4f459b42ba5f22c50a9cb2db7935502aa34e5aee8c",
+        "reports/raw/record-authorization/capabilities-false/routes-organization-service.json": "1c117d31b127f1ce6916ff4c20bde86e630763708e488866b6f56a87c95a6437",
+        "reports/raw/record-authorization/capabilities-false/routes-user-management-service.json": "b4c4c31cbb8af0a29f4e5fc2df2a52265df55ff89d293c65a63b9a21e2f50872",
+        "reports/raw/record-authorization/capabilities-false/routes-user-service.json": "3fc334cdd6deb4eecc8da362b38d2a5057c1543ec3d35c46867a47e58e3ccc98",
+        "reports/raw/record-authorization/capabilities-false/results.json": "72846a0c09646f0ef2b6bdb74aab651a756a284a1d36319af7cae6617f7c8180",
+        "reports/raw/record-authorization/capabilities-false/existing-results.json": "b0a5aaf5b4388552ad79de32e6b3235ac053e24b71abfccfd7bcc50e5a4a853f",
+        "reports/raw/record-authorization/capabilities-false/requests.jsonl": "0772dbeef0403cd339cadef1d438ea8012c6c56b520b611a8f58501ee8415912"
+      }
+    },
+    {
+      "mode": "capabilities",
+      "redis": true,
+      "examples": 91,
+      "record_examples": 70,
+      "existing_examples": 21,
+      "requests": 4420,
+      "http_statuses": {
+        "200": 1716,
+        "403": 2702,
+        "503": 2
+      },
+      "service_requests": {
+        "account-service": 536,
+        "user-service": 772,
+        "group-service": 1494,
+        "organization-service": 891,
+        "authorization-service": 673,
+        "user-management-service": 54
+      },
+      "hashes": {
+        "reports/raw/record-authorization/capabilities-true/routes-account-service.json": "9979631dee72ade1daebe61ce854726d48ce1559fd5bbfcc683e2c9315e8cd31",
+        "reports/raw/record-authorization/capabilities-true/routes-authorization-service.json": "e702b52b769cdd60dc92fe2c09d198bf3bdffdb1b1f1521324e6e80a5eef226d",
+        "reports/raw/record-authorization/capabilities-true/routes-group-service.json": "8eb593dac6b0b1790e63eb4f459b42ba5f22c50a9cb2db7935502aa34e5aee8c",
+        "reports/raw/record-authorization/capabilities-true/routes-organization-service.json": "1c117d31b127f1ce6916ff4c20bde86e630763708e488866b6f56a87c95a6437",
+        "reports/raw/record-authorization/capabilities-true/routes-user-management-service.json": "b4c4c31cbb8af0a29f4e5fc2df2a52265df55ff89d293c65a63b9a21e2f50872",
+        "reports/raw/record-authorization/capabilities-true/routes-user-service.json": "3fc334cdd6deb4eecc8da362b38d2a5057c1543ec3d35c46867a47e58e3ccc98",
+        "reports/raw/record-authorization/capabilities-true/results.json": "0f1c7ca6d1aeb81fee2eb558437f493d09592d457784e961880f820a9bcf9f5f",
+        "reports/raw/record-authorization/capabilities-true/existing-results.json": "49cdfe060afb532b7c0569fc491546f0a7af2ea9d53316d1be0ccca28791e6ed",
+        "reports/raw/record-authorization/capabilities-true/requests.jsonl": "8ca46c749c55a2e90f63ff6f3e80273052218d5e265d9fbb30ef77328e5d5769"
+      }
+    }
+  ],
+  "mutations": [
+    {
+      "mutation": "account_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "account-service/app/controllers/accounts_controller.rb",
+      "before": "def authorize_account_collection_read!(accounts)",
+      "after": "def authorize_account_collection_read!(accounts)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle account respects read grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/account_gate/results.json": "806c29409fc5fe7459e59d23ee9d142631aa393bd820db11bf3dfd1d74365a03",
+        "reports/raw/record-authorization/mutations/can/account_gate/requests.jsonl": "ed1b98c1c97fd9a81c9268419721ebb847417449e2a75885c4458196a5c5a24f",
+        "reports/raw/record-authorization/mutations/can/account_gate/restored/results.json": "83966787a96054d8c92b7273cb17dfc5eee7e240dbed5af93b77b1869cf5b499",
+        "reports/raw/record-authorization/mutations/can/account_gate/restored/requests.jsonl": "4ba0e4183a7468a37f7b94c3f650603680b271c53e6c34ea0c81c54b580c8b2c"
+      }
+    },
+    {
+      "mutation": "user_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "user-service/app/controllers/users_controller.rb",
+      "before": "def authorize_user_collection_read!(users)",
+      "after": "def authorize_user_collection_read!(users)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle user respects users grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/user_gate/results.json": "08cd628704b8defe2f5253333727b6350d20555c7028b4307609612369c7f881",
+        "reports/raw/record-authorization/mutations/can/user_gate/requests.jsonl": "30205b359e441159c07ce575925754bb6f38b4f259bfd1e937e2b5863a559512",
+        "reports/raw/record-authorization/mutations/can/user_gate/restored/results.json": "16d3b3c162855b6824082e27a4a1ac48c57e9a25625ae1a15a7a19b51cf4ea31",
+        "reports/raw/record-authorization/mutations/can/user_gate/restored/requests.jsonl": "32a5a4c3912b4b823b9e300f468a021849454972d164b693792ca81f808f479c"
+      }
+    },
+    {
+      "mutation": "group_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "group-service/app/controllers/groups_controller.rb",
+      "before": "def authorize_group_collection_read!(groups)",
+      "after": "def authorize_group_collection_read!(groups)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle group respects users grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/group_gate/results.json": "19b334cfe26bf861f849cf94433dd20e59bd804384910eb3ae95d64541f532c0",
+        "reports/raw/record-authorization/mutations/can/group_gate/requests.jsonl": "f01d476f749593d1c9651f2f63623808b87364b8035e841a0cf28b36c867ea41",
+        "reports/raw/record-authorization/mutations/can/group_gate/restored/results.json": "fe54a4338295699d7b7db507635421e0a8b8a80f853e5ce39474e30247a52b7c",
+        "reports/raw/record-authorization/mutations/can/group_gate/restored/requests.jsonl": "9fbdd879cd608b3f7d981afcd264ec02d74e7148ce8450e4c72b3506098f03cc"
+      }
+    },
+    {
+      "mutation": "membership_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "group-service/app/controllers/group_users_controller.rb",
+      "before": "def authorize_group_user_collection_read!(group_users)",
+      "after": "def authorize_group_user_collection_read!(group_users)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle membership respects users grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/membership_gate/results.json": "89a37e1765be56073baa3e8381a642bc207b1244e28cab666ce1f07f3e87176a",
+        "reports/raw/record-authorization/mutations/can/membership_gate/requests.jsonl": "e344ca09b3116a591ebd98bfcad08a03575c207fadd24b0b9b02ea7984fabe7d",
+        "reports/raw/record-authorization/mutations/can/membership_gate/restored/results.json": "621df4e58cc320ef2caa93901082ca6519af776e87453d9f3754e105a8bed80b",
+        "reports/raw/record-authorization/mutations/can/membership_gate/restored/requests.jsonl": "d6fd46a2cb43c2c734a281429c9570ea5db1c1309b2146140e913914841c5db5"
+      }
+    },
+    {
+      "mutation": "relationship_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/organization_accounts_controller.rb",
+      "before": "def authorize_relationship_read!(actor, relationship)",
+      "after": "def authorize_relationship_read!(actor, relationship)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle organization_relationship respects read grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/relationship_gate/results.json": "830215057c62bab968a5bca02a2d06eb9c6d1abd8e0f60e7b56830f825587d95",
+        "reports/raw/record-authorization/mutations/can/relationship_gate/requests.jsonl": "b5c30e2f65c22ae85653697a73c6e605a9088a5e28177915743cc1f2f1b84bd4",
+        "reports/raw/record-authorization/mutations/can/relationship_gate/restored/results.json": "12540aa4ad48ff11952b64b7f53d1a55da1a29ab07363e4dfce2323e489d3c46",
+        "reports/raw/record-authorization/mutations/can/relationship_gate/restored/requests.jsonl": "98d061514a2349a750a500ed6e04a39ca1e8a94dce4883b9daee827969c11bbd"
+      }
+    },
+    {
+      "mutation": "organization_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/organizations_controller.rb",
+      "before": "if pad_user_id != \"IAM_SYSTEM\"",
+      "after": "if false",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle organization records and account enumeration require their distinct exact organization grants"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/organization_gate/results.json": "ecc44d404586219299c5d026e50e015d8a5b3c72db3a9f39fd9d20b07326b515",
+        "reports/raw/record-authorization/mutations/can/organization_gate/requests.jsonl": "a3d24a7b3c23accf4f2bd55043b287a29ce20be49b8e266e18a557bdaaec8668",
+        "reports/raw/record-authorization/mutations/can/organization_gate/restored/results.json": "5564bb70e7c2caee0002f067b9da7111f71622cd4700d028a01bf3fd47dc353a",
+        "reports/raw/record-authorization/mutations/can/organization_gate/restored/requests.jsonl": "6d4c32653e8109509e2d42996701f60868f3bd4d083d35474fe9aba427289f19"
+      }
+    },
+    {
+      "mutation": "user_count_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "user-service/app/controllers/users_counts_controller.rb",
+      "before": "def authorize_account_user_counts!(account_ids)",
+      "after": "def authorize_account_user_counts!(account_ids)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle users counts authorize each requested account including zero counts and mixed batches"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/user_count_gate/results.json": "f663852377798e1c3a43b005b4293e28e436a2f2ee83d9d6b063dafec9797307",
+        "reports/raw/record-authorization/mutations/can/user_count_gate/requests.jsonl": "38d0c4130f5ac9a2f6668f8cfe07b5ead0ba4e85d13f1813aade00cdacafb537",
+        "reports/raw/record-authorization/mutations/can/user_count_gate/restored/results.json": "10cf9b5b8d4c1e26a75472926ae55372c2d23d50cf2fe2eea1eed0aa37712c95",
+        "reports/raw/record-authorization/mutations/can/user_count_gate/restored/requests.jsonl": "84c23285e09c2b7392f1fbbe6325f58e9d5b9d0ea7059094d2dc99671bb75e42"
+      }
+    },
+    {
+      "mutation": "group_count_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "group-service/app/controllers/groups_counts_controller.rb",
+      "before": "def authorize_account_group_counts!(account_ids)",
+      "after": "def authorize_account_group_counts!(account_ids)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle groups counts authorize each requested account including zero counts and mixed batches"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/group_count_gate/results.json": "bfc09930f91407d251a0e0892967b7ac2ef65b2ad3382201555e1c68d17823ea",
+        "reports/raw/record-authorization/mutations/can/group_count_gate/requests.jsonl": "47a5895d590bfb61e7c21df16bf5130cc8e52f807770483364dd7c6b6bc9caf3",
+        "reports/raw/record-authorization/mutations/can/group_count_gate/restored/results.json": "6abe8100d500b8b63f6ff09b13e37869b81830f45e74adc8e0041e8056e58d82",
+        "reports/raw/record-authorization/mutations/can/group_count_gate/restored/requests.jsonl": "763d135be1110cc7453fd5393b8d3e4b77b121a25bbea760755488340b6833a5"
+      }
+    },
+    {
+      "mutation": "hierarchy_output_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "account-service/app/controllers/accounts_controller.rb",
+      "before": "def authorize_hierarchy_records!(actor, hierarchies)",
+      "after": "def authorize_hierarchy_records!(actor, hierarchies)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle hierarchy records require authority on every returned ancestor as well as requested accounts"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/hierarchy_output_gate/results.json": "19e108a69866bdff7ccb0294e1849b6c88dcd6f45fe81c447e84819a46266d7d",
+        "reports/raw/record-authorization/mutations/can/hierarchy_output_gate/requests.jsonl": "454d121d5f0503d9dd2e511fef51d7cdd01d8b1dcfe3c6ec6c7f6d4bcb9377bf",
+        "reports/raw/record-authorization/mutations/can/hierarchy_output_gate/restored/results.json": "018bed6de86c7e403bb17da18dc9b408e4d8b2ef4d21044e8f053cda4f347f1a",
+        "reports/raw/record-authorization/mutations/can/hierarchy_output_gate/restored/requests.jsonl": "94e1d2624fdfffe742b006ee0f64d8ad5534c75d6c4bccb5759427feed81c321"
+      }
+    },
+    {
+      "mutation": "organization_count_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/organizations/accounts_count_controller.rb",
+      "before": "if pad_user_id != \"IAM_SYSTEM\" && !organization_accounts_read?(pad_user_id, org_id)",
+      "after": "if false",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle organization records and account enumeration require their distinct exact organization grants"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/organization_count_gate/results.json": "b066692edd4e932fe082fe525f4de01d4adda5d5d68bb29284be2b0be590a207",
+        "reports/raw/record-authorization/mutations/can/organization_count_gate/requests.jsonl": "7eca8390051eb48366710405797942418b22bca2b1c3ecf69bc38ec552478040",
+        "reports/raw/record-authorization/mutations/can/organization_count_gate/restored/results.json": "5494b7424266e8b2a040078ec4405cfd49747be1e30ed59724e8f45a6849ff49",
+        "reports/raw/record-authorization/mutations/can/organization_count_gate/restored/requests.jsonl": "6d4c32653e8109509e2d42996701f60868f3bd4d083d35474fe9aba427289f19"
+      }
+    },
+    {
+      "mutation": "organization_enumeration_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/organization_accounts_controller.rb",
+      "before": "unless actor == \"IAM_SYSTEM\" || organization_accounts_read?(actor, organization_ids)",
+      "after": "unless true",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle organization context requires account read AND enumeration, plus organization read when embedding the record"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/organization_enumeration_gate/results.json": "182fd7fa44c65c59fc94a8bd951deaa80d9d85dac1c31a31f36eb14a4a9f7761",
+        "reports/raw/record-authorization/mutations/can/organization_enumeration_gate/requests.jsonl": "867a32a0b847a9d3b81dc184b550f12dbbb35c1a61641f727f50617ab4de2252",
+        "reports/raw/record-authorization/mutations/can/organization_enumeration_gate/restored/results.json": "6e95dc78eb83839ee60f8de71f3f309d9c953f2ca2ded3977892fc60efa27cd4",
+        "reports/raw/record-authorization/mutations/can/organization_enumeration_gate/restored/requests.jsonl": "5977162efd4774968a10fde22b0086a7b66f7ee53ba088c0aefdb5c70242befa"
+      }
+    },
+    {
+      "mutation": "msp_page_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/models/user.rb",
+      "before": "def self.user_can(user_id, scope_type, permission, scope_id)",
+      "after": "def self.user_can(user_id, scope_type, permission, scope_id)\n    return true",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle MSP pages require the actual permission on the provider and each managed target, never a role or unrelated grant"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/msp_page_gate/results.json": "b9cfe73084b6cad82f09f92fbc285c28d75a866f9b54dc91e490d23ffbf737a9",
+        "reports/raw/record-authorization/mutations/can/msp_page_gate/requests.jsonl": "fb91c811001c5c9563bebc0dc980854b6fdaa8d150cbc3ddeb83bf21f205b57d",
+        "reports/raw/record-authorization/mutations/can/msp_page_gate/restored/results.json": "12beab9f78fe2b134b010f353daf2a9ddfe5456f2078d56a5dcf38a655a0c3a2",
+        "reports/raw/record-authorization/mutations/can/msp_page_gate/restored/requests.jsonl": "bfedd4ccd2bee611f66ca90c45172bc96cba13ecf3f6073c180f23308f9289bc"
+      }
+    },
+    {
+      "mutation": "internal_group_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "group-service/app/controllers/internal/auth/contexts_controller.rb",
+      "before": "def require_auth_system!",
+      "after": "def require_auth_system!\n        return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle internal record and relationship lookups reject real actors and the wrong trusted context"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/internal_group_gate/results.json": "beaea8f8928ed0b2839503686917686cc16acc618924d62e53da006464aff185",
+        "reports/raw/record-authorization/mutations/can/internal_group_gate/requests.jsonl": "e5a2ff3fa3c49b4bb25170cd49f3a28d4ff4590a5355296023e51ab290e08886",
+        "reports/raw/record-authorization/mutations/can/internal_group_gate/restored/results.json": "e71ca1c29711e435ecb79cc0bde833216df871b14b3dbe1c2fff50a0373d0763",
+        "reports/raw/record-authorization/mutations/can/internal_group_gate/restored/requests.jsonl": "bbd29bffc9f2df6351502afe28c31dfebd0496e57d6da9ca02da3d17c451584a"
+      }
+    },
+    {
+      "mutation": "internal_organization_facts_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/internal/auth/account_contexts_controller.rb",
+      "before": "def require_iam_system_auth!",
+      "after": "def require_iam_system_auth!\n        return true",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle internal record and relationship lookups reject real actors and the wrong trusted context"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/internal_organization_facts_gate/results.json": "80cea4eb44abc86fdb6d7964f694efb80bf411e738a7aaa37c3bcec79abd40a6",
+        "reports/raw/record-authorization/mutations/can/internal_organization_facts_gate/requests.jsonl": "f96390be8646066614fff210c1b19bd7a7b60db9dcda962c825a684f15522f49",
+        "reports/raw/record-authorization/mutations/can/internal_organization_facts_gate/restored/results.json": "a1df7c6baf1d08bca1f605ac3c84893a17e53f805d6fd862cf556f3d4c6b0fa5",
+        "reports/raw/record-authorization/mutations/can/internal_organization_facts_gate/restored/requests.jsonl": "bbd29bffc9f2df6351502afe28c31dfebd0496e57d6da9ca02da3d17c451584a"
+      }
+    },
+    {
+      "mutation": "internal_admin_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/app/controllers/internal/admin_users_controller.rb",
+      "before": "def require_iam_system!",
+      "after": "def require_iam_system!\n      return true",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle internal record and relationship lookups reject real actors and the wrong trusted context"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/internal_admin_gate/results.json": "2af788325ea69774703c5d8b70d5b9b4fdba1a665d1510ba6fbb94c253a71fb8",
+        "reports/raw/record-authorization/mutations/can/internal_admin_gate/requests.jsonl": "11e0689839fbbe0a46a81d675ac6fbb9540cbe0b5458fe7d4b5d32a86baae3e2",
+        "reports/raw/record-authorization/mutations/can/internal_admin_gate/restored/results.json": "4fd48c81ef1baabb8483bf17e223769c99accd615796820ea3094cbbc408b769",
+        "reports/raw/record-authorization/mutations/can/internal_admin_gate/restored/requests.jsonl": "bbd29bffc9f2df6351502afe28c31dfebd0496e57d6da9ca02da3d17c451584a"
+      }
+    },
+    {
+      "mutation": "internal_random_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/internal/random_records_controller.rb",
+      "before": "def require_iam_system!",
+      "after": "def require_iam_system!\n      return true",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle internal record and relationship lookups reject real actors and the wrong trusted context"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/internal_random_gate/results.json": "5ddf04beb3b4f939e928a394d683c089fb4a1c9bd9c11bad6fd61f0446d1f073",
+        "reports/raw/record-authorization/mutations/can/internal_random_gate/requests.jsonl": "dcdb9afcd7b7a00ff5faa89965f25d850e531901b22b1cf076c38e14f6fe3288",
+        "reports/raw/record-authorization/mutations/can/internal_random_gate/restored/results.json": "4677d27c5f2006daf9ad46d78b20c0ece23735b30ae9a5e0ac037e958e301420",
+        "reports/raw/record-authorization/mutations/can/internal_random_gate/restored/requests.jsonl": "bbd29bffc9f2df6351502afe28c31dfebd0496e57d6da9ca02da3d17c451584a"
+      }
+    },
+    {
+      "mutation": "internal_msp_gate",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/internal/msp_managed_organizations_controller.rb",
+      "before": "def require_internal_system!",
+      "after": "def require_internal_system!\n      return true",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle internal record and relationship lookups reject real actors and the wrong trusted context"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/internal_msp_gate/results.json": "d4427c604a239ba2cfd38fd23761898fcccbb809b3f3f80bc7c4af7f9d4e90fc",
+        "reports/raw/record-authorization/mutations/can/internal_msp_gate/requests.jsonl": "51fade9bd97713ec925f671075961db4b1802ad07d637c27318b12a3ed5cfe33",
+        "reports/raw/record-authorization/mutations/can/internal_msp_gate/restored/results.json": "354330c98dc7c41cbd7479e94dad07678f1c37022280b1edc66c16222ab61365",
+        "reports/raw/record-authorization/mutations/can/internal_msp_gate/restored/requests.jsonl": "bbd29bffc9f2df6351502afe28c31dfebd0496e57d6da9ca02da3d17c451584a"
+      }
+    },
+    {
+      "mutation": "batch_any_target",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/app/controllers/can_controller.rb",
+      "before": "requested_account_ids.all? { |account_id| authorized_account_ids.include?(account_id) }",
+      "after": "requested_account_ids.any? { |account_id| authorized_account_ids.include?(account_id) }",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle account respects read grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/batch_any_target/results.json": "f52c87f909dcacd0c5288b7864b125c2c9420ac48433280a09c4728d90eb6c18",
+        "reports/raw/record-authorization/mutations/can/batch_any_target/requests.jsonl": "bea10d98a75be433a139129a5e0ee0423d7b318a0a6dac57101c1756f86f11e3",
+        "reports/raw/record-authorization/mutations/can/batch_any_target/restored/results.json": "0314be6d5b2f95a0f9fd2ca9308433bbaaa9bd8836fe3806c63ecbfad7c87f3e",
+        "reports/raw/record-authorization/mutations/can/batch_any_target/restored/requests.jsonl": "4ba0e4183a7468a37f7b94c3f650603680b271c53e6c34ea0c81c54b580c8b2c"
+      }
+    },
+    {
+      "mutation": "scope_is_ignored",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/lib/authorization/capabilities.rb",
+      "before": "def account_scope_ids_for(account_ids)",
+      "after": "def account_scope_ids_for(account_ids)\n      return account_ids.to_h { |id| [id, CapabilityGrant.where(group_id: group_ids, scope_type: \"Account\").distinct.pluck(:scope_id)] }",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle account respects read grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/scope_is_ignored/results.json": "2b59d26335819703065e6a1be57182f42d9ea082c0ee1372b20afb3e7a702227",
+        "reports/raw/record-authorization/mutations/can/scope_is_ignored/requests.jsonl": "ad5c7c54df26b865cbbfa40f228ce320bcebb95b581bb4bbeb129410f587a9b7",
+        "reports/raw/record-authorization/mutations/can/scope_is_ignored/restored/results.json": "5cbeb29b1d7db5c9061c41ac90bbd44cf33457bd42009cbdbf9138bcf10846a5",
+        "reports/raw/record-authorization/mutations/can/scope_is_ignored/restored/requests.jsonl": "4ba0e4183a7468a37f7b94c3f650603680b271c53e6c34ea0c81c54b580c8b2c"
+      }
+    },
+    {
+      "mutation": "permission_is_ignored",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/lib/authorization/capabilities.rb",
+      "before": ".distinct.pluck(:permission).sort\n      end\n    end\n\n    def for_group",
+      "after": ".distinct.pluck(:permission).then { |ps| ps.empty? ? [] : %w[account.read account.users.read] }\n      end\n    end\n\n    def for_group",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle user rejects wrong permission, wrong scope, nonmember, and missing actor after an allowed read"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/permission_is_ignored/results.json": "920ee8479b80d6f7279a075ecb4440d3594af1f7a7cf19e107d439c17cbd642c",
+        "reports/raw/record-authorization/mutations/can/permission_is_ignored/requests.jsonl": "4434f44842b54899ff4ab4029b9e02bc6422c2a03403744b0c26d7c1c14bb549",
+        "reports/raw/record-authorization/mutations/can/permission_is_ignored/restored/results.json": "45806fb41772f7492807d4531027b86f3aa0c8170e5b949aa35c3caa7de02902",
+        "reports/raw/record-authorization/mutations/can/permission_is_ignored/restored/requests.jsonl": "34c81f1cc85a47be89701ad5ec48cef648424262a8c9e7121de464105a3225b0"
+      }
+    },
+    {
+      "mutation": "membership_is_ignored",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/lib/authorization/capabilities.rb",
+      "before": "@group_ids ||= @group_context_client.group_ids_for(@user_id)",
+      "after": "@group_ids ||= CapabilityGrant.distinct.pluck(:group_id)",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle user rejects wrong permission, wrong scope, nonmember, and missing actor after an allowed read"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/membership_is_ignored/results.json": "da3bbd5d19b9e3c8374b3d3713121a4a7fecb3796b224621221f392c6754771f",
+        "reports/raw/record-authorization/mutations/can/membership_is_ignored/requests.jsonl": "4434f44842b54899ff4ab4029b9e02bc6422c2a03403744b0c26d7c1c14bb549",
+        "reports/raw/record-authorization/mutations/can/membership_is_ignored/restored/results.json": "73331acd7a9f4fc571275ce5dde20e19729c64d3de98f919e7479c9399d40d35",
+        "reports/raw/record-authorization/mutations/can/membership_is_ignored/restored/requests.jsonl": "34c81f1cc85a47be89701ad5ec48cef648424262a8c9e7121de464105a3225b0"
+      }
+    },
+    {
+      "mutation": "exact_group_scope_is_ignored",
+      "mode": "can",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/lib/authorization/capabilities.rb",
+      "before": "CapabilityGrant.where(group_id: group_ids, scope_type: \"Group\", scope_id: group_id)",
+      "after": "CapabilityGrant.where(group_id: group_ids, scope_type: \"Group\")",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle group and membership exact grants stay on one group, combine per target, and require membership"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/can/exact_group_scope_is_ignored/results.json": "b5785bfe3e299c18b1393d41a2b0285d84295aee8589385dcaeb84f38254d6ea",
+        "reports/raw/record-authorization/mutations/can/exact_group_scope_is_ignored/requests.jsonl": "d3c48d03d3125f44f8c126b2c3864255f634b725646c32139554990d1962e648",
+        "reports/raw/record-authorization/mutations/can/exact_group_scope_is_ignored/restored/results.json": "96791403a4818e0c38c65248893bdaadd5c0f15a671bb482536eb9a836ca07a6",
+        "reports/raw/record-authorization/mutations/can/exact_group_scope_is_ignored/restored/requests.jsonl": "abcaee00130c354e73b99d4b9c30f58965aee989bdc33d73314097a53944ff3e"
+      }
+    },
+    {
+      "mutation": "account_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "account-service/app/controllers/accounts_controller.rb",
+      "before": "def authorize_account_collection_read!(accounts)",
+      "after": "def authorize_account_collection_read!(accounts)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle account respects read grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/account_gate/results.json": "6a1c69c1ba95a7d08ca5ceab39bea6463e0bf8bcd7081bc6be2d661ce780245b",
+        "reports/raw/record-authorization/mutations/capabilities/account_gate/requests.jsonl": "60f914d014358199798a9fd1ad7b1912e49635951b86201068ca8a53309bd99f",
+        "reports/raw/record-authorization/mutations/capabilities/account_gate/restored/results.json": "7310e681739fd8533010b9fb86a2cdd506fae3f5b8b2109384e6fee742f8fedd",
+        "reports/raw/record-authorization/mutations/capabilities/account_gate/restored/requests.jsonl": "b71d3aaaf139033876ce07c4868710ab6f6664e28a57d555c0d998a1c4b1d93d"
+      }
+    },
+    {
+      "mutation": "user_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "user-service/app/controllers/users_controller.rb",
+      "before": "def authorize_user_collection_read!(users)",
+      "after": "def authorize_user_collection_read!(users)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle user respects users grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/user_gate/results.json": "1e604ecb2d57935718b4852b5fa8d864814f6ef7e580d4dcfb86e6e2e03ed232",
+        "reports/raw/record-authorization/mutations/capabilities/user_gate/requests.jsonl": "8f2b86a5e55d55a714f9f37272866c65042e9382d9ae00351bbf41eb47a24549",
+        "reports/raw/record-authorization/mutations/capabilities/user_gate/restored/results.json": "0e1b2a6913f7dd8c26747a220a10844de68d3ccfc7564891492660b69869abc4",
+        "reports/raw/record-authorization/mutations/capabilities/user_gate/restored/requests.jsonl": "58dda3d322d628f4f52446a9a5884b5ced0cb38c527673df62fe18c710b570b6"
+      }
+    },
+    {
+      "mutation": "group_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "group-service/app/controllers/groups_controller.rb",
+      "before": "def authorize_group_collection_read!(groups)",
+      "after": "def authorize_group_collection_read!(groups)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle group respects users grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/group_gate/results.json": "dc220d04500b916d9eae7f8e1b2736bacc90f78a544ff6fb334b27073ec137c1",
+        "reports/raw/record-authorization/mutations/capabilities/group_gate/requests.jsonl": "a7222cfebbcd8c9f1e0f1974a896ff39cc470e186bf6906681e52682e0eddf4d",
+        "reports/raw/record-authorization/mutations/capabilities/group_gate/restored/results.json": "28c5354f8b9bcbc155d004611d8b3d5477bb017cd86f6d17dad7db7cdafa9674",
+        "reports/raw/record-authorization/mutations/capabilities/group_gate/restored/requests.jsonl": "85009db4a1a58ec28c2f3b7a4e7744d29f2db8406aeecce05064d68fb0c61d52"
+      }
+    },
+    {
+      "mutation": "membership_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "group-service/app/controllers/group_users_controller.rb",
+      "before": "def authorize_group_user_collection_read!(group_users)",
+      "after": "def authorize_group_user_collection_read!(group_users)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle membership respects users grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/membership_gate/results.json": "903b4e1d5b38b90c4c8b2a73efdc6a50475c0acf646bc76af8f78fe0bc702fb4",
+        "reports/raw/record-authorization/mutations/capabilities/membership_gate/requests.jsonl": "cad93966595dd37a6c75964ac46abbf55040ee85e71f8cea7dcd2594f93b3f47",
+        "reports/raw/record-authorization/mutations/capabilities/membership_gate/restored/results.json": "1230ac8f20582f52e521d451698af6580d6c203fa8d143ef4ea7666f4dc2e67d",
+        "reports/raw/record-authorization/mutations/capabilities/membership_gate/restored/requests.jsonl": "42f1ecf2ad440d9edeb9974f2978eeb9356afcc56c30cc018367e815a6410464"
+      }
+    },
+    {
+      "mutation": "relationship_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/organization_accounts_controller.rb",
+      "before": "def authorize_relationship_read!(actor, relationship)",
+      "after": "def authorize_relationship_read!(actor, relationship)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle organization_relationship respects read grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/relationship_gate/results.json": "fb92e4edd2666b393e73ba0e49d7a100d997d0f9c18c30f2e04f49d1a35f51ee",
+        "reports/raw/record-authorization/mutations/capabilities/relationship_gate/requests.jsonl": "f9b715ab259bbf2248bd9fe9fb42b30768415f49a4e3eb43ead26f4de3dc3608",
+        "reports/raw/record-authorization/mutations/capabilities/relationship_gate/restored/results.json": "58d2cb1043073066d7ba127c81576cfbfce742dc194c3c36b6c6f3951fce7ed1",
+        "reports/raw/record-authorization/mutations/capabilities/relationship_gate/restored/requests.jsonl": "28b423fcabbd26cd2f9dfeaafb205f9f51fdef100a537469b5dfe96edb052b1b"
+      }
+    },
+    {
+      "mutation": "organization_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/organizations_controller.rb",
+      "before": "if pad_user_id != \"IAM_SYSTEM\"",
+      "after": "if false",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle organization records and account enumeration require their distinct exact organization grants"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/organization_gate/results.json": "a5554ebf57326060f4ae70382b958b2a69afb15628878447ffdba256cea107bd",
+        "reports/raw/record-authorization/mutations/capabilities/organization_gate/requests.jsonl": "b5dc3b74bca4acb24818a2a8a69804876a6781e15835277c8f09b37186e17639",
+        "reports/raw/record-authorization/mutations/capabilities/organization_gate/restored/results.json": "605fbc0f3b052030aed167f63544131796762fa03ea74fae656d445167f59dbf",
+        "reports/raw/record-authorization/mutations/capabilities/organization_gate/restored/requests.jsonl": "58c3ea920758d7e7ea38b1fb662fc3f3fdad4416b99b0bf1f71e3960808d747c"
+      }
+    },
+    {
+      "mutation": "user_count_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "user-service/app/controllers/users_counts_controller.rb",
+      "before": "def authorize_account_user_counts!(account_ids)",
+      "after": "def authorize_account_user_counts!(account_ids)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle users counts authorize each requested account including zero counts and mixed batches"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/user_count_gate/results.json": "55509a8db5ee5026fa02cf2b518f85a1aa2393b99eb7314bc282dd1bae3aa360",
+        "reports/raw/record-authorization/mutations/capabilities/user_count_gate/requests.jsonl": "745a28c5223867b46a0d01971b8133ff4788804685d878b1385fc1eb0df3d8f8",
+        "reports/raw/record-authorization/mutations/capabilities/user_count_gate/restored/results.json": "9905d47c7e28cefe9329a10fbe7559fd4cf6a5b3d01e46209f205eb828141524",
+        "reports/raw/record-authorization/mutations/capabilities/user_count_gate/restored/requests.jsonl": "7f061160c597998ce3eabd2533b86d6c9fe37e592cf733e395b7a9a28561b3c4"
+      }
+    },
+    {
+      "mutation": "group_count_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "group-service/app/controllers/groups_counts_controller.rb",
+      "before": "def authorize_account_group_counts!(account_ids)",
+      "after": "def authorize_account_group_counts!(account_ids)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle groups counts authorize each requested account including zero counts and mixed batches"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/group_count_gate/results.json": "a3618e6a0eaa8813471dece43c57e8f4f1f89d29d204b4c9b627a426927c1804",
+        "reports/raw/record-authorization/mutations/capabilities/group_count_gate/requests.jsonl": "9223bc5c57d87dda11164e140a85ab8c90ff349b6ac11292e5bae1c55b23670e",
+        "reports/raw/record-authorization/mutations/capabilities/group_count_gate/restored/results.json": "59f4f0298c83d79ab3eb5d3d0558c605ba9fb1c96925029422340dda29d80950",
+        "reports/raw/record-authorization/mutations/capabilities/group_count_gate/restored/requests.jsonl": "6f35926e8edfde7ec1330cd0110469204fe67308b7f1aad8a1bc08a690648e96"
+      }
+    },
+    {
+      "mutation": "hierarchy_output_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "account-service/app/controllers/accounts_controller.rb",
+      "before": "def authorize_hierarchy_records!(actor, hierarchies)",
+      "after": "def authorize_hierarchy_records!(actor, hierarchies)\n    return",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle hierarchy records require authority on every returned ancestor as well as requested accounts"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/hierarchy_output_gate/results.json": "64897d7a6d9b52c2bf87c534993d60227e97acd835c709d352e053a4d57b2a75",
+        "reports/raw/record-authorization/mutations/capabilities/hierarchy_output_gate/requests.jsonl": "18be1814d415dd17dfc463b7386075a30546f292d1d552536b91adcfd552f42e",
+        "reports/raw/record-authorization/mutations/capabilities/hierarchy_output_gate/restored/results.json": "f191736afcd2d45a6bdbe66340bd0de1a79caad15a0735970485f6bbcad4d120",
+        "reports/raw/record-authorization/mutations/capabilities/hierarchy_output_gate/restored/requests.jsonl": "a2b03e2d027973afe5a931da98aef702ec9bb18743074a48bf9aa0282c8ad145"
+      }
+    },
+    {
+      "mutation": "organization_count_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/organizations/accounts_count_controller.rb",
+      "before": "if pad_user_id != \"IAM_SYSTEM\" && !organization_accounts_read?(pad_user_id, org_id)",
+      "after": "if false",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle organization records and account enumeration require their distinct exact organization grants"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/organization_count_gate/results.json": "f250d69172243a8d3b8ced5f587ed0aa5e8f9e381538acd0d70b09742802c5d8",
+        "reports/raw/record-authorization/mutations/capabilities/organization_count_gate/requests.jsonl": "c4ebb9c8df0f761cc4ea2ec62e2ae9f3e62310183c0172120a4776411d8562e8",
+        "reports/raw/record-authorization/mutations/capabilities/organization_count_gate/restored/results.json": "c3456cc87a95735b0e61cc8f59f13ff3f4359009b5fd13f646c7c4ede3228bb6",
+        "reports/raw/record-authorization/mutations/capabilities/organization_count_gate/restored/requests.jsonl": "58c3ea920758d7e7ea38b1fb662fc3f3fdad4416b99b0bf1f71e3960808d747c"
+      }
+    },
+    {
+      "mutation": "organization_enumeration_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/controllers/organization_accounts_controller.rb",
+      "before": "unless actor == \"IAM_SYSTEM\" || organization_accounts_read?(actor, organization_ids)",
+      "after": "unless true",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle organization context requires account read AND enumeration, plus organization read when embedding the record"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/organization_enumeration_gate/results.json": "ebcd9b38ca5fde3adcfb99bd22f9c10a879781d25e956cd3cdf8cdde7bc5b74a",
+        "reports/raw/record-authorization/mutations/capabilities/organization_enumeration_gate/requests.jsonl": "36d574262e3a2387c1e7a6199d33b9fabd29f2bb1a050248a54ac553e20032d6",
+        "reports/raw/record-authorization/mutations/capabilities/organization_enumeration_gate/restored/results.json": "fb1f898e22fb79b0c9cd49b9b4ea30eabbf954a68636495de4401bc33ac23c51",
+        "reports/raw/record-authorization/mutations/capabilities/organization_enumeration_gate/restored/requests.jsonl": "a7a3bbbed9dc4d73644fffb526b604cfd3b1877f556f43c042988e9753d592f3"
+      }
+    },
+    {
+      "mutation": "msp_page_gate",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "organization-service/app/models/user.rb",
+      "before": "def self.user_can(user_id, scope_type, permission, scope_id)",
+      "after": "def self.user_can(user_id, scope_type, permission, scope_id)\n    return true",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle MSP pages require the actual permission on the provider and each managed target, never a role or unrelated grant"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/msp_page_gate/results.json": "a4e5fd30ba2895a155c4f76544ccaf5addcb96d09521813ae35a190cb1665124",
+        "reports/raw/record-authorization/mutations/capabilities/msp_page_gate/requests.jsonl": "099aaef15d606fa26bbe41fe944768ea22923db3585080223bad77bd57541ce4",
+        "reports/raw/record-authorization/mutations/capabilities/msp_page_gate/restored/results.json": "3aa63830484d44193443dcb6595cdf5dfc22917a482c68fb0117aba29646880e",
+        "reports/raw/record-authorization/mutations/capabilities/msp_page_gate/restored/requests.jsonl": "f4899968c06cd25c1cd4d1e7bc4b8fb47b9dd8a28bb635fb232b5279cc6fc65f"
+      }
+    },
+    {
+      "mutation": "batch_any_target",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "account-service/app/models/user.rb",
+      "before": "scope_ids.all? { |scope_id| Array(capabilities_by_scope[scope_id]).include?(permission) }",
+      "after": "scope_ids.any? { |scope_id| Array(capabilities_by_scope[scope_id]).include?(permission) }",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle account respects read grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/batch_any_target/results.json": "7ee0612502d34dc7ab71ae27e89f04d1aff89d7997a1c6ca792850066f908241",
+        "reports/raw/record-authorization/mutations/capabilities/batch_any_target/requests.jsonl": "2b9875f63ba8641e618d731e2a2c7dc84f7aec3efe0af0b844fbd03b5722ad44",
+        "reports/raw/record-authorization/mutations/capabilities/batch_any_target/restored/results.json": "1c434911a9f89b20a2b5d2afab3b46debc2cde1b0b809be2905cebf34a1e9801",
+        "reports/raw/record-authorization/mutations/capabilities/batch_any_target/restored/requests.jsonl": "b71d3aaaf139033876ce07c4868710ab6f6664e28a57d555c0d998a1c4b1d93d"
+      }
+    },
+    {
+      "mutation": "scope_is_ignored",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/lib/authorization/capabilities.rb",
+      "before": "def account_scope_ids_for(account_ids)",
+      "after": "def account_scope_ids_for(account_ids)\n      return account_ids.to_h { |id| [id, CapabilityGrant.where(group_id: group_ids, scope_type: \"Account\").distinct.pluck(:scope_id)] }",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle account respects read grant at child for individual, filtered, and mixed reads"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/scope_is_ignored/results.json": "8abc01224c00a4754230d8cf37ab8b55e06c348af54cdddb24172574327354aa",
+        "reports/raw/record-authorization/mutations/capabilities/scope_is_ignored/requests.jsonl": "2ed56d6fec67f7d49c77abb0977554bdd7ea26f9f4c378e5c458e2b889986da3",
+        "reports/raw/record-authorization/mutations/capabilities/scope_is_ignored/restored/results.json": "3291bc8a4c88cf1676a0cb63ec2ceb9e427ddfcd97d2321c02510e1eacd0c804",
+        "reports/raw/record-authorization/mutations/capabilities/scope_is_ignored/restored/requests.jsonl": "b71d3aaaf139033876ce07c4868710ab6f6664e28a57d555c0d998a1c4b1d93d"
+      }
+    },
+    {
+      "mutation": "permission_is_ignored",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/lib/authorization/capabilities.rb",
+      "before": ".distinct.pluck(:permission).sort\n      end\n    end\n\n    def for_group",
+      "after": ".distinct.pluck(:permission).then { |ps| ps.empty? ? [] : %w[account.read account.users.read] }\n      end\n    end\n\n    def for_group",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle user rejects wrong permission, wrong scope, nonmember, and missing actor after an allowed read"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/permission_is_ignored/results.json": "28a2ba3fbabb9e6c366c7a8c0b821520d73ffe4bdaca5f79a97518692ece1376",
+        "reports/raw/record-authorization/mutations/capabilities/permission_is_ignored/requests.jsonl": "6bb5957b15951e993576497a0683c25c1fbfd8e29fb54c9f4b5717bc21ad0444",
+        "reports/raw/record-authorization/mutations/capabilities/permission_is_ignored/restored/results.json": "ba9f7ec55f369c4ee15aed4be66af450a062117b19c0fd77e327f3b5d81fe906",
+        "reports/raw/record-authorization/mutations/capabilities/permission_is_ignored/restored/requests.jsonl": "9ccba14352447b2b62c419c909062e78ae49bb1c7c928ec3a44b1696e2b4ff74"
+      }
+    },
+    {
+      "mutation": "membership_is_ignored",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/lib/authorization/capabilities.rb",
+      "before": "@group_ids ||= @group_context_client.group_ids_for(@user_id)",
+      "after": "@group_ids ||= CapabilityGrant.distinct.pluck(:group_id)",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle user rejects wrong permission, wrong scope, nonmember, and missing actor after an allowed read"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/membership_is_ignored/results.json": "cdbb8042d300ec271991341ff1a511caea01dd8948e5f317747e719973a0c658",
+        "reports/raw/record-authorization/mutations/capabilities/membership_is_ignored/requests.jsonl": "6bb5957b15951e993576497a0683c25c1fbfd8e29fb54c9f4b5717bc21ad0444",
+        "reports/raw/record-authorization/mutations/capabilities/membership_is_ignored/restored/results.json": "c14baed5ded1c4f0a8a330bb4e9567ded1902eaa3ac89ac11f2dff85668d62de",
+        "reports/raw/record-authorization/mutations/capabilities/membership_is_ignored/restored/requests.jsonl": "9ccba14352447b2b62c419c909062e78ae49bb1c7c928ec3a44b1696e2b4ff74"
+      }
+    },
+    {
+      "mutation": "exact_group_scope_is_ignored",
+      "mode": "capabilities",
+      "caught": true,
+      "restored_passed": true,
+      "exit": 1,
+      "source": "authorization-service/lib/authorization/capabilities.rb",
+      "before": "CapabilityGrant.where(group_id: group_ids, scope_type: \"Group\", scope_id: group_id)",
+      "after": "CapabilityGrant.where(group_id: group_ids, scope_type: \"Group\")",
+      "failed_examples": [
+        "Every checked record type: independent authorization oracle group and membership exact grants stay on one group, combine per target, and require membership"
+      ],
+      "hashes": {
+        "reports/raw/record-authorization/mutations/capabilities/exact_group_scope_is_ignored/results.json": "5237965810d082a4afe2d513fb43be635373c16bc3083bcf2e0abd45a619ca9e",
+        "reports/raw/record-authorization/mutations/capabilities/exact_group_scope_is_ignored/requests.jsonl": "9c21ad1375cad06aef161da76d68304f824f58dcf2d948df3afa59e688afd8e6",
+        "reports/raw/record-authorization/mutations/capabilities/exact_group_scope_is_ignored/restored/results.json": "909a5092d70b0d04f20fdfd82cea6fc52bb32cee6ff56eefde8efaa6d0f57b51",
+        "reports/raw/record-authorization/mutations/capabilities/exact_group_scope_is_ignored/restored/requests.jsonl": "8f9bf7ece98c8e75e8c6eede092afb9a517f73f6b1eba8c6404dfe943c4381fd"
+      }
+    }
+  ],
+  "trace_profiles": [
+    {
+      "mode": "can",
+      "traces": [
+        {
+          "name": "Allow Account | actor read_child | target child | can | Redis cold",
+          "trace_id": "530888404e3b0e25df42ac1f7111a25e",
+          "parent_id": "e52893fe6ee31ef8",
+          "service": "account-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/530888404e3b0e25df42ac1f7111a25e",
+          "spans": 44,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "80f1ac16925f48c01bd166cdc0c649e4a85a2d21c52de4931029bcf9d7c53c30"
+        },
+        {
+          "name": "Allow Account | actor read_child | target child | can | Redis warm",
+          "trace_id": "ca9646093cf6be228035faf0bc2c88c2",
+          "parent_id": "cdf4fc54beaef8d0",
+          "service": "account-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/ca9646093cf6be228035faf0bc2c88c2",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "c00716acdedfe65b73176bfebd56d7f7374a4b06bb2e9bc121311382f9b3d8e6"
+        },
+        {
+          "name": "Deny Account | actor read_child | target sibling | can | Redis cold",
+          "trace_id": "4d564dcb162a1f89e0fd971450572d27",
+          "parent_id": "c06eb1fb5ddec70b",
+          "service": "account-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/4d564dcb162a1f89e0fd971450572d27",
+          "spans": 44,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "0f89ce1ae127ce310f92e0551f8304f906faa846d464add562faaa3c6172ac34"
+        },
+        {
+          "name": "Deny Account | actor read_child | target sibling | can | Redis warm",
+          "trace_id": "5d52b5a1f2a5c24caac71f94f00cd99f",
+          "parent_id": "f5f851ce03b0af11",
+          "service": "account-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/5d52b5a1f2a5c24caac71f94f00cd99f",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "57dce65edd8acc4d4ab3654ea8309c1368ca185814b6e4ff83318bad4d87bcf5"
+        },
+        {
+          "name": "Allow User | actor users_child | target child | can | Redis cold",
+          "trace_id": "469b4246374c32c2f5fc20efd4d25014",
+          "parent_id": "507049eb4a090984",
+          "service": "user-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/469b4246374c32c2f5fc20efd4d25014",
+          "spans": 42,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "d514eee3156adc1862fdd83446ae85cac015960bf926d7b9ef2194e06336f02e"
+        },
+        {
+          "name": "Allow User | actor users_child | target child | can | Redis warm",
+          "trace_id": "38387e12a0946cb16510ce6aebe71025",
+          "parent_id": "2c034f17b01d24c4",
+          "service": "user-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/38387e12a0946cb16510ce6aebe71025",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "717bccb213fdeaa77c92f9179b618f1de837b1f71aa4fe2abb2dfb4df28068a4"
+        },
+        {
+          "name": "Deny User | actor users_child | target sibling | can | Redis cold",
+          "trace_id": "894cbb3e31351f7da53e13e7a2ffe8bc",
+          "parent_id": "57cb970355162555",
+          "service": "user-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/894cbb3e31351f7da53e13e7a2ffe8bc",
+          "spans": 42,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "73137e6d89ce19b9cc09d37587de6fd1f0b194ddf466bcb0fd335aa01b3e675f"
+        },
+        {
+          "name": "Deny User | actor users_child | target sibling | can | Redis warm",
+          "trace_id": "89538ae868cae9d2b3545fde411ce31d",
+          "parent_id": "72b7dfadb5f102c4",
+          "service": "user-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/89538ae868cae9d2b3545fde411ce31d",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "d455151f39c9d61266978d9bc2d1d4e176f4df98324d31d16abc89d84fdc6102"
+        },
+        {
+          "name": "Allow Group | actor users_child | target child | can | Redis cold",
+          "trace_id": "1c5d00e0cb10d9fa7d8da937ffd42733",
+          "parent_id": "a9d3d01852fad376",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/1c5d00e0cb10d9fa7d8da937ffd42733",
+          "spans": 26,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "c0e41eb39bfc0c59a64a8287d0e8b3db0b66def65c77c3ebeebbece134f21df8"
+        },
+        {
+          "name": "Allow Group | actor users_child | target child | can | Redis warm",
+          "trace_id": "f8d80406d4635866e48ae6a8cb85c7a6",
+          "parent_id": "d5962e04d33b2e07",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/f8d80406d4635866e48ae6a8cb85c7a6",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "58f6998df08155d40c57e8029b0f3a723fde707208db8bc0fe86f6fd1b413378"
+        },
+        {
+          "name": "Deny Group | actor users_child | target sibling | can | Redis cold",
+          "trace_id": "ccd8dc0c5f6ed8c14c29c2c60090fef5",
+          "parent_id": "a2f4b0c0af6d3e56",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/ccd8dc0c5f6ed8c14c29c2c60090fef5",
+          "spans": 45,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read",
+            "/can/Group/group.read"
+          ],
+          "sha256": "09bef6c8ce4d8bc019796cbe212ceac8c475a42c9e3310e80a952e8074793f02"
+        },
+        {
+          "name": "Deny Group | actor users_child | target sibling | can | Redis warm",
+          "trace_id": "bffaf1497c914537bc884689d7679d7f",
+          "parent_id": "2cfe147f5f9b3dd3",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/bffaf1497c914537bc884689d7679d7f",
+          "spans": 13,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read",
+            "/can/Group/group.read"
+          ],
+          "sha256": "b212f0a31e23ff15eea5feed3e46436aded662af82b34389a9fbd677850c9e23"
+        },
+        {
+          "name": "Allow Membership | actor users_child | target child | can | Redis cold",
+          "trace_id": "7853a8f7c4336e67d1cad02eb8f9e24a",
+          "parent_id": "7902ce68e706444b",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/7853a8f7c4336e67d1cad02eb8f9e24a",
+          "spans": 45,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "3029b3dd0b01d500631c808a35e4dc1dea22a692c7fb4d63b9a6f1f2ac61d1e7"
+        },
+        {
+          "name": "Allow Membership | actor users_child | target child | can | Redis warm",
+          "trace_id": "29bf2b24fc39bd063fecab7024ea7128",
+          "parent_id": "c57259b8b24c7d3a",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/29bf2b24fc39bd063fecab7024ea7128",
+          "spans": 8,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "92518dd7e819ed3e014adedb1c5a0e2ccc0d84f96460a4332d6136a45d1dcb63"
+        },
+        {
+          "name": "Deny Membership | actor users_child | target sibling | can | Redis cold",
+          "trace_id": "b42aa1d34f50ae0984fa2b29f0d11c45",
+          "parent_id": "08e43704fe01412e",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/b42aa1d34f50ae0984fa2b29f0d11c45",
+          "spans": 72,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read",
+            "/can/Group/group.read"
+          ],
+          "sha256": "351b42b52f9a105d231ba934ad4901360a771aaf23b2afd648f38e4a45df01a4"
+        },
+        {
+          "name": "Deny Membership | actor users_child | target sibling | can | Redis warm",
+          "trace_id": "2165bb46780691bc31389f8787f10ce9",
+          "parent_id": "e017ede11c7bd5ee",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/2165bb46780691bc31389f8787f10ce9",
+          "spans": 14,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read",
+            "/can/Group/group.read"
+          ],
+          "sha256": "ab0f27fb54e3de671e73843842eec9e661ce106c4ba04ea96bcbf6284f3473a2"
+        },
+        {
+          "name": "Allow Organization relationship | actor read_child | target child | can | Redis cold",
+          "trace_id": "e18e418985dc690a4edc0d997a7641c7",
+          "parent_id": "312e5f3d00fb33e8",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/e18e418985dc690a4edc0d997a7641c7",
+          "spans": 51,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "2a7384ea97d72a8da77ab97f09469a961be747cf0a09c89a0821d2992e4ea1c8"
+        },
+        {
+          "name": "Allow Organization relationship | actor read_child | target child | can | Redis warm",
+          "trace_id": "31e9bd892d35fd7cdfff166d32ec69a2",
+          "parent_id": "fa4b96c860ef8c03",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/31e9bd892d35fd7cdfff166d32ec69a2",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "acd599e05802e2de9205d1b4deedeb766717a6f345860d2a773f2870b6a17ba9"
+        },
+        {
+          "name": "Deny Organization relationship | actor read_child | target sibling | can | Redis cold",
+          "trace_id": "fb1942f6bd1e7cc418fa9b0d20d3cadf",
+          "parent_id": "a717925216ea0f81",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/fb1942f6bd1e7cc418fa9b0d20d3cadf",
+          "spans": 51,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "af907b4023878f50a7616cc19082d4ddc136fea29c17d4ea02922b49607c09f2"
+        },
+        {
+          "name": "Deny Organization relationship | actor read_child | target sibling | can | Redis warm",
+          "trace_id": "2b7cb9e8c26700f2a5f79190b91127f3",
+          "parent_id": "4f5fe211a36030bd",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/2b7cb9e8c26700f2a5f79190b91127f3",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "c03ccf7c2a7ce626f0c56dd72b850ab41d4bace2dbf3d1f71dbc85f669158c39"
+        },
+        {
+          "name": "Allow Users count | actor users_child | target child | can | Redis cold",
+          "trace_id": "db09475a448899aa735584f9dcdecb53",
+          "parent_id": "f4b0f86f284ea26d",
+          "service": "user-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/db09475a448899aa735584f9dcdecb53",
+          "spans": 44,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "3074b92dd8fbae0bf6b3b3806ebb90c7740086ae5786df6b2f6a3cf6c78618db"
+        },
+        {
+          "name": "Allow Users count | actor users_child | target child | can | Redis warm",
+          "trace_id": "dad5b355f211a20e9221c7582b90277a",
+          "parent_id": "f6dda901edaaef04",
+          "service": "user-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/dad5b355f211a20e9221c7582b90277a",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "cf372e9346b79072980fdf2f1309d8859b4528d77dec44491f15687a5dc0a931"
+        },
+        {
+          "name": "Deny Users count | actor users_child | target sibling | can | Redis cold",
+          "trace_id": "e3e4976c9a4b228d2177ce6906ae690c",
+          "parent_id": "8a9612616bfc8cb7",
+          "service": "user-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/e3e4976c9a4b228d2177ce6906ae690c",
+          "spans": 43,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "9c64bc346d97182691ef8e601b08f7329e373fbdbdd3d8c23595d85d39d15312"
+        },
+        {
+          "name": "Deny Users count | actor users_child | target sibling | can | Redis warm",
+          "trace_id": "f5dd7fbc7b24ea670cd7d1157a773ef8",
+          "parent_id": "e4380bfbbb938a6d",
+          "service": "user-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/f5dd7fbc7b24ea670cd7d1157a773ef8",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "5cc1069e35aa87b33cbe54ce984de809652b1f83906623a1bd63a71fa1711837"
+        },
+        {
+          "name": "Allow Groups count | actor users_child | target child | can | Redis cold",
+          "trace_id": "d96e6803945f2ec5ed879cfd8a42e44f",
+          "parent_id": "bdd55c0ea341af2b",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/d96e6803945f2ec5ed879cfd8a42e44f",
+          "spans": 44,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "4ec6bd53ba1f1ee333a4a50447fa4a25a74cb03514b40006af66e327cd751721"
+        },
+        {
+          "name": "Allow Groups count | actor users_child | target child | can | Redis warm",
+          "trace_id": "a9f016130295e74e39d039a876da19ff",
+          "parent_id": "dec325aed2476e4f",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/a9f016130295e74e39d039a876da19ff",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "624b24b764e33cf842f51a8ee61356096da1c0f82d2f6a5f41c8d292121841bd"
+        },
+        {
+          "name": "Deny Groups count | actor users_child | target sibling | can | Redis cold",
+          "trace_id": "af29b2e6f515d0df8826409fdba26191",
+          "parent_id": "54e9dce8b3e4b034",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/af29b2e6f515d0df8826409fdba26191",
+          "spans": 43,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "595fa816487cf6f6a5baca54f064b462840c7a997c5dbcbef81301e9a963203c"
+        },
+        {
+          "name": "Deny Groups count | actor users_child | target sibling | can | Redis warm",
+          "trace_id": "fdbd0c2576a642250ca82b7647db3848",
+          "parent_id": "82107ccbf12af9f0",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/fdbd0c2576a642250ca82b7647db3848",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/can/Account/account.users.read"
+          ],
+          "sha256": "c4d97cf204b157dc1dc319bd993c19d535f1992bf7f392cecc670e28f21f2455"
+        },
+        {
+          "name": "Allow Organization | actor org_client | target client | can | Redis cold",
+          "trace_id": "756ea893d558e1668041756f197a2bcc",
+          "parent_id": "fd8b568842012c69",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/756ea893d558e1668041756f197a2bcc",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/can/Organization/organization.read"
+          ],
+          "sha256": "4fa49a132e658098d1aebedb9e8861f6fa3b207bc811cc70d5c63034ac14d0f4"
+        },
+        {
+          "name": "Allow Organization | actor org_client | target client | can | Redis warm",
+          "trace_id": "9e034d4a0d01eb9e01d6ea20a9e0bcb0",
+          "parent_id": "af1f1889ee53884f",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/9e034d4a0d01eb9e01d6ea20a9e0bcb0",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/can/Organization/organization.read"
+          ],
+          "sha256": "fd95a43d7ee927e5f9cef542bb67d0e97515263704668ca14158effa242f4360"
+        },
+        {
+          "name": "Allow Organization account count | actor list_client | target client | can | Redis cold",
+          "trace_id": "410795bd80ddfe5be474ced9496bdcf1",
+          "parent_id": "0c04a91d520a6770",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/410795bd80ddfe5be474ced9496bdcf1",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "b9d44eae70197f24678e4f966d2fea7bc086b7136b044d55d574cd7768f76202"
+        },
+        {
+          "name": "Allow Organization account count | actor list_client | target client | can | Redis warm",
+          "trace_id": "e1a4cdf5bc1656944c6070ed0e6d5b61",
+          "parent_id": "8d0efd1001bf0b52",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/e1a4cdf5bc1656944c6070ed0e6d5b61",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "3c72d6e6e0b80ab2ebfeb9c9f1002b0111daf9a56a0184450a05e3829352844c"
+        },
+        {
+          "name": "Deny Organization | actor org_client | target other_client | can | Redis cold",
+          "trace_id": "8070819977a7d6f937ab08fbe07c1144",
+          "parent_id": "195b20047fcbdac7",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/8070819977a7d6f937ab08fbe07c1144",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/can/Organization/organization.read"
+          ],
+          "sha256": "e75f90b017d0434e492001459b7ac0fc638fa07629478a811bd171060525a3c5"
+        },
+        {
+          "name": "Deny Organization | actor org_client | target other_client | can | Redis warm",
+          "trace_id": "72722aea5438aaac5e07c5de793ce25e",
+          "parent_id": "98de9eae7524dbaa",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/72722aea5438aaac5e07c5de793ce25e",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/can/Organization/organization.read"
+          ],
+          "sha256": "42120d2adacb85c64909700305fa03405f2f8e78c07da3290184b5e1cd7fbdde"
+        },
+        {
+          "name": "Deny Organization account count | actor list_client | target other_client | can | Redis cold",
+          "trace_id": "6fd06d237fa2fa592298c29e79975f6a",
+          "parent_id": "091cab4b76396ffd",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/6fd06d237fa2fa592298c29e79975f6a",
+          "spans": 9,
+          "observed_authorization_paths": [
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "cfce2537dd27d2df8418affed9b117e2f8fe8df2d32350b8822d4e5dfcd04971"
+        },
+        {
+          "name": "Deny Organization account count | actor list_client | target other_client | can | Redis warm",
+          "trace_id": "b43e30f8312c10703fb7c305c0ec7d8b",
+          "parent_id": "26a1872c1fb304fe",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/b43e30f8312c10703fb7c305c0ec7d8b",
+          "spans": 5,
+          "observed_authorization_paths": [
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "ac40b71134716134585cfe674feb635458da566a1f94fde9cc21dc28aa36acb2"
+        },
+        {
+          "name": "Allow Hierarchy | actor read_root | target leaf | can | Redis cold",
+          "trace_id": "f956791b2db22b663294138f3e327a33",
+          "parent_id": "9402fdbb72ad1fbd",
+          "service": "account-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/f956791b2db22b663294138f3e327a33",
+          "spans": 73,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "b468229776a60119ebe71536e4e7ef38a0e7192e2467f3b7e69cc301874e66fd"
+        },
+        {
+          "name": "Allow Hierarchy | actor read_root | target leaf | can | Redis warm",
+          "trace_id": "a7eaac280ae41a0e350bdcef6b802c3d",
+          "parent_id": "908b30d8ba1430f0",
+          "service": "account-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/a7eaac280ae41a0e350bdcef6b802c3d",
+          "spans": 11,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "86424fa705c11b73098a1df3a92336993b15cd97c6e4f1be4cf412ce83546ea8"
+        },
+        {
+          "name": "Deny Hierarchy | actor read_child | target leaf | can | Redis cold",
+          "trace_id": "75fcb9596b336272a8a817ba03d1f2c0",
+          "parent_id": "2a8685fd91178c14",
+          "service": "account-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/75fcb9596b336272a8a817ba03d1f2c0",
+          "spans": 73,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "ce93ecf839b8ba046a3cca52262b5c9de9852779ca78c24094433cffd3a4a99b"
+        },
+        {
+          "name": "Deny Hierarchy | actor read_child | target leaf | can | Redis warm",
+          "trace_id": "1e985c654ff3b1fb38288471b663b1b0",
+          "parent_id": "190eeea7bc26a514",
+          "service": "account-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/1e985c654ff3b1fb38288471b663b1b0",
+          "spans": 11,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "532a45b3e1dd968eeb3b15cd54981ced80da420003f62c84b9607b17fb46cc46"
+        },
+        {
+          "name": "Allow Organization account IDs | actor full | target child | can | Redis cold",
+          "trace_id": "3f174287afa4b4338a05864e0a8b4eb4",
+          "parent_id": "353e9290ba293131",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/3f174287afa4b4338a05864e0a8b4eb4",
+          "spans": 53,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "f9579ef8374b86bffda2ca0da95bcf7db6d7b39fd49e78b42c9a2bbc78586fd8"
+        },
+        {
+          "name": "Allow Organization account IDs | actor full | target child | can | Redis warm",
+          "trace_id": "c35c316be8d6a36d14e2f86148564973",
+          "parent_id": "2a71fd58d257c667",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/c35c316be8d6a36d14e2f86148564973",
+          "spans": 12,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "78823f34ae3e2b25a2c73543f99182fc97b97ed9b3301954370335bb1d40954b"
+        },
+        {
+          "name": "Allow Organization context | actor full | target child | can | Redis cold",
+          "trace_id": "f185f675b2e6cda866031dc8c3673fd0",
+          "parent_id": "27f346d92f91e5ae",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/f185f675b2e6cda866031dc8c3673fd0",
+          "spans": 56,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "67ca20f2c9ba96291c456020b370cc761dfab20a655e12f2032c14b44f467314"
+        },
+        {
+          "name": "Allow Organization context | actor full | target child | can | Redis warm",
+          "trace_id": "546b959c4a0b2d2ebcd2b81ffd7f41b5",
+          "parent_id": "d0a49af037fe351b",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/546b959c4a0b2d2ebcd2b81ffd7f41b5",
+          "spans": 15,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "41a5e7876c1b283bacf93032aabd7df43ba96c695a6003a1cb3243149451bc61"
+        },
+        {
+          "name": "Deny Organization account IDs | actor read_provider_root | target child | can | Redis cold",
+          "trace_id": "bf17dea41a8df94ab60beba03beba7ed",
+          "parent_id": "9d6be465de646864",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/bf17dea41a8df94ab60beba03beba7ed",
+          "spans": 52,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "c227f91e65d1d5a87537d64f6d182ab2e3f677ca4a5adef9a743904bdd8a5918"
+        },
+        {
+          "name": "Deny Organization account IDs | actor read_provider_root | target child | can | Redis warm",
+          "trace_id": "78590c9ffe1a4fe766f367a5b561011a",
+          "parent_id": "5997a1d56ed80e13",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/78590c9ffe1a4fe766f367a5b561011a",
+          "spans": 11,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "e5361a64c74ce68d6553d91acea30b3d6f8d216514938bca26b3b930d087b71d"
+        },
+        {
+          "name": "Deny Organization context | actor read_provider_root | target child | can | Redis cold",
+          "trace_id": "a1e9c804f87239f3de171c817877e859",
+          "parent_id": "860e06d19964baa9",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/a1e9c804f87239f3de171c817877e859",
+          "spans": 51,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "ebd895c2d5770dbeab5346621ea361fb8ecc823d2a66c109c513e3d882066481"
+        },
+        {
+          "name": "Deny Organization context | actor read_provider_root | target child | can | Redis warm",
+          "trace_id": "ea7caec7564b92fcc42e9acd136a69e9",
+          "parent_id": "edd284242366b1dc",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/ea7caec7564b92fcc42e9acd136a69e9",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/can/Account/account.read",
+            "/can/Organization/organization.read.accounts"
+          ],
+          "sha256": "08fd34c9107db23a22b8f1b05e3fa52377a07d79fe13bdded9ae2f5bfab65d3f"
+        },
+        {
+          "name": "Allow MSP page | actor read_provider_root | target provider | can | Redis cold",
+          "trace_id": "2f48263bd51b66ea9d48007109ddb821",
+          "parent_id": "08c7ae55db22fce3",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/2f48263bd51b66ea9d48007109ddb821",
+          "spans": 63,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "0a5e484d05bfbc34cc89a944179e354261334324d78f34a19fcc06f16131bf6b"
+        },
+        {
+          "name": "Allow MSP page | actor read_provider_root | target provider | can | Redis warm",
+          "trace_id": "72d453f90b66fa5003a8b3428bc01746",
+          "parent_id": "56fcb1a5b64e085b",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/72d453f90b66fa5003a8b3428bc01746",
+          "spans": 15,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "33fc33f68d761d7422696be9616b179598e3ab37285c16c12f8bc3ac9a6bd8bf"
+        },
+        {
+          "name": "Deny MSP page | actor read_foreign_provider | target provider | can | Redis cold",
+          "trace_id": "ba046a95d7133a5b2a0f35c8f4dc9e60",
+          "parent_id": "50742e6c3449e460",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/ba046a95d7133a5b2a0f35c8f4dc9e60",
+          "spans": 29,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "bb1de8c525ac81affc8b41a4603323df2d2663cca2ac2f8aa18df23a338347ec"
+        },
+        {
+          "name": "Deny MSP page | actor read_foreign_provider | target provider | can | Redis warm",
+          "trace_id": "2c0439610ff37eabdea14ce11d66999c",
+          "parent_id": "7298363b788db325",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/2c0439610ff37eabdea14ce11d66999c",
+          "spans": 8,
+          "observed_authorization_paths": [
+            "/can/Account/account.read"
+          ],
+          "sha256": "d96b981de6082aec0844aa33afba4db55a48c4a7ffe59634f40c8cdfb3ab0c88"
+        }
+      ]
+    },
+    {
+      "mode": "capabilities",
+      "traces": [
+        {
+          "name": "Allow Account | actor read_child | target child | capabilities | Redis cold",
+          "trace_id": "2f88584fdfaab09aea4985491c8d8086",
+          "parent_id": "3e0e4a050a24b574",
+          "service": "account-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/2f88584fdfaab09aea4985491c8d8086",
+          "spans": 42,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "f1b5011e67f7970b1a51eb267dd47ae49dca1514f31510156eac05bfa19dc16b"
+        },
+        {
+          "name": "Allow Account | actor read_child | target child | capabilities | Redis warm",
+          "trace_id": "02559ab377a8f4faec13785fbc23c4c9",
+          "parent_id": "9c39b761f05a657e",
+          "service": "account-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/02559ab377a8f4faec13785fbc23c4c9",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "c34aeaf71a1c14157ff5226180832c470b71818ff722139b3f5650fa68a559eb"
+        },
+        {
+          "name": "Deny Account | actor read_child | target sibling | capabilities | Redis cold",
+          "trace_id": "ccfb0a18ae9a8e6d18da858753401589",
+          "parent_id": "fc028af975938e30",
+          "service": "account-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/ccfb0a18ae9a8e6d18da858753401589",
+          "spans": 42,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "a98f70aff85a2f9a3cc2cb82137ddab6d6a82f47795059ddd477c70ccb45c75c"
+        },
+        {
+          "name": "Deny Account | actor read_child | target sibling | capabilities | Redis warm",
+          "trace_id": "a192254b927de65ce070624f14e87a08",
+          "parent_id": "81c0ccad15ddc1f0",
+          "service": "account-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/a192254b927de65ce070624f14e87a08",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "9a3486455041986efc81e8712d35d7064a70f04de745dcd6b1c38bd14e5966c7"
+        },
+        {
+          "name": "Allow User | actor users_child | target child | capabilities | Redis cold",
+          "trace_id": "045ac0394ee5172f98896996497cc543",
+          "parent_id": "b6c6530638eb4678",
+          "service": "user-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/045ac0394ee5172f98896996497cc543",
+          "spans": 40,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "fd95c0645706e9127d048b1836975f9ed0fa970983b65ec163594b2caac2e72a"
+        },
+        {
+          "name": "Allow User | actor users_child | target child | capabilities | Redis warm",
+          "trace_id": "335e4dd16b01cf67c21b82e084053e1b",
+          "parent_id": "a584224d5f14a53d",
+          "service": "user-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/335e4dd16b01cf67c21b82e084053e1b",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "d13281a5214f1198b5e3f1a898ab57dabe501982c1be91673a7f39da76a73987"
+        },
+        {
+          "name": "Deny User | actor users_child | target sibling | capabilities | Redis cold",
+          "trace_id": "4d4fc88157ef0e6734f45aab5aafb101",
+          "parent_id": "1bce3da665f505a8",
+          "service": "user-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/4d4fc88157ef0e6734f45aab5aafb101",
+          "spans": 38,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "8041b248382d82cbdef120d78a23320c8f86bd3dd201a7a8b77a66e74d179788"
+        },
+        {
+          "name": "Deny User | actor users_child | target sibling | capabilities | Redis warm",
+          "trace_id": "6f07cadb058bc5f3fdabad8e768c4a1e",
+          "parent_id": "fa56c82128f53ac5",
+          "service": "user-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/6f07cadb058bc5f3fdabad8e768c4a1e",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "a9fe42594c7795cf6125fc4fd6ddcae2ae64044d502024324d6d52a3882d6173"
+        },
+        {
+          "name": "Allow Group | actor users_child | target child | capabilities | Redis cold",
+          "trace_id": "07c5c16054e27ab71351759a882d85dc",
+          "parent_id": "0c55c040931ec4b3",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/07c5c16054e27ab71351759a882d85dc",
+          "spans": 24,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "33aa73939d32f97b68c509d203b84dc30bf92abf74f3c216fa898ae0d0dd5861"
+        },
+        {
+          "name": "Allow Group | actor users_child | target child | capabilities | Redis warm",
+          "trace_id": "11427bdf696a06b59e3cc83b51225c33",
+          "parent_id": "7793df6f5dde232b",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/11427bdf696a06b59e3cc83b51225c33",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "5df83402414ef3b5f321fce2e80b6cb096872b327aec788e9cbea0c482372937"
+        },
+        {
+          "name": "Deny Group | actor users_child | target sibling | capabilities | Redis cold",
+          "trace_id": "e2990a9ff53bd22dc88632cef2896db8",
+          "parent_id": "dda55d5a9264b404",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/e2990a9ff53bd22dc88632cef2896db8",
+          "spans": 33,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Group"
+          ],
+          "sha256": "0f3c7e74fa3ee67e5cc42818d73eb6e4b405bf77424f813c1ff4f6e5c9e41676"
+        },
+        {
+          "name": "Deny Group | actor users_child | target sibling | capabilities | Redis warm",
+          "trace_id": "b1da98a0e16a9938be55d4747a88b836",
+          "parent_id": "2496e014108b4f5d",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/b1da98a0e16a9938be55d4747a88b836",
+          "spans": 11,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Group"
+          ],
+          "sha256": "4bef834165202b832dd40bab8f61c9373001241a2114a474421113139d8f6668"
+        },
+        {
+          "name": "Allow Membership | actor users_child | target child | capabilities | Redis cold",
+          "trace_id": "de54617e54a0c39e8d8a43e4b0003cba",
+          "parent_id": "d530eb97505f2989",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/de54617e54a0c39e8d8a43e4b0003cba",
+          "spans": 43,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "8e87f5befea8bada1ad6688b8e0ec18e7c71c24478a88e12f2516ba651a97687"
+        },
+        {
+          "name": "Allow Membership | actor users_child | target child | capabilities | Redis warm",
+          "trace_id": "c4a8db4b34edb6dbf36b19e0d6c6cbb8",
+          "parent_id": "a00bb9675619c576",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/c4a8db4b34edb6dbf36b19e0d6c6cbb8",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "a661a78b0de08f37011cebc2f7ddfdf1b54d2df989898bca0d1048f7889e9d70"
+        },
+        {
+          "name": "Deny Membership | actor users_child | target sibling | capabilities | Redis cold",
+          "trace_id": "e45d64cc45bdaab12d3bbd47264626ba",
+          "parent_id": "d278aa1586639360",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/e45d64cc45bdaab12d3bbd47264626ba",
+          "spans": 56,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Group"
+          ],
+          "sha256": "421068f0a3d67297ab3edcd1a5225302a9255734508efd8ec1a4f2ffa23d8aa2"
+        },
+        {
+          "name": "Deny Membership | actor users_child | target sibling | capabilities | Redis warm",
+          "trace_id": "36375704b2e43902eaab2fb8167848a0",
+          "parent_id": "9821a17df1f66436",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/36375704b2e43902eaab2fb8167848a0",
+          "spans": 12,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Group"
+          ],
+          "sha256": "79638d5d9e50bbf73bf44b6869f0e8885401dc740d36fae89d38d69c207c5f20"
+        },
+        {
+          "name": "Allow Organization relationship | actor read_child | target child | capabilities | Redis cold",
+          "trace_id": "7f15904c730c7461fad1098f70a4e267",
+          "parent_id": "7e2cc276bfc835eb",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/7f15904c730c7461fad1098f70a4e267",
+          "spans": 49,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "4220ec00ab13effc4bce09fa742e2bbd69c59107aff4f2f6582c9d42ec1c3b80"
+        },
+        {
+          "name": "Allow Organization relationship | actor read_child | target child | capabilities | Redis warm",
+          "trace_id": "50da5a6eb6b84f54e389312098e8c409",
+          "parent_id": "245b335803a62055",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/50da5a6eb6b84f54e389312098e8c409",
+          "spans": 9,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "2a38eee77026e4af4e0637d50a1ff26f03cad5e78a9abd3919d77ad87261bb33"
+        },
+        {
+          "name": "Deny Organization relationship | actor read_child | target sibling | capabilities | Redis cold",
+          "trace_id": "f46127565dfda50d959304813e7d29b7",
+          "parent_id": "5fbc83e80f292e58",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/f46127565dfda50d959304813e7d29b7",
+          "spans": 49,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "e156c64561d9c670209bedd75d47e0d4ceb2b81341ccd9440b05c2db324264ba"
+        },
+        {
+          "name": "Deny Organization relationship | actor read_child | target sibling | capabilities | Redis warm",
+          "trace_id": "5e920fe985220b713a21f4062aeb80b6",
+          "parent_id": "4faf746a0a114e23",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/5e920fe985220b713a21f4062aeb80b6",
+          "spans": 9,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "b4ea3744a152cfb101b4336413b38b2f181c755610c56d504da0d50262b31c99"
+        },
+        {
+          "name": "Allow Users count | actor users_child | target child | capabilities | Redis cold",
+          "trace_id": "527fbe8c19f134fd487af3040692dad0",
+          "parent_id": "ce473b0fa44fa416",
+          "service": "user-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/527fbe8c19f134fd487af3040692dad0",
+          "spans": 42,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "31ae9dade4a65270ebe1a816bf2536c36ee0e51f38b967ebd80bf5fc1ccd012c"
+        },
+        {
+          "name": "Allow Users count | actor users_child | target child | capabilities | Redis warm",
+          "trace_id": "7b268627c13da7ebf446054106252d31",
+          "parent_id": "73824c4ef657b429",
+          "service": "user-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/7b268627c13da7ebf446054106252d31",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "15856cc0370235570fa754780e5cdcbbd234006bff17e4e081f75d7ff5470774"
+        },
+        {
+          "name": "Deny Users count | actor users_child | target sibling | capabilities | Redis cold",
+          "trace_id": "93d627ae610d0528c8fce14d7657174c",
+          "parent_id": "66ecea3a649e0972",
+          "service": "user-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/93d627ae610d0528c8fce14d7657174c",
+          "spans": 41,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "6744d80a478ad3903f2d7c2d5387198e486d7f23e8effc9cc7feffb97661281c"
+        },
+        {
+          "name": "Deny Users count | actor users_child | target sibling | capabilities | Redis warm",
+          "trace_id": "823794c58ec613aa84bb4687cd07c16f",
+          "parent_id": "e43bc15c9912149b",
+          "service": "user-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/823794c58ec613aa84bb4687cd07c16f",
+          "spans": 5,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "8c467293ac7e66be85566d7a58c4dbf473603413c783cc12f667c51e31b8ad74"
+        },
+        {
+          "name": "Allow Groups count | actor users_child | target child | capabilities | Redis cold",
+          "trace_id": "2fec757f1aa38a1321d105e497e420c3",
+          "parent_id": "7fd4d44a4f67940f",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/2fec757f1aa38a1321d105e497e420c3",
+          "spans": 42,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "6c58d0af9a1082fe8f32c88b16efe8ec1e093299a59872954901ee07f4c57295"
+        },
+        {
+          "name": "Allow Groups count | actor users_child | target child | capabilities | Redis warm",
+          "trace_id": "12835ce44971e86a15f3f26508a5f661",
+          "parent_id": "3dfe57aa8aa78946",
+          "service": "group-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/12835ce44971e86a15f3f26508a5f661",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "3f6eebda64a2cb8d2f5265f550a077114249a426a2fd40bf5e3294b756a93058"
+        },
+        {
+          "name": "Deny Groups count | actor users_child | target sibling | capabilities | Redis cold",
+          "trace_id": "6e7ea1b89d121686f990c71ae7fc3091",
+          "parent_id": "f11308c00fb345ed",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/6e7ea1b89d121686f990c71ae7fc3091",
+          "spans": 41,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "7ecf56b78b118879e80bcd471fb156cb093c4c96ffa6fcd58e77a8cb5da18b46"
+        },
+        {
+          "name": "Deny Groups count | actor users_child | target sibling | capabilities | Redis warm",
+          "trace_id": "6340177c2f146376ae897dba2c06f0f4",
+          "parent_id": "f756075ee2fdb3a3",
+          "service": "group-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/6340177c2f146376ae897dba2c06f0f4",
+          "spans": 5,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "c5ac0af458e2149edecf282c1e59ec104bb5e76d0dbf0de2491446245003e9f7"
+        },
+        {
+          "name": "Allow Organization | actor org_client | target client | capabilities | Redis cold",
+          "trace_id": "76839c9925d375c875376160fe791ee6",
+          "parent_id": "bbe4b0b62cddf49d",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/76839c9925d375c875376160fe791ee6",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/capabilities/Organization"
+          ],
+          "sha256": "fd9bcea64f2e92fa76b06d7d6a323c4e341233dc1a9508eaad9aba03775bdecd"
+        },
+        {
+          "name": "Allow Organization | actor org_client | target client | capabilities | Redis warm",
+          "trace_id": "208bdbbe513d677ecc5a3e5c26896826",
+          "parent_id": "064bae079b3f1dd5",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/208bdbbe513d677ecc5a3e5c26896826",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Organization"
+          ],
+          "sha256": "a767b31f1ec68346cae70b5da898b961dca921a6637a933d83fafb3df7bd9273"
+        },
+        {
+          "name": "Allow Organization account count | actor list_client | target client | capabilities | Redis cold",
+          "trace_id": "d228147a6ad33afaa87b180a20c6d9fd",
+          "parent_id": "7aef2c0e7a60db25",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/d228147a6ad33afaa87b180a20c6d9fd",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/capabilities/Organization"
+          ],
+          "sha256": "6c1d715cf09491122aa11139861c657188ab714289cf3ee6f5dac74ba18c8eb8"
+        },
+        {
+          "name": "Allow Organization account count | actor list_client | target client | capabilities | Redis warm",
+          "trace_id": "fb0fb8da1d53565c552a7628d542d395",
+          "parent_id": "5d5a940707db4538",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/fb0fb8da1d53565c552a7628d542d395",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Organization"
+          ],
+          "sha256": "0649a85881b0f11002fc3869b91793cc037aa3544ee0915601aa26fba3d43c5d"
+        },
+        {
+          "name": "Deny Organization | actor org_client | target other_client | capabilities | Redis cold",
+          "trace_id": "72e9a1c63d6f13353a23dbab3a0b815b",
+          "parent_id": "ca24853ec7f8556e",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/72e9a1c63d6f13353a23dbab3a0b815b",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/capabilities/Organization"
+          ],
+          "sha256": "db9517c626380874918fe557e7f002e2853085679eec1b804ac83755a4563b9c"
+        },
+        {
+          "name": "Deny Organization | actor org_client | target other_client | capabilities | Redis warm",
+          "trace_id": "584c71f4b3d75e118111d29cf39413fa",
+          "parent_id": "2e617d4d5484d8c6",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/584c71f4b3d75e118111d29cf39413fa",
+          "spans": 6,
+          "observed_authorization_paths": [
+            "/capabilities/Organization"
+          ],
+          "sha256": "55e392e38f087d030e2d9cabce9d3394d65e4e8f5af78f53be2e0e085ad19474"
+        },
+        {
+          "name": "Deny Organization account count | actor list_client | target other_client | capabilities | Redis cold",
+          "trace_id": "4402e8a5ba873e0f17ca5310fe43ba29",
+          "parent_id": "388b86e9408d9e3d",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/4402e8a5ba873e0f17ca5310fe43ba29",
+          "spans": 9,
+          "observed_authorization_paths": [
+            "/capabilities/Organization"
+          ],
+          "sha256": "6ec945940813069ebbe62e1ad398f78961edd5210f6467fb0aaebfe66a630004"
+        },
+        {
+          "name": "Deny Organization account count | actor list_client | target other_client | capabilities | Redis warm",
+          "trace_id": "c4a34aeac816586cb2051d7501476d6a",
+          "parent_id": "b66f29fd4989c2f7",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/c4a34aeac816586cb2051d7501476d6a",
+          "spans": 5,
+          "observed_authorization_paths": [
+            "/capabilities/Organization"
+          ],
+          "sha256": "f521ff9db0f23338807d3076ac593e7d4dac33276be42f32e807affa2ab1b76d"
+        },
+        {
+          "name": "Allow Hierarchy | actor read_root | target leaf | capabilities | Redis cold",
+          "trace_id": "e4c103217abc3a773034353117b19f5b",
+          "parent_id": "7d871ec377886a3c",
+          "service": "account-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/e4c103217abc3a773034353117b19f5b",
+          "spans": 92,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "6f3b53608227300e5e946fb433edda763ea4fb2ef3909d95c3f89b352f794089"
+        },
+        {
+          "name": "Allow Hierarchy | actor read_root | target leaf | capabilities | Redis warm",
+          "trace_id": "9fc00013150f39f128a0faa5b821c9d2",
+          "parent_id": "e6bf462c99242b12",
+          "service": "account-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/9fc00013150f39f128a0faa5b821c9d2",
+          "spans": 11,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "b4e154ac0d1330ed7db6e912ef1601fe08c268c855976b97ef0a271b93454f09"
+        },
+        {
+          "name": "Deny Hierarchy | actor read_child | target leaf | capabilities | Redis cold",
+          "trace_id": "a22f212ac39e761c15ba467bd28e3c7f",
+          "parent_id": "27feba61a122c59b",
+          "service": "account-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/a22f212ac39e761c15ba467bd28e3c7f",
+          "spans": 92,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "c812d2481e625482aaecc0a7c6e6fe0ab44c890f86c71fba151185a63b4a2607"
+        },
+        {
+          "name": "Deny Hierarchy | actor read_child | target leaf | capabilities | Redis warm",
+          "trace_id": "d7bad7827b23666f31615e2dfc01c48e",
+          "parent_id": "132307a4c88c5125",
+          "service": "account-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/d7bad7827b23666f31615e2dfc01c48e",
+          "spans": 11,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "98a403e91952c9f2acdeb1411600afbf701562da7499c722d7092daa798e2e30"
+        },
+        {
+          "name": "Allow Organization account IDs | actor full | target child | capabilities | Redis cold",
+          "trace_id": "f52c220a057c09bc0fefce7ce7a66c2c",
+          "parent_id": "52cecaa02e898a1b",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/f52c220a057c09bc0fefce7ce7a66c2c",
+          "spans": 51,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "800cad7f4a437b5db80e06ed431dfcc69650d41a5cb663c2d5439583a9a36284"
+        },
+        {
+          "name": "Allow Organization account IDs | actor full | target child | capabilities | Redis warm",
+          "trace_id": "06161b37c2d37b27bdf94e42057dc710",
+          "parent_id": "09a0c7970c258bd1",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/06161b37c2d37b27bdf94e42057dc710",
+          "spans": 11,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "3fa0ad1d72456b889fc1da35f21f7aeeb39ae7231828ee323f19570902cd464a"
+        },
+        {
+          "name": "Allow Organization context | actor full | target child | capabilities | Redis cold",
+          "trace_id": "185736eb1ec0556ec1bf2a5964d2389e",
+          "parent_id": "9680d5ffdc7bb33c",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/185736eb1ec0556ec1bf2a5964d2389e",
+          "spans": 54,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "ba7912225775f91cf4a719c01f36611a4ad8f8dd915b49ce6a66a32269cfff58"
+        },
+        {
+          "name": "Allow Organization context | actor full | target child | capabilities | Redis warm",
+          "trace_id": "2073dde7cba9a2edee766db641208e60",
+          "parent_id": "98fb6eae0acaaab6",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/2073dde7cba9a2edee766db641208e60",
+          "spans": 14,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "77c90f2dbba85cfd3d289051fa851c403fbde20dadcaea80da65c1a4731f99f0"
+        },
+        {
+          "name": "Deny Organization account IDs | actor read_provider_root | target child | capabilities | Redis cold",
+          "trace_id": "5d28e465d8b41d592d46c8e08e813dce",
+          "parent_id": "7a4ab0d7b73226f8",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/5d28e465d8b41d592d46c8e08e813dce",
+          "spans": 50,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "3ff8521a202ed6206cd5094c656afba1e3bec6bce8f011b5f667111d2c2d409b"
+        },
+        {
+          "name": "Deny Organization account IDs | actor read_provider_root | target child | capabilities | Redis warm",
+          "trace_id": "c1bf9c77c51e53d5cd175325631b4abc",
+          "parent_id": "dd65a12ba5b19ce4",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/c1bf9c77c51e53d5cd175325631b4abc",
+          "spans": 10,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "46fc778cc5e78092edb8dc4acfd3fcaf7f01198bd50af4225782e75bb14895dc"
+        },
+        {
+          "name": "Deny Organization context | actor read_provider_root | target child | capabilities | Redis cold",
+          "trace_id": "36735ca244fe0cc0dc39045503df868c",
+          "parent_id": "30edc45d33be0b32",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/36735ca244fe0cc0dc39045503df868c",
+          "spans": 49,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "93d8c5ba2e3ca43d2929f595791d4038548dfa1e77b4d735f1c6681e26449a48"
+        },
+        {
+          "name": "Deny Organization context | actor read_provider_root | target child | capabilities | Redis warm",
+          "trace_id": "93c26ff1e3010eed258f26852e7cf098",
+          "parent_id": "e13d96f4148b7804",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/93c26ff1e3010eed258f26852e7cf098",
+          "spans": 9,
+          "observed_authorization_paths": [
+            "/capabilities/Account",
+            "/capabilities/Organization"
+          ],
+          "sha256": "1f37a1d8c43d6242e9fb83d8da965be7329a1a80b7ab087b4df709d5b7b9a30e"
+        },
+        {
+          "name": "Allow MSP page | actor read_provider_root | target provider | capabilities | Redis cold",
+          "trace_id": "501d7fa515fb602d6b2515bc614aeab0",
+          "parent_id": "7a85c0b1ed40f581",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/501d7fa515fb602d6b2515bc614aeab0",
+          "spans": 171,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "b256c95facae7dad728480ef3cc8c5cefac1c4e0774a86d96f7cbacf16f213be"
+        },
+        {
+          "name": "Allow MSP page | actor read_provider_root | target provider | capabilities | Redis warm",
+          "trace_id": "005bb36d588593ef0140fb4db34ec1c5",
+          "parent_id": "68f8bb9e2e5d0592",
+          "service": "organization-service",
+          "status": "200",
+          "expected": "allow",
+          "url": "http://localhost:11030/trace/005bb36d588593ef0140fb4db34ec1c5",
+          "spans": 18,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "f10d3ea86547322118f7f31dfa2cbb0bf596b5c07217d175706a96d96987ed9c"
+        },
+        {
+          "name": "Deny MSP page | actor read_foreign_provider | target provider | capabilities | Redis cold",
+          "trace_id": "084b282cebd81ac4d07da37793b80ce1",
+          "parent_id": "e092452a13e6313e",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/084b282cebd81ac4d07da37793b80ce1",
+          "spans": 27,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "5f4d8f3987ea7d594be1885793b6c857c94e67e2385c659130809f927c44467e"
+        },
+        {
+          "name": "Deny MSP page | actor read_foreign_provider | target provider | capabilities | Redis warm",
+          "trace_id": "a6b79e6234dd6f34a835b956a9597f0b",
+          "parent_id": "c2b95b08f3f26931",
+          "service": "organization-service",
+          "status": "403",
+          "expected": "deny",
+          "url": "http://localhost:11030/trace/a6b79e6234dd6f34a835b956a9597f0b",
+          "spans": 7,
+          "observed_authorization_paths": [
+            "/capabilities/Account"
+          ],
+          "sha256": "a5152f99c12d72024a7a0e6d81c2d68888f6fb070bc40eeef8512e34ef6a2cb9"
+        }
+      ]
+    }
+  ],
+  "graphql_surfaces": {
+    "graphql-account-service": {
+      "Mutation": [
+        "testField"
+      ],
+      "Query": [
+        "node",
+        "nodes",
+        "testField"
+      ],
+      "Node": [
+        "id"
+      ]
+    },
+    "graphql-authorization-service": {
+      "Mutation": [
+        "testField"
+      ],
+      "Query": [
+        "node",
+        "nodes",
+        "testField"
+      ],
+      "Node": [
+        "id"
+      ]
+    },
+    "graphql-group-service": {
+      "Mutation": [
+        "testField"
+      ],
+      "Query": [
+        "node",
+        "nodes",
+        "testField"
+      ],
+      "Node": [
+        "id"
+      ]
+    },
+    "graphql-organization-service": {
+      "Mutation": [
+        "testField"
+      ],
+      "Query": [
+        "node",
+        "nodes",
+        "testField"
+      ],
+      "Node": [
+        "id"
+      ]
+    },
+    "graphql-user-management-service": {
+      "Mutation": [
+        "testField"
+      ],
+      "Query": [
+        "account",
+        "accountHierarchies",
+        "accountWithParents",
+        "accounts",
+        "mspUserManagement",
+        "organization"
+      ],
+      "Account": [
+        "groupsCount",
+        "id",
+        "name",
+        "parentAccountId",
+        "users",
+        "usersCount"
+      ],
+      "User": [
+        "accountId",
+        "email",
+        "groups",
+        "id"
+      ],
+      "Group": [
+        "id",
+        "name"
+      ],
+      "Organization": [
+        "accounts",
+        "accountsCount",
+        "id",
+        "name"
+      ],
+      "MspUserManagement": [
+        "accounts",
+        "continuance",
+        "loadedCount",
+        "loading",
+        "message",
+        "totalCount"
+      ],
+      "MspManagedAccount": [
+        "id",
+        "users"
+      ]
+    },
+    "graphql-user-service": {
+      "Mutation": [
+        "testField"
+      ],
+      "Query": [
+        "node",
+        "nodes",
+        "testField"
+      ],
+      "Node": [
+        "id"
+      ]
+    }
+  },
+  "graphql_surface_hashes": {
+    "reports/raw/record-authorization/schema/graphql-account-service.json": "86853460f8b5b6a2351db9124be876c0f90e7e274362de20c5eb8f4417e78a89",
+    "reports/raw/record-authorization/schema/graphql-authorization-service.json": "86853460f8b5b6a2351db9124be876c0f90e7e274362de20c5eb8f4417e78a89",
+    "reports/raw/record-authorization/schema/graphql-group-service.json": "86853460f8b5b6a2351db9124be876c0f90e7e274362de20c5eb8f4417e78a89",
+    "reports/raw/record-authorization/schema/graphql-organization-service.json": "86853460f8b5b6a2351db9124be876c0f90e7e274362de20c5eb8f4417e78a89",
+    "reports/raw/record-authorization/schema/graphql-user-management-service.json": "28099953b095ea6b0623dca68508b6682385f460f97ac315ec6f5657ebd0a72d",
+    "reports/raw/record-authorization/schema/graphql-user-service.json": "86853460f8b5b6a2351db9124be876c0f90e7e274362de20c5eb8f4417e78a89"
+  },
+  "source_sha256": {
+    "account-service/Gemfile": "db2be301ec424bb41e2066ec30fc28abc1c59070191c6af21e14ec5e821712ba",
+    "account-service/Gemfile.lock": "acde04ac3fa1377df75958d92768ee7891b6e5fb347c96b835f13d7d6bf04153",
+    "account-service/app/controllers/accounts_controller.rb": "b32d18a65e72436d7c775d39fcb0f9a8e2100dcbe16cf0282ec3a94cff941923",
+    "account-service/app/controllers/application_controller.rb": "a5a08abbf997a56311d5da45463490655987481095fb99b96f630b9177e38e95",
+    "account-service/app/controllers/graphql_controller.rb": "c629e3ed7ebfcc1476f5d1c31af8053a49ba96307c3b9f0daf685ca9229f1eb6",
+    "account-service/app/controllers/metrics_controller.rb": "e7912490c00882faf524a00876c23a458ac912e1784b0ffdaea426488989f6f4",
+    "account-service/app/graphql/account_service_schema.rb": "84f84f195e62f21ea5a1f8a48a01ce2c35609fc5aa205edbf704b1bd4d440e6e",
+    "account-service/app/graphql/mutations/base_mutation.rb": "c28e667d06e0a0eef99ce1db5bd108fd448db2532656f140021aefae66577388",
+    "account-service/app/graphql/resolvers/base_resolver.rb": "058a4ccb837368b8a1f957483563bf0dd8e0faf1291b5e15e637b7c730e5390c",
+    "account-service/app/graphql/types/base_argument.rb": "081d0bd3b544b2787dfbec03dc0621628695eb3866f9cbfdb64c49b7363cd1a2",
+    "account-service/app/graphql/types/base_connection.rb": "45612d320ba493601f449e72cc11f8d7ff5899cc09fa89aafdca2e8f989fe421",
+    "account-service/app/graphql/types/base_edge.rb": "a5f59d6719ae94e295aa1f3799b0ec92d1b5bb99d9d50c4eca3c5e5aec8e6242",
+    "account-service/app/graphql/types/base_enum.rb": "0802f453a60a0eb45d5bb1cc8ae2fb3179b44a127861c2ccda50c7eff8b99b34",
+    "account-service/app/graphql/types/base_field.rb": "82040d8561db80c19625cabb0f34bd3d61dc57a04810eb7ec9070eac2ec286b6",
+    "account-service/app/graphql/types/base_input_object.rb": "a6baeffe850a3030cc06ccd49d0fe9860006a681b095cabfa974b5e77999deae",
+    "account-service/app/graphql/types/base_interface.rb": "b110bdc749f1b5cd2c3e4239b42a124ceb9c294425ae2f22501edcd9065cb226",
+    "account-service/app/graphql/types/base_object.rb": "a3c45fc5b5b5632fbfbecb212fa6091e3bd84746f4bf5f5d18c2301eef545cf0",
+    "account-service/app/graphql/types/base_scalar.rb": "221ccec0724f2da3f93ae679319382d970986177fa0159426950f4250d0c1252",
+    "account-service/app/graphql/types/base_union.rb": "b772c02af98af43f71f8d85f69b10a3ca4f36d81469643ed92936868e8658136",
+    "account-service/app/graphql/types/mutation_type.rb": "92047912ead3722014f5f28cd95aae4c2679bf768c49a596da0145115537fb26",
+    "account-service/app/graphql/types/node_type.rb": "ee3082df36da35f2a4208bebc93d902637acf1b0027881483cf0d2af0d5d3b02",
+    "account-service/app/graphql/types/query_type.rb": "46b099e2c38587f0dc9839ec105f5eeb63f75ae9d41e7a156d9861af48ac6cc7",
+    "account-service/app/jobs/application_job.rb": "d51e125007521b0f59765422cf3cf949b59b2054cdac6567a95b4a7aeaf1d722",
+    "account-service/app/mailers/application_mailer.rb": "51b58ee6215d29f50f4f35b309e849766e40f584016e48ec9ea66558ab352fa7",
+    "account-service/app/models/account.rb": "927544133b9f4e16023d6a8893c8bdd78bcc1703ca588b0a3eba7fd993fffc15",
+    "account-service/app/models/application_record.rb": "12bf7d0eaefce4d50e0719991e19b48a36a7865aeb7ac745980584806155fdc1",
+    "account-service/app/models/capability_grant.rb": "5eb9b47ced030b26c33a115e439eae6f76944a66760a98ee27d68d2c08fb1ce3",
+    "account-service/app/models/organization.rb": "78013bd2ad55ad026f0b5da459f7b95482746c0d65bba06385332bdaa3ebec10",
+    "account-service/app/models/organization_account.rb": "9f3cd7abfc23afb4016a9aa070a6e5f49d88f6e651238cb5afed287f6e051a25",
+    "account-service/app/models/user.rb": "8b4f79f68f883b1f02b47aea5d546f71270b772ba4da21e299cdb1c81f7beee3",
+    "account-service/app/workers/account_create_queue_worker.rb": "ea4b2a972fd62de50db6c72eaa16f154d87e8d1af5a8dfc136d4840b09c58f9e",
+    "account-service/config/application.rb": "d962ce0c892cc038c76603da7b4825f6198ee87532fe897e52ebdb75b0657e33",
+    "account-service/config/boot.rb": "bb5a9499136e72c70c557bc3ff4d2661cc9b05dc5b848fb720540e3fe716e4ea",
+    "account-service/config/environment.rb": "73b2e731e02cedb9dc0335e1a35c3a2b7738032e3aa7e62ac32cbb8432b43c69",
+    "account-service/config/environments/development.rb": "be25dbe64fd84de6e533f14530ac6e49d5b779a0d4d8716f4133a8d8ce7b31c2",
+    "account-service/config/environments/production.rb": "6c76cc30a695e71a9c173c65a3c13981473e71bd6de016700eeff75290bcd1b4",
+    "account-service/config/environments/test.rb": "b3208a3cb7383c4383dfa44d815fd0f942d03ca64ca2ca06a104aad9773403e2",
+    "account-service/config/initializers/account_cache.rb": "46c3149e59c37cc0b0ba6136e438e7dd0b50c34301c6a2cf5d7d161900c8bf4f",
+    "account-service/config/initializers/batch_size.rb": "cb592d2ae520788ddb4d64bd9979642df0b9c42a7efcb3cd73d1988c7c5f9f5f",
+    "account-service/config/initializers/cache_metrics.rb": "8f9555a2d23b152596d1bf41de14bd2bde3f54b21b2702cc6af0097e732ba024",
+    "account-service/config/initializers/cors.rb": "3d2204f77bb83b40940ae789f0201a66d0f40a55a9144d51f28c433d8eb0d1bd",
+    "account-service/config/initializers/env_constants.rb": "3664035279f9008ce810fd38c211870b22819ca7d6a3e8dacf7e55c7abb8f5f7",
+    "account-service/config/initializers/filter_parameter_logging.rb": "f864bd67e7bdaa63a5331b9fc15446613c410c3a314cd70d1b6a7c8b566b6120",
+    "account-service/config/initializers/inflections.rb": "e2c18b803625a073b25e4ee4460677da33a8bf19bbbcad629718a8e15c58acc2",
+    "account-service/config/initializers/opentelemetry.rb": "a96b39711fd7d412baa7443a515573bd83b904a42ac040daf7aad44d752b4da7",
+    "account-service/config/puma.rb": "9018e5a98af6989b2a20c9cb9e91cc06989c59de13dddd640652e8191a6e8c58",
+    "account-service/config/routes.rb": "8fdd312f1a1bfaa69c37585f48e3dccad15af0029f91b269cef2d03512b7346d",
+    "account-service/lib/application_sql_tracing.rb": "b2db40b4f34a9372f36747e4e2951291941100f876aaa204e89608e0c19a41e5",
+    "account-service/lib/http_request_tracing.rb": "fc1814f6c2920e0fcf4d389d335e7c25a5296a9abf7598359f5897283f61dec1",
+    "account-service/lib/instrumentation.rb": "cb0c92ced5d51ed0ff7eb2239d9435d86ff3740bdaf4c0d57f0878aea281b540",
+    "account-service/lib/mel/filterable.rb": "cb454a643cb745363711d91bb725e9fc37e6df95b5e8845b43d54ec239eae07d",
+    "account-service/lib/mel/multi_fetch_cache.rb": "d798b417469daf1ca740ab08c4af288827e7069875c4051c05c8c33ac839ae50",
+    "account-service/lib/redis_pipeline_tracing.rb": "02a241113473b5c9f38d5054015d213b083d1b34b4ebe2373e46af567a0bc4a3",
+    "account-service/lib/request_operation_tracing.rb": "b964884da31197ec5cbc8b9fca6451888157318cbd8e058d6329b00d28357ca0",
+    "authorization-service/Gemfile": "fb27031130abc8c95673c691bbd96eadef4dc5dd392d6f25fac67e6a44326bc7",
+    "authorization-service/Gemfile.lock": "2b4dc6fd4f3fb81dc7447202693f6ebefa47a653de55381cad4bea42108baebb",
+    "authorization-service/app/controllers/application_controller.rb": "4ce72a1bbb890368badb9e9b9bd6e13d275fd95a07b9ac2cc888b477d5331d31",
+    "authorization-service/app/controllers/can_controller.rb": "35a57da5bcf0135cdd187529f4f1656dd28a30b96f0277990dd206f0979879cc",
+    "authorization-service/app/controllers/capabilities_controller.rb": "ee5c50a2ad6909519e55fa248322bd53276e3a83f74c5fabafe0f176b8eb984f",
+    "authorization-service/app/controllers/graphql_controller.rb": "a7b57d552b8a0a019cdaaecda9196e5aacd4e258280a55d7cba1689e3804a916",
+    "authorization-service/app/controllers/internal/admin_users_controller.rb": "509c9bd0c832d93ebb250d800893f182e0c6c19643560ff7fb38b9ca1dff86b8",
+    "authorization-service/app/controllers/metrics_controller.rb": "e7912490c00882faf524a00876c23a458ac912e1784b0ffdaea426488989f6f4",
+    "authorization-service/app/graphql/authorization_service_schema.rb": "5933ed3820c50102392457f39b9ea650c963f70b8aeaa688e0fefcdc3bad7c11",
+    "authorization-service/app/graphql/mutations/base_mutation.rb": "c28e667d06e0a0eef99ce1db5bd108fd448db2532656f140021aefae66577388",
+    "authorization-service/app/graphql/resolvers/base_resolver.rb": "058a4ccb837368b8a1f957483563bf0dd8e0faf1291b5e15e637b7c730e5390c",
+    "authorization-service/app/graphql/types/base_argument.rb": "081d0bd3b544b2787dfbec03dc0621628695eb3866f9cbfdb64c49b7363cd1a2",
+    "authorization-service/app/graphql/types/base_connection.rb": "45612d320ba493601f449e72cc11f8d7ff5899cc09fa89aafdca2e8f989fe421",
+    "authorization-service/app/graphql/types/base_edge.rb": "a5f59d6719ae94e295aa1f3799b0ec92d1b5bb99d9d50c4eca3c5e5aec8e6242",
+    "authorization-service/app/graphql/types/base_enum.rb": "0802f453a60a0eb45d5bb1cc8ae2fb3179b44a127861c2ccda50c7eff8b99b34",
+    "authorization-service/app/graphql/types/base_field.rb": "82040d8561db80c19625cabb0f34bd3d61dc57a04810eb7ec9070eac2ec286b6",
+    "authorization-service/app/graphql/types/base_input_object.rb": "a6baeffe850a3030cc06ccd49d0fe9860006a681b095cabfa974b5e77999deae",
+    "authorization-service/app/graphql/types/base_interface.rb": "b110bdc749f1b5cd2c3e4239b42a124ceb9c294425ae2f22501edcd9065cb226",
+    "authorization-service/app/graphql/types/base_object.rb": "a3c45fc5b5b5632fbfbecb212fa6091e3bd84746f4bf5f5d18c2301eef545cf0",
+    "authorization-service/app/graphql/types/base_scalar.rb": "221ccec0724f2da3f93ae679319382d970986177fa0159426950f4250d0c1252",
+    "authorization-service/app/graphql/types/base_union.rb": "b772c02af98af43f71f8d85f69b10a3ca4f36d81469643ed92936868e8658136",
+    "authorization-service/app/graphql/types/mutation_type.rb": "92047912ead3722014f5f28cd95aae4c2679bf768c49a596da0145115537fb26",
+    "authorization-service/app/graphql/types/node_type.rb": "ee3082df36da35f2a4208bebc93d902637acf1b0027881483cf0d2af0d5d3b02",
+    "authorization-service/app/graphql/types/query_type.rb": "46b099e2c38587f0dc9839ec105f5eeb63f75ae9d41e7a156d9861af48ac6cc7",
+    "authorization-service/app/jobs/application_job.rb": "d51e125007521b0f59765422cf3cf949b59b2054cdac6567a95b4a7aeaf1d722",
+    "authorization-service/app/mailers/application_mailer.rb": "51b58ee6215d29f50f4f35b309e849766e40f584016e48ec9ea66558ab352fa7",
+    "authorization-service/app/models/account.rb": "5ac7333dc756593c2726fba0626e0961087582006571c6fa5254d25dda905fbb",
+    "authorization-service/app/models/application_record.rb": "12bf7d0eaefce4d50e0719991e19b48a36a7865aeb7ac745980584806155fdc1",
+    "authorization-service/app/models/capability_grant.rb": "2232ab98ababaf7fa3c6eb290e27a6efff98572751a06f73680f235df227ecfc",
+    "authorization-service/app/workers/grants_create_queue_worker.rb": "fb22ef3506d56e8cbd92fae3c1ef383c1ce7012f385e4debe35c59081a5c49f4",
+    "authorization-service/config/application.rb": "6ecb228c07a5363ddc21ff8118704813d1f49f97fdcc736f6a14f899b5d5cf8d",
+    "authorization-service/config/boot.rb": "bb5a9499136e72c70c557bc3ff4d2661cc9b05dc5b848fb720540e3fe716e4ea",
+    "authorization-service/config/environment.rb": "73b2e731e02cedb9dc0335e1a35c3a2b7738032e3aa7e62ac32cbb8432b43c69",
+    "authorization-service/config/environments/development.rb": "4861d8fd308e7dea740717ebed438c9611a84689da1807271e6987ec0090c29a",
+    "authorization-service/config/environments/production.rb": "519d2d984a05042704f3347151e71e2e6fc0f461d440667155c516a25187080d",
+    "authorization-service/config/environments/test.rb": "b3208a3cb7383c4383dfa44d815fd0f942d03ca64ca2ca06a104aad9773403e2",
+    "authorization-service/config/initializers/authorization_cache.rb": "c22dcf680d80435ee7196277026c5880fd0f3c231ed010fdea473b68301b3f5d",
+    "authorization-service/config/initializers/authorization_tracing.rb": "bd35297ffbcb1f851019af66fc7395062cdd84dee66b8b25fcebbc78065988c9",
+    "authorization-service/config/initializers/cache_metrics.rb": "f89f5fa910c5b9f690888d2151954997ae9f82cbe1bb99ddeda87d8de487f931",
+    "authorization-service/config/initializers/cors.rb": "3d2204f77bb83b40940ae789f0201a66d0f40a55a9144d51f28c433d8eb0d1bd",
+    "authorization-service/config/initializers/filter_parameter_logging.rb": "f864bd67e7bdaa63a5331b9fc15446613c410c3a314cd70d1b6a7c8b566b6120",
+    "authorization-service/config/initializers/inflections.rb": "e2c18b803625a073b25e4ee4460677da33a8bf19bbbcad629718a8e15c58acc2",
+    "authorization-service/config/initializers/opentelemetry.rb": "0a4120a5eebcdc423378e0afa8b276a4c87ade10932c19d0182da5e24cc35b46",
+    "authorization-service/config/puma.rb": "9018e5a98af6989b2a20c9cb9e91cc06989c59de13dddd640652e8191a6e8c58",
+    "authorization-service/config/routes.rb": "ae930244b6333db4f34ee8ec6cb37ea6817e2aef93274cb57da59438f6d3d0d6",
+    "authorization-service/lib/application_sql_tracing.rb": "b2db40b4f34a9372f36747e4e2951291941100f876aaa204e89608e0c19a41e5",
+    "authorization-service/lib/authorization/account_context_client.rb": "ac09bc16b8f55506222e00c47ce08aa9508d687f93829f4db37412e2c7ddafc9",
+    "authorization-service/lib/authorization/capabilities.rb": "4745be56b404c8459e35da3c31af731956e4f8ca5db68155487e93dc7e3e8ac9",
+    "authorization-service/lib/authorization/group_context_client.rb": "113167ec96fac01e808d67be4b3c21268f647c13b286f489ac137dff37edf938",
+    "authorization-service/lib/http_request_tracing.rb": "fc1814f6c2920e0fcf4d389d335e7c25a5296a9abf7598359f5897283f61dec1",
+    "authorization-service/lib/instrumentation.rb": "7ae72d10d9e37ea4260b01a91ebf2b804d1bfce947e687bc6202e6edb62a2304",
+    "authorization-service/lib/redis_pipeline_tracing.rb": "02a241113473b5c9f38d5054015d213b083d1b34b4ebe2373e46af567a0bc4a3",
+    "authorization-service/lib/request_operation_tracing.rb": "b964884da31197ec5cbc8b9fca6451888157318cbd8e058d6329b00d28357ca0",
+    "group-service/Gemfile": "e1530eec8eecf2b25abe0f07b892eff511ff4346c7d5422a681c17fdb8fb4804",
+    "group-service/Gemfile.lock": "f9dd366a68dd5702da607c09a010878b49376bb6c6865dd883fd60138f177b4a",
+    "group-service/app/controllers/application_controller.rb": "a5a08abbf997a56311d5da45463490655987481095fb99b96f630b9177e38e95",
+    "group-service/app/controllers/graphql_controller.rb": "9148097a654947a9cfe5dad641e6e4b5e79780a6a0afd0b227a0af884b167ab8",
+    "group-service/app/controllers/group_users_controller.rb": "4f6b3c095a1bd746bef7582a07abc5b0408a32b1b5c94d79d482238d90db51f2",
+    "group-service/app/controllers/groups_controller.rb": "abeb1f6cf091ccfa737759618e415d1bbf67d36c6877b39bcbd734bebfd4991f",
+    "group-service/app/controllers/groups_counts_controller.rb": "26e18ce4242ee047048d1861578429adbca9b15fc2b9440c4065cbcba5014c9a",
+    "group-service/app/controllers/internal/auth/contexts_controller.rb": "0888f788aa52aa521c75b761c36334ef74894f4a92e61cb10a0f832fac88e506",
+    "group-service/app/graphql/group_service_schema.rb": "f4bacd6d84cc379b3840c3902d5f34f7f245b9d8f8deeba5094f0cf2072e7469",
+    "group-service/app/graphql/mutations/base_mutation.rb": "c28e667d06e0a0eef99ce1db5bd108fd448db2532656f140021aefae66577388",
+    "group-service/app/graphql/resolvers/base_resolver.rb": "058a4ccb837368b8a1f957483563bf0dd8e0faf1291b5e15e637b7c730e5390c",
+    "group-service/app/graphql/types/base_argument.rb": "081d0bd3b544b2787dfbec03dc0621628695eb3866f9cbfdb64c49b7363cd1a2",
+    "group-service/app/graphql/types/base_connection.rb": "45612d320ba493601f449e72cc11f8d7ff5899cc09fa89aafdca2e8f989fe421",
+    "group-service/app/graphql/types/base_edge.rb": "a5f59d6719ae94e295aa1f3799b0ec92d1b5bb99d9d50c4eca3c5e5aec8e6242",
+    "group-service/app/graphql/types/base_enum.rb": "0802f453a60a0eb45d5bb1cc8ae2fb3179b44a127861c2ccda50c7eff8b99b34",
+    "group-service/app/graphql/types/base_field.rb": "82040d8561db80c19625cabb0f34bd3d61dc57a04810eb7ec9070eac2ec286b6",
+    "group-service/app/graphql/types/base_input_object.rb": "a6baeffe850a3030cc06ccd49d0fe9860006a681b095cabfa974b5e77999deae",
+    "group-service/app/graphql/types/base_interface.rb": "b110bdc749f1b5cd2c3e4239b42a124ceb9c294425ae2f22501edcd9065cb226",
+    "group-service/app/graphql/types/base_object.rb": "a3c45fc5b5b5632fbfbecb212fa6091e3bd84746f4bf5f5d18c2301eef545cf0",
+    "group-service/app/graphql/types/base_scalar.rb": "221ccec0724f2da3f93ae679319382d970986177fa0159426950f4250d0c1252",
+    "group-service/app/graphql/types/base_union.rb": "b772c02af98af43f71f8d85f69b10a3ca4f36d81469643ed92936868e8658136",
+    "group-service/app/graphql/types/mutation_type.rb": "92047912ead3722014f5f28cd95aae4c2679bf768c49a596da0145115537fb26",
+    "group-service/app/graphql/types/node_type.rb": "ee3082df36da35f2a4208bebc93d902637acf1b0027881483cf0d2af0d5d3b02",
+    "group-service/app/graphql/types/query_type.rb": "46b099e2c38587f0dc9839ec105f5eeb63f75ae9d41e7a156d9861af48ac6cc7",
+    "group-service/app/jobs/application_job.rb": "d51e125007521b0f59765422cf3cf949b59b2054cdac6567a95b4a7aeaf1d722",
+    "group-service/app/mailers/application_mailer.rb": "51b58ee6215d29f50f4f35b309e849766e40f584016e48ec9ea66558ab352fa7",
+    "group-service/app/models/application_record.rb": "12bf7d0eaefce4d50e0719991e19b48a36a7865aeb7ac745980584806155fdc1",
+    "group-service/app/models/group.rb": "f57c4b263b4585fcb5a18fe9467236a80ad2751a485a8c2f60b2651ffba88119",
+    "group-service/app/models/group_user.rb": "35d8e6fbb836fb6dfd6622acb7236995c02afd9bd8fcbf47308cd6ad15aee13a",
+    "group-service/app/models/user.rb": "defe70a84918be6a3aa637642c64acbcdad410daca28265ae724bc7ad0b05d5c",
+    "group-service/app/workers/groups_create_queue_worker.rb": "7231933870214f571d32e1085e0eb7aa407040a9e776064fb8687c0eda1396aa",
+    "group-service/config/application.rb": "79898d000a7495162297738d1caa245bdfa9cd90e78509465524f8dab8967131",
+    "group-service/config/boot.rb": "bb5a9499136e72c70c557bc3ff4d2661cc9b05dc5b848fb720540e3fe716e4ea",
+    "group-service/config/environment.rb": "73b2e731e02cedb9dc0335e1a35c3a2b7738032e3aa7e62ac32cbb8432b43c69",
+    "group-service/config/environments/development.rb": "5d642b84787fbcc3d0f16faff959f3ac775f0b8c62d19569259c8162ed21674c",
+    "group-service/config/environments/production.rb": "ba06a797e36f70143473abe22d16ebfd12515fbce0162b2db6720bb7609a0a41",
+    "group-service/config/environments/test.rb": "b3208a3cb7383c4383dfa44d815fd0f942d03ca64ca2ca06a104aad9773403e2",
+    "group-service/config/initializers/cors.rb": "3d2204f77bb83b40940ae789f0201a66d0f40a55a9144d51f28c433d8eb0d1bd",
+    "group-service/config/initializers/env_constants.rb": "4080cde5a3399b804a5058a647b6931e3542dbc2a07c2819d27bc45e8e996bff",
+    "group-service/config/initializers/filter_parameter_logging.rb": "f864bd67e7bdaa63a5331b9fc15446613c410c3a314cd70d1b6a7c8b566b6120",
+    "group-service/config/initializers/inflections.rb": "e2c18b803625a073b25e4ee4460677da33a8bf19bbbcad629718a8e15c58acc2",
+    "group-service/config/initializers/opentelemetry.rb": "ba7aa8bce91c374ee1a17ec2e693facd10cf888dcbbeadcbe1780ef73a484132",
+    "group-service/config/puma.rb": "9018e5a98af6989b2a20c9cb9e91cc06989c59de13dddd640652e8191a6e8c58",
+    "group-service/config/routes.rb": "b94ec1e282dd35f28384d22dec0104ce5721400320c6ad79f654cb8611c2f6a6",
+    "group-service/lib/application_sql_tracing.rb": "b2db40b4f34a9372f36747e4e2951291941100f876aaa204e89608e0c19a41e5",
+    "group-service/lib/http_request_tracing.rb": "fc1814f6c2920e0fcf4d389d335e7c25a5296a9abf7598359f5897283f61dec1",
+    "group-service/lib/instrumentation.rb": "b6d926506addbe74696dbe2201deb4624e6e537532dce3691f70e5a8890d3707",
+    "group-service/lib/mel/filterable.rb": "cb454a643cb745363711d91bb725e9fc37e6df95b5e8845b43d54ec239eae07d",
+    "group-service/lib/request_operation_tracing.rb": "b964884da31197ec5cbc8b9fca6451888157318cbd8e058d6329b00d28357ca0",
+    "organization-service/Gemfile": "e7337726b51f5d33c38615d03cb0e6bcf1f1697423e788549dbb923a990d053b",
+    "organization-service/Gemfile.lock": "5418c27b504d09805b5919aea9ff6219e6640b7ca53544d0e8bcde92172389d6",
+    "organization-service/app/controllers/application_controller.rb": "a5a08abbf997a56311d5da45463490655987481095fb99b96f630b9177e38e95",
+    "organization-service/app/controllers/graphql_controller.rb": "5028dd9c27a31a6af8e5824be3804e25537d74a6640b937c8a405ac11bd78e7c",
+    "organization-service/app/controllers/internal/auth/account_contexts_controller.rb": "a6719ef2e4158009cf499257b52e3e9354de274921af1a54e3d1717c37e4c551",
+    "organization-service/app/controllers/internal/msp_managed_organizations_controller.rb": "bf9a44688cca621f59695f7f5d76fb02e33de69564d4f30483584ede25b49e13",
+    "organization-service/app/controllers/internal/random_records_controller.rb": "5c44975ceee006b8a32d003a8bb78641e96a556b66e4f7e05c7f02dfc2b61bd1",
+    "organization-service/app/controllers/metrics_controller.rb": "e7912490c00882faf524a00876c23a458ac912e1784b0ffdaea426488989f6f4",
+    "organization-service/app/controllers/organization_accounts_controller.rb": "04d48af746bfca469952b0e26c65a94254e07226e10f672f6e92b68cd5419b49",
+    "organization-service/app/controllers/organizations/accounts_count_controller.rb": "9c928d428f26a0015f460c7f80ca716eda2dd47931ef95cda55dfcbae13a02de",
+    "organization-service/app/controllers/organizations_controller.rb": "5b5317c741c4040bf7222339de01690347dc6306ceeb287ad676365f31168fb8",
+    "organization-service/app/graphql/mutations/base_mutation.rb": "c28e667d06e0a0eef99ce1db5bd108fd448db2532656f140021aefae66577388",
+    "organization-service/app/graphql/organization_service_schema.rb": "27506c57ee3774649b3b564b8032e5a808ad35a8865535f284adbf7d21c001a6",
+    "organization-service/app/graphql/resolvers/base_resolver.rb": "058a4ccb837368b8a1f957483563bf0dd8e0faf1291b5e15e637b7c730e5390c",
+    "organization-service/app/graphql/types/base_argument.rb": "081d0bd3b544b2787dfbec03dc0621628695eb3866f9cbfdb64c49b7363cd1a2",
+    "organization-service/app/graphql/types/base_connection.rb": "45612d320ba493601f449e72cc11f8d7ff5899cc09fa89aafdca2e8f989fe421",
+    "organization-service/app/graphql/types/base_edge.rb": "a5f59d6719ae94e295aa1f3799b0ec92d1b5bb99d9d50c4eca3c5e5aec8e6242",
+    "organization-service/app/graphql/types/base_enum.rb": "0802f453a60a0eb45d5bb1cc8ae2fb3179b44a127861c2ccda50c7eff8b99b34",
+    "organization-service/app/graphql/types/base_field.rb": "82040d8561db80c19625cabb0f34bd3d61dc57a04810eb7ec9070eac2ec286b6",
+    "organization-service/app/graphql/types/base_input_object.rb": "a6baeffe850a3030cc06ccd49d0fe9860006a681b095cabfa974b5e77999deae",
+    "organization-service/app/graphql/types/base_interface.rb": "b110bdc749f1b5cd2c3e4239b42a124ceb9c294425ae2f22501edcd9065cb226",
+    "organization-service/app/graphql/types/base_object.rb": "a3c45fc5b5b5632fbfbecb212fa6091e3bd84746f4bf5f5d18c2301eef545cf0",
+    "organization-service/app/graphql/types/base_scalar.rb": "221ccec0724f2da3f93ae679319382d970986177fa0159426950f4250d0c1252",
+    "organization-service/app/graphql/types/base_union.rb": "b772c02af98af43f71f8d85f69b10a3ca4f36d81469643ed92936868e8658136",
+    "organization-service/app/graphql/types/mutation_type.rb": "92047912ead3722014f5f28cd95aae4c2679bf768c49a596da0145115537fb26",
+    "organization-service/app/graphql/types/node_type.rb": "ee3082df36da35f2a4208bebc93d902637acf1b0027881483cf0d2af0d5d3b02",
+    "organization-service/app/graphql/types/query_type.rb": "46b099e2c38587f0dc9839ec105f5eeb63f75ae9d41e7a156d9861af48ac6cc7",
+    "organization-service/app/jobs/application_job.rb": "d51e125007521b0f59765422cf3cf949b59b2054cdac6567a95b4a7aeaf1d722",
+    "organization-service/app/mailers/application_mailer.rb": "51b58ee6215d29f50f4f35b309e849766e40f584016e48ec9ea66558ab352fa7",
+    "organization-service/app/models/application_record.rb": "12bf7d0eaefce4d50e0719991e19b48a36a7865aeb7ac745980584806155fdc1",
+    "organization-service/app/models/msp_managed_organization.rb": "83c4ae77f023cb1ebf13b957520a6a842cabc5c482c9ffe1c824a3c944f91532",
+    "organization-service/app/models/organization.rb": "ff9373b07db1d8902e43ed8398c1b2c0aa73c2b2ce8bc6b6ce71ef2b2507ae60",
+    "organization-service/app/models/organization_account.rb": "8a56b254f06bcfc0503074c90544122bde0ec27a9bbbe17d7acfc14fecf41117",
+    "organization-service/app/models/user.rb": "f878e6b311c0650dea25023e92e3c0158e06b545d6e234856b3d0b224835d4c1",
+    "organization-service/app/workers/organization_create_queue_worker.rb": "b971a52a38f5601d34715f2fe7efd5e4155de105ab847159816077205a919d02",
+    "organization-service/config/application.rb": "ddb99792bc135f0e2e0a00617ae7f4e2b2493026db8867d61892b747bf09d76f",
+    "organization-service/config/boot.rb": "bb5a9499136e72c70c557bc3ff4d2661cc9b05dc5b848fb720540e3fe716e4ea",
+    "organization-service/config/environment.rb": "73b2e731e02cedb9dc0335e1a35c3a2b7738032e3aa7e62ac32cbb8432b43c69",
+    "organization-service/config/environments/development.rb": "97a10a16a6c6506deb9ded49d91b26c0c5f42eb1c607499db343f2848d14fde6",
+    "organization-service/config/environments/production.rb": "4aa4c2e788f27c0da836a005e468c1075e7816bf790cc183d5dc44694917a282",
+    "organization-service/config/environments/test.rb": "b3208a3cb7383c4383dfa44d815fd0f942d03ca64ca2ca06a104aad9773403e2",
+    "organization-service/config/initializers/batch_size.rb": "cb592d2ae520788ddb4d64bd9979642df0b9c42a7efcb3cd73d1988c7c5f9f5f",
+    "organization-service/config/initializers/cache_metrics.rb": "6b21148bd25d2f01af1ffe9d887471eb50eaea2586b54cfa5fa45b17ba08f632",
+    "organization-service/config/initializers/cors.rb": "3d2204f77bb83b40940ae789f0201a66d0f40a55a9144d51f28c433d8eb0d1bd",
+    "organization-service/config/initializers/env_constants.rb": "8b0d8d02741061673e2c371f3f30d2594b436a40184ae01de707255b99b57140",
+    "organization-service/config/initializers/filter_parameter_logging.rb": "f864bd67e7bdaa63a5331b9fc15446613c410c3a314cd70d1b6a7c8b566b6120",
+    "organization-service/config/initializers/inflections.rb": "e2c18b803625a073b25e4ee4460677da33a8bf19bbbcad629718a8e15c58acc2",
+    "organization-service/config/initializers/opentelemetry.rb": "577c80aaf7af77fa0640938a7b412a0ba281ac1e5ac23d93962ecfa91cb1f508",
+    "organization-service/config/initializers/organization_cache.rb": "ff7c97cd8b2c7f576b8bd9b9e052b6b4ece76c7686c8ed52e50daf764a19a2a0",
+    "organization-service/config/puma.rb": "9018e5a98af6989b2a20c9cb9e91cc06989c59de13dddd640652e8191a6e8c58",
+    "organization-service/config/routes.rb": "4e087eed64d648107e1e19bffbf6253999ff3a930adf736a9b5a49d95ff19a08",
+    "organization-service/lib/application_sql_tracing.rb": "b2db40b4f34a9372f36747e4e2951291941100f876aaa204e89608e0c19a41e5",
+    "organization-service/lib/http_request_tracing.rb": "fc1814f6c2920e0fcf4d389d335e7c25a5296a9abf7598359f5897283f61dec1",
+    "organization-service/lib/instrumentation.rb": "5f892e12c584eabde896ca03b294895db969e4a21aa00e211d36106a5499641f",
+    "organization-service/lib/mel/filterable.rb": "cb454a643cb745363711d91bb725e9fc37e6df95b5e8845b43d54ec239eae07d",
+    "organization-service/lib/redis_pipeline_tracing.rb": "02a241113473b5c9f38d5054015d213b083d1b34b4ebe2373e46af567a0bc4a3",
+    "organization-service/lib/request_operation_tracing.rb": "b964884da31197ec5cbc8b9fca6451888157318cbd8e058d6329b00d28357ca0",
+    "scripts/prove_record_authorization.sh": "eba252eaf9074db9da3d63cf767983e548ea2db447082119862f1cd1e89855bd",
+    "scripts/summarize_record_authorization.py": "8c26a6ceab790d892f83382dc7503d9aab9075e10d672ee8ca6853d0b5fcc76b",
+    "scripts/test_record_authorization.sh": "9d928539cb2cd161f6ebee084ef40559b98274444f61cc9d5c24d59f8a8c5189",
+    "scripts/test_record_authorization_matrix.sh": "65afb84aea34f1ead3d822828c698d707e20b2ff514a4ce42dfe9f1a8bc632fe",
+    "scripts/test_record_authorization_mutations.py": "49e57c63302ff70b09af5fb2e609339c20a4842a42c8f06f4c11743a89292e5d",
+    "test/integration/authorization_boundary_spec.rb": "39a2d484622560af1e070ef5b359be3fbf4a663eddedd310d51d317e3b0d4f3c",
+    "test/integration/authorization_fixture.rb": "90433359aefc750c7a083f957f27f3bad04e44f560f37c38691a715919ea4137",
+    "test/integration/authorization_smoke_benchmark.rb": "af31d51d8098badb9da8aa4a357fbc0e6bf2b26ecf0bfe4fcacd02a89968855f",
+    "test/integration/record_authorization_fixture.rb": "f63572d1fdb086d2e10a32d993c49e37009622ac2831baa9723961c3daf728c1",
+    "test/integration/record_authorization_routes.rb": "f31a819adad5f1b9094f2b5bdf8cb63ca280db924037ac174d1c7f01d48bd37f",
+    "test/integration/record_authorization_spec.rb": "99977257a2b62926f5ebabb6ecbf77b911b99773424b9a97a28d490226713410",
+    "test/integration/record_authorization_traces.rb": "3b09ad479074aead12e33a1ecda6e5d395cd07a64f01e8554d98a832f99c0121",
+    "user-management-service/Gemfile": "eb50befcaf6bb33e950fe9d408fc434bf8f043408f0fd803129d9c8f0912a987",
+    "user-management-service/Gemfile.lock": "87126b4e47808c8203006ea15d286d03f1801aa983beddbd4763a5fae38515c4",
+    "user-management-service/app/controllers/accounts_controller.rb": "4b480ce157f94ada833c9487155aac99b3470977272171f3cdc7c0dc94efea89",
+    "user-management-service/app/controllers/application_controller.rb": "72c39d39243eebfb896e721c400ceef1f95c6c4e7bada30000238582f413798a",
+    "user-management-service/app/controllers/frontdoor_controller.rb": "1d77d8d6e5ed159461026c69b95d2f36ea0baef30b405ffc53b7914ad8104197",
+    "user-management-service/app/controllers/graphql_controller.rb": "6dd16d5155dcb5f615bed67fabc7e87ff46372c1dbdec2f386ad8e69f3bf018d",
+    "user-management-service/app/controllers/organization_user_management_controller.rb": "c9a37b1cf4a047f31c3cc9ef1031063999b3b03a2b480aa1c7c5bd6dcba8036d",
+    "user-management-service/app/graphql/mutations/base_mutation.rb": "c28e667d06e0a0eef99ce1db5bd108fd448db2532656f140021aefae66577388",
+    "user-management-service/app/graphql/resolvers/account_hierarchies_resolver.rb": "a550fd5979aa80c46168c150a0da1782c0c31caa87bceb7b7c9af041e393891f",
+    "user-management-service/app/graphql/resolvers/account_with_parents_resolver.rb": "3e03ab266caa4cfc1964b265537f6033e84b20effca5e8d7f80c306c745ba859",
+    "user-management-service/app/graphql/resolvers/base_resolver.rb": "058a4ccb837368b8a1f957483563bf0dd8e0faf1291b5e15e637b7c730e5390c",
+    "user-management-service/app/graphql/sources/account_by_id.rb": "72f89ff9a5842b75178c6e15df55e0178f6e7eb0b22c85e4fcccc00f32b59cbc",
+    "user-management-service/app/graphql/sources/accounts_with_parents_by_id.rb": "b22838f77dbe2a9a94aca229401406e8f7a558c1933a2b4aa3ea43e31b91cb2e",
+    "user-management-service/app/graphql/sources/base_source.rb": "27eb66f17b64e864efbde6e0fa437ccf72c4cc210381e9427a5d75dfec263731",
+    "user-management-service/app/graphql/sources/groups_by_user_id.rb": "6311aa6d8595d92388cd2b77e1d5abb407920aeb29757f753d6b350a1034d2fd",
+    "user-management-service/app/graphql/sources/groups_count_by_account.rb": "eb8aba8a75138e7d643ccda7be1cafd5b43171546a1197b8024d8166ea5abe3a",
+    "user-management-service/app/graphql/sources/org_accounts_count.rb": "fa0d99b44e18053cf7bd95f08e4a95f7a7271aba15cfdb4f24e354b34bed9b0c",
+    "user-management-service/app/graphql/sources/users_by_account_id.rb": "d44621240f15bfb55dcf9bed3422443e0c5e91db5bb6bf0386ce66f62f8049d7",
+    "user-management-service/app/graphql/sources/users_count_by_account.rb": "9ee3ed0f6315cdc9c2e82ef335250e923df6649e13d27ee8c0cc9b4eae160215",
+    "user-management-service/app/graphql/tracing/dataloader.rb": "07c02cece2827b7af1b48d85b427cd9f05cc9d403b0548027cd56fae293455d5",
+    "user-management-service/app/graphql/tracing/source_context.rb": "2ab8369a6ff9eea5e8e83e456ad91f5f33dcd1e7709ec4aa86d1a40185fea6b6",
+    "user-management-service/app/graphql/types/account_type.rb": "29af6b60f772163dc88f1fd2c230e0862c2412b4ded1cee25c48a90119042da3",
+    "user-management-service/app/graphql/types/base_argument.rb": "081d0bd3b544b2787dfbec03dc0621628695eb3866f9cbfdb64c49b7363cd1a2",
+    "user-management-service/app/graphql/types/base_connection.rb": "45612d320ba493601f449e72cc11f8d7ff5899cc09fa89aafdca2e8f989fe421",
+    "user-management-service/app/graphql/types/base_edge.rb": "a5f59d6719ae94e295aa1f3799b0ec92d1b5bb99d9d50c4eca3c5e5aec8e6242",
+    "user-management-service/app/graphql/types/base_enum.rb": "0802f453a60a0eb45d5bb1cc8ae2fb3179b44a127861c2ccda50c7eff8b99b34",
+    "user-management-service/app/graphql/types/base_field.rb": "82040d8561db80c19625cabb0f34bd3d61dc57a04810eb7ec9070eac2ec286b6",
+    "user-management-service/app/graphql/types/base_input_object.rb": "a6baeffe850a3030cc06ccd49d0fe9860006a681b095cabfa974b5e77999deae",
+    "user-management-service/app/graphql/types/base_interface.rb": "b110bdc749f1b5cd2c3e4239b42a124ceb9c294425ae2f22501edcd9065cb226",
+    "user-management-service/app/graphql/types/base_object.rb": "a3c45fc5b5b5632fbfbecb212fa6091e3bd84746f4bf5f5d18c2301eef545cf0",
+    "user-management-service/app/graphql/types/base_scalar.rb": "221ccec0724f2da3f93ae679319382d970986177fa0159426950f4250d0c1252",
+    "user-management-service/app/graphql/types/base_union.rb": "b772c02af98af43f71f8d85f69b10a3ca4f36d81469643ed92936868e8658136",
+    "user-management-service/app/graphql/types/group_type.rb": "10a31ec8169ad5fedc0b92c3c176eef4f5dd294f870f8be02a8ced330c12c97f",
+    "user-management-service/app/graphql/types/msp_managed_account_type.rb": "14f154b2667b356817803a738240b56536e3c6a58cba41745e914fdbba19efee",
+    "user-management-service/app/graphql/types/msp_user_management_type.rb": "2b095c73c2f5e787795dd9cab2b9a5a3d8fa4eb31556ee73014d57426deaaa74",
+    "user-management-service/app/graphql/types/mutation_type.rb": "92047912ead3722014f5f28cd95aae4c2679bf768c49a596da0145115537fb26",
+    "user-management-service/app/graphql/types/node_type.rb": "ee3082df36da35f2a4208bebc93d902637acf1b0027881483cf0d2af0d5d3b02",
+    "user-management-service/app/graphql/types/organization_type.rb": "f1c0dddab8b08fb1cb0a2bd2cb15cb915ce251d7348235e476ffa45ac02fcb54",
+    "user-management-service/app/graphql/types/query_type.rb": "73dd62842f9084dd1724187fd65a70aff3bb3820fb01fd11a47421a605833718",
+    "user-management-service/app/graphql/types/user_type.rb": "cc236965c3ea945a1ddd1a6ade033c724a4d7acb2771e6a3391c4c6e1eac93d9",
+    "user-management-service/app/graphql/user_management_service_schema.rb": "f0cba9432109d410f6bea957dd6ca2795db823579c71bd606e0d90a8dbd52641",
+    "user-management-service/app/helpers/accounts_helper.rb": "5142b2145df436de3299cad380d3c91e877bf2d84dee6a88bc9adb313bde6b40",
+    "user-management-service/app/helpers/application_helper.rb": "f77fac5ea412dbed92c4524fe0ed180acb2b7239f84daf758da989032301f5c8",
+    "user-management-service/app/helpers/frontdoor_helper.rb": "aee6c5ceb6dfca6f6da0dafda2875f6e80136f61f4a79871e2ecc8bfdf2bcc90",
+    "user-management-service/app/jobs/application_job.rb": "d51e125007521b0f59765422cf3cf949b59b2054cdac6567a95b4a7aeaf1d722",
+    "user-management-service/app/mailers/application_mailer.rb": "51b58ee6215d29f50f4f35b309e849766e40f584016e48ec9ea66558ab352fa7",
+    "user-management-service/app/models/account.rb": "49dffeb4a1661ec2c7b884a96194537555029ca2775f5186c034b224e366bf29",
+    "user-management-service/app/models/application_record.rb": "12bf7d0eaefce4d50e0719991e19b48a36a7865aeb7ac745980584806155fdc1",
+    "user-management-service/app/models/capability_grant.rb": "e039292ad9ca8a09735ce00a865deb7ed3a2525ac5c1df70eec7f84e6926f3e6",
+    "user-management-service/app/models/group.rb": "af421bf75a6d7a75666001b8c93f600e9739edc470b7034f01b97cc59395bbaa",
+    "user-management-service/app/models/group_user.rb": "a4a8ddea87dcbdbf73b989464f4b639a7eb19cfb1b3d131b34ea4157f73bcb9c",
+    "user-management-service/app/models/msp_managed_organization.rb": "07f4556c156b8dfb62ac5c4da00078034a3fa09add5a3ebf2e988e135adab3a5",
+    "user-management-service/app/models/organization.rb": "7737599d9ce2f97373754996af025bcde3ede0ec2fc423cc2df9fd1edb448d58",
+    "user-management-service/app/models/organization_account.rb": "8b41b2cd31717409eb1170e011e7d875c64dab611b9d7e5bedcb46796d3985e5",
+    "user-management-service/app/models/user.rb": "c356f9eb6962705339860f03264e7bd7954233c39cd0e8108c9c40d312dae91a",
+    "user-management-service/config/application.rb": "2a91c0d3370393dd6b96f2780dec796eaec3be46714cf42f1a25daa67a32c601",
+    "user-management-service/config/boot.rb": "bb5a9499136e72c70c557bc3ff4d2661cc9b05dc5b848fb720540e3fe716e4ea",
+    "user-management-service/config/environment.rb": "73b2e731e02cedb9dc0335e1a35c3a2b7738032e3aa7e62ac32cbb8432b43c69",
+    "user-management-service/config/environments/development.rb": "c779868d055d2152fb15021b25fb9b635cf480c36b0db753669f05c8839e92db",
+    "user-management-service/config/environments/production.rb": "baaa3e44afa3df8ac0dded84e5e41e53054e92ca1703ad2db3b7ebdc0817213e",
+    "user-management-service/config/environments/test.rb": "b3208a3cb7383c4383dfa44d815fd0f942d03ca64ca2ca06a104aad9773403e2",
+    "user-management-service/config/importmap.rb": "148fdf21d156d2d1274627caa734d3e2d05ce23ae60e6a371fae054933ca30be",
+    "user-management-service/config/initializers/assets.rb": "f55d4ce66ec2b48256ff492c99c7105b7cc1726c78789dffdbee2611e193c1a6",
+    "user-management-service/config/initializers/batch_size.rb": "cb592d2ae520788ddb4d64bd9979642df0b9c42a7efcb3cd73d1988c7c5f9f5f",
+    "user-management-service/config/initializers/content_security_policy.rb": "74c222dfd7c82fb1797dbe8eb4fce7b9e6afdfea8e413957692a021dfd7bfbb0",
+    "user-management-service/config/initializers/env_constants.rb": "d15063cba3f563129574bac3ae2cb4099a714208ec974ede9ecf24afb50183fe",
+    "user-management-service/config/initializers/filter_parameter_logging.rb": "f864bd67e7bdaa63a5331b9fc15446613c410c3a314cd70d1b6a7c8b566b6120",
+    "user-management-service/config/initializers/inflections.rb": "e2c18b803625a073b25e4ee4460677da33a8bf19bbbcad629718a8e15c58acc2",
+    "user-management-service/config/initializers/opentelemetry.rb": "e3155b7a024ecfe6d65618ddc8f725fa82500f40ea0d0cfe8ffc7add614bf50e",
+    "user-management-service/config/puma.rb": "383009750fc1edf7a5065a6f87a4a4a670ae6847f54bead2b3efe5a6289edf05",
+    "user-management-service/config/routes.rb": "2b153aa9e07f1124e1cc12e517b5c8f6610df323da5cd33e57dc7913c1269ec0",
+    "user-management-service/lib/application_sql_tracing.rb": "b2db40b4f34a9372f36747e4e2951291941100f876aaa204e89608e0c19a41e5",
+    "user-management-service/lib/http_request_tracing.rb": "fc1814f6c2920e0fcf4d389d335e7c25a5296a9abf7598359f5897283f61dec1",
+    "user-management-service/lib/instrumentation.rb": "d7093eb06c7e55170808b74eb42ec7a92286353d728a71b7d0832ef81d810085",
+    "user-management-service/lib/request_operation_tracing.rb": "b964884da31197ec5cbc8b9fca6451888157318cbd8e058d6329b00d28357ca0",
+    "user-service/Gemfile": "731f3bb210736d963b3c3973de1a3b8ec8bb6127b29a57a9856a2cc4e30ebf70",
+    "user-service/Gemfile.lock": "dcfb8c8dd9054c9acf78b9ecb3bc7cc909ed091917f494b1ff60b335910b8726",
+    "user-service/app/controllers/application_controller.rb": "a5a08abbf997a56311d5da45463490655987481095fb99b96f630b9177e38e95",
+    "user-service/app/controllers/graphql_controller.rb": "97d3dd15b8b53096abd646876d60adef20d58b0da9f440cd934a7b00cbe6e890",
+    "user-service/app/controllers/users_controller.rb": "a7f64052190ca66e544e322118674845e8d99e08f501a473e671c22b2be3b122",
+    "user-service/app/controllers/users_counts_controller.rb": "4d6c8f3b9c0914c0b0bc46fffbbd6b6d59edb4eceb3e7341d608e943993a26b2",
+    "user-service/app/graphql/mutations/base_mutation.rb": "c28e667d06e0a0eef99ce1db5bd108fd448db2532656f140021aefae66577388",
+    "user-service/app/graphql/resolvers/base_resolver.rb": "058a4ccb837368b8a1f957483563bf0dd8e0faf1291b5e15e637b7c730e5390c",
+    "user-service/app/graphql/types/base_argument.rb": "081d0bd3b544b2787dfbec03dc0621628695eb3866f9cbfdb64c49b7363cd1a2",
+    "user-service/app/graphql/types/base_connection.rb": "45612d320ba493601f449e72cc11f8d7ff5899cc09fa89aafdca2e8f989fe421",
+    "user-service/app/graphql/types/base_edge.rb": "a5f59d6719ae94e295aa1f3799b0ec92d1b5bb99d9d50c4eca3c5e5aec8e6242",
+    "user-service/app/graphql/types/base_enum.rb": "0802f453a60a0eb45d5bb1cc8ae2fb3179b44a127861c2ccda50c7eff8b99b34",
+    "user-service/app/graphql/types/base_field.rb": "82040d8561db80c19625cabb0f34bd3d61dc57a04810eb7ec9070eac2ec286b6",
+    "user-service/app/graphql/types/base_input_object.rb": "a6baeffe850a3030cc06ccd49d0fe9860006a681b095cabfa974b5e77999deae",
+    "user-service/app/graphql/types/base_interface.rb": "b110bdc749f1b5cd2c3e4239b42a124ceb9c294425ae2f22501edcd9065cb226",
+    "user-service/app/graphql/types/base_object.rb": "a3c45fc5b5b5632fbfbecb212fa6091e3bd84746f4bf5f5d18c2301eef545cf0",
+    "user-service/app/graphql/types/base_scalar.rb": "221ccec0724f2da3f93ae679319382d970986177fa0159426950f4250d0c1252",
+    "user-service/app/graphql/types/base_union.rb": "b772c02af98af43f71f8d85f69b10a3ca4f36d81469643ed92936868e8658136",
+    "user-service/app/graphql/types/mutation_type.rb": "92047912ead3722014f5f28cd95aae4c2679bf768c49a596da0145115537fb26",
+    "user-service/app/graphql/types/node_type.rb": "ee3082df36da35f2a4208bebc93d902637acf1b0027881483cf0d2af0d5d3b02",
+    "user-service/app/graphql/types/query_type.rb": "46b099e2c38587f0dc9839ec105f5eeb63f75ae9d41e7a156d9861af48ac6cc7",
+    "user-service/app/graphql/user_service_schema.rb": "90579d037571cd3d1c54ac8031ab602319fa3b9608581a58a59a8f69f3ade7e0",
+    "user-service/app/jobs/application_job.rb": "d51e125007521b0f59765422cf3cf949b59b2054cdac6567a95b4a7aeaf1d722",
+    "user-service/app/mailers/application_mailer.rb": "51b58ee6215d29f50f4f35b309e849766e40f584016e48ec9ea66558ab352fa7",
+    "user-service/app/models/application_record.rb": "12bf7d0eaefce4d50e0719991e19b48a36a7865aeb7ac745980584806155fdc1",
+    "user-service/app/models/user.rb": "d522a1d752dc1da0410b17d659b8a9cf295b290f492573a94c2c6d61695a6ba8",
+    "user-service/app/workers/user_create_queue_worker.rb": "a9f44c42e88df1011dffc34ed3f96ebd81c1495191b3c0d1be62ec817724312a",
+    "user-service/config/application.rb": "705430d2894e507c941cd45ff30bbe3460eae3a48e24dc7e5d7efed83fd58b72",
+    "user-service/config/boot.rb": "bb5a9499136e72c70c557bc3ff4d2661cc9b05dc5b848fb720540e3fe716e4ea",
+    "user-service/config/environment.rb": "73b2e731e02cedb9dc0335e1a35c3a2b7738032e3aa7e62ac32cbb8432b43c69",
+    "user-service/config/environments/development.rb": "c92639765868e34378150d4e1096ecde83c9d0041cb786ee505209a8d4d5fc0c",
+    "user-service/config/environments/production.rb": "51a2f01317d7a7d3ecd9c26ee5bd3855946633ca8e665e50f6a63c4bc73c4ae1",
+    "user-service/config/environments/test.rb": "b3208a3cb7383c4383dfa44d815fd0f942d03ca64ca2ca06a104aad9773403e2",
+    "user-service/config/initializers/cors.rb": "3d2204f77bb83b40940ae789f0201a66d0f40a55a9144d51f28c433d8eb0d1bd",
+    "user-service/config/initializers/filter_parameter_logging.rb": "f864bd67e7bdaa63a5331b9fc15446613c410c3a314cd70d1b6a7c8b566b6120",
+    "user-service/config/initializers/inflections.rb": "e2c18b803625a073b25e4ee4460677da33a8bf19bbbcad629718a8e15c58acc2",
+    "user-service/config/initializers/opentelemetry.rb": "25e9d4fafba24c14516ffcf9a8f48c6015a9279ee04085ff7647c74e3ea921af",
+    "user-service/config/puma.rb": "9018e5a98af6989b2a20c9cb9e91cc06989c59de13dddd640652e8191a6e8c58",
+    "user-service/config/routes.rb": "eeed26a462fb3e70b084ab3ad92dc3e4495cffdc24c3024bb248f940837bb473",
+    "user-service/lib/application_sql_tracing.rb": "b2db40b4f34a9372f36747e4e2951291941100f876aaa204e89608e0c19a41e5",
+    "user-service/lib/http_request_tracing.rb": "fc1814f6c2920e0fcf4d389d335e7c25a5296a9abf7598359f5897283f61dec1",
+    "user-service/lib/instrumentation.rb": "9fa0ed9086819810aefe9a2a8e7c2a3a4d5f90444083298af94036080bc5e282",
+    "user-service/lib/mel/filterable.rb": "cb454a643cb745363711d91bb725e9fc37e6df95b5e8845b43d54ec239eae07d",
+    "user-service/lib/request_operation_tracing.rb": "b964884da31197ec5cbc8b9fca6451888157318cbd8e058d6329b00d28357ca0"
+  },
+  "limits": [
+    "Fixed persisted fixture graph; immediate revocation during cache TTL is not asserted.",
+    "Caller identity/trusted-token authentication at an external boundary is outside this record authorization contract."
+  ]
+}
