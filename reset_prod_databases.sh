@@ -47,19 +47,20 @@ done
 
 echo 'Truncating User Management SQLite databases...'
 ./dc_prod run --rm --no-deps user-management-service bin/rails runner - <<'RUBY'
+class ProductionResetRecord < ActiveRecord::Base
+  self.abstract_class = true
+end
+
 ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |configuration|
-  connection_class = Class.new(ActiveRecord::Base) do
-    self.abstract_class = true
-  end
-  connection_class.establish_connection(configuration)
-  connection = connection_class.connection
+  ProductionResetRecord.establish_connection(configuration)
+  connection = ProductionResetRecord.connection
   tables = connection.tables - %w[ar_internal_metadata schema_migrations]
   connection.transaction do
     connection.disable_referential_integrity do
       tables.each { |table| connection.execute("DELETE FROM #{connection.quote_table_name(table)}") }
     end
   end
-  connection_class.remove_connection
+  ProductionResetRecord.remove_connection
   puts "#{configuration.name}: truncated #{tables.length} tables"
 end
 RUBY
