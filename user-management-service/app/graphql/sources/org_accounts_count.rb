@@ -7,10 +7,13 @@ module Sources
     end
 
     def fetch(org_ids)
-      map = OrganizationAccount.accounts_counts(org_ids)
-      Rails.logger.info map
-      Rails.logger.info org_ids
-      org_ids.map { |id| (map[:organization_id] == id ? map[:accounts_count] : 0).to_i }
+      OrganizationAccount.with_headers("pad-user-id" => @as) do
+        org_ids.map do |id|
+          counts = OrganizationAccount.accounts_counts(id)
+          raise "Organization count returned the wrong scope" unless counts.fetch(:organization_id) == id
+          counts.fetch(:accounts_count).to_i
+        end
+      end
     end
   end
 end

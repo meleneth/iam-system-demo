@@ -56,6 +56,52 @@ class AccountsController < ApplicationController
       @users = User.search(account_id: all_account_ids)
     end
 
+    prepare_user_rows
+  end
+
+  def slow_view
+    @account = Account.find(params[:id])
+    @accounts = []
+    @accounts << @account
+    current_account = @account
+    while current_account.parent_account_id do
+      parent_account = Account.find(current_account.parent_account_id)
+      @accounts << parent_account
+      current_account = parent_account
+    end
+    org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
+    @organization = org_account.organization if org_account
+
+    org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
+    @organization_accounts = Account.where(id: org_accounts.map(&:account_id))
+    @users = User.find(:all, params: { account_id: @account.id})
+    prepare_user_rows
+    render :view
+  end
+
+  def slowest_view
+    @account = Account.find(params[:id])
+    @accounts = []
+    @accounts << @account
+    current_account = @account
+    while current_account.parent_account_id do
+      parent_account = Account.find(current_account.parent_account_id)
+      @accounts << parent_account
+      current_account = parent_account
+    end
+    org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
+    @organization = org_account.organization if org_account
+
+    org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
+    @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
+    @users = User.find(:all, params: { account_id: @account.id})
+    prepare_user_rows
+    render :view
+  end
+
+  # All rendering variants must authorize and populate the membership/group
+  # records used by the shared template, under with_actor_headers.
+  def prepare_user_rows
     @users_by_account_id = {}
     @users.each do |user|
       @users_by_account_id[user.account_id] ||= []
@@ -76,44 +122,6 @@ class AccountsController < ApplicationController
       @group_names_by_user_id[group_user.user_id] ||= []
       @group_names_by_user_id[group_user.user_id] << @group_name_by_group_id[group_user.group_id]
     end
-  end
-
-  def slow_view
-    @account = Account.find(params[:id])
-    @accounts = []
-    @accounts << @account
-    current_account = @account
-    while current_account.parent_account_id do
-      parent_account = Account.find(current_account.parent_account_id)
-      @accounts << parent_account
-      current_account = parent_account
-    end
-    org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
-    @organization = org_account.organization if org_account
-
-    org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
-    @organization_accounts = Account.where(id: org_accounts.map(&:account_id))
-    @users = User.find(:all, params: { account_id: @account.id})
-    render :view
-  end
-
-  def slowest_view
-    @account = Account.find(params[:id])
-    @accounts = []
-    @accounts << @account
-    current_account = @account
-    while current_account.parent_account_id do
-      parent_account = Account.find(current_account.parent_account_id)
-      @accounts << parent_account
-      current_account = parent_account
-    end
-    org_account = OrganizationAccount.find(:first, params: { account_id: @account.id })
-    @organization = org_account.organization if org_account
-
-    org_accounts = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
-    @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
-    @users = User.find(:all, params: { account_id: @account.id})
-    render :view
   end
 
   def fetch_parent_accounts_async()

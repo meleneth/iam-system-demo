@@ -50,6 +50,7 @@ class OrganizationAccount < ActiveResource::Base
       req.body = { account_ids: account_ids }.to_json
     end
 
+    raise ActiveResource::ForbiddenAccess.new(response) if response.status == 403
     raise "Failed to get org accounts for account_ids #{account_ids}" unless response.status == 200
 
     data = JSON.parse(response.body)
@@ -81,6 +82,7 @@ class OrganizationAccount < ActiveResource::Base
       outgoing_headers.each { |key, value| req.headers[key] = value }
     end
 
+    raise ActiveResource::ForbiddenAccess.new(response) if response.status == 403
     raise "Error getting Organization's Account counts" unless response.status == 200
 
     JSON.parse(response.body, symbolize_names: true)
@@ -92,6 +94,7 @@ class OrganizationAccount < ActiveResource::Base
       headers.each { |key, value| req.headers[key] = value }
     end
 
+    raise ActiveResource::ForbiddenAccess.new(response) if response.status == 403
     raise "Failed to get random account for organization #{organization_id}: #{response.status} #{response.body}" unless response.status == 200
 
     JSON.parse(response.body, symbolize_names: true)

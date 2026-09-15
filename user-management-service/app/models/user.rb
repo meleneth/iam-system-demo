@@ -78,6 +78,7 @@ class User < ActiveResource::Base
       req.body = { account_id: account_ids }.to_json
     end
 
+    raise ActiveResource::ForbiddenAccess.new(response) if response.status == 403
     raise "Error getting Account's User counts" unless response.status == 200
 
     JSON.parse(response.body, symbolize_names: true)
