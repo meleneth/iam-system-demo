@@ -16,6 +16,7 @@ require_relative "benchmark_hierarchies"
 require_relative "benchmark_response"
 require_relative "authorization_correctness_gate"
 require_relative "gallery_correctness"
+require_relative "workload_trace"
 
 class ArticleTraceRefresh < ArticleCollection
   CASES = {
@@ -52,14 +53,17 @@ class ArticleTraceRefresh < ArticleCollection
     raise "Commit runtime/collector changes before collecting: #{dirty_code}" unless dirty_code.empty? || ENV["GALLERY_CORRECTNESS_REVIEW"] == "1"
     raise "Missing fixture manifest: #{@manifest}" unless File.file?(@manifest)
     raise "Output already exists; choose a new COLLECTION_DIR: #{@out}" if File.exist?(@out)
-    @fixtures = JSON.parse(File.read(@manifest)).fetch("fixtures").to_h { |f| [f.fetch("name"), f] }
+    seed_manifest = JSON.parse(File.read(@manifest))
+    @seed_profile = seed_manifest.fetch('profile', 'full')
+    @fixtures = seed_manifest.fetch("fixtures").to_h { |f| [f.fetch("name"), f] }
     %w[deep_chain wide_org massive_fanout_10k].each { |name| @fixtures.fetch(name) }
     FileUtils.mkdir_p(@out)
     FileUtils.cp(@manifest, File.join(@out, "fixture_manifest.json"))
     write_json(File.join(@out, "collection.json"), @fingerprint.merge("started_at" => Time.now.utc.iso8601,
       "purpose" => "Selected article traces only; not replacement benchmark timings",
-      "instrumentation" => { "automatic" => %w[Net::HTTP Rack Redis GraphQL], "sql" => "application sql.active_record executions only",
-        "controller_http_phases_serialization_materialization_spans" => false, "application_cache_authorization_spans" => true,
+      "instrumentation" => { "automatic" => %w[Net::HTTP Rack GraphQL], "sql" => "application sql.active_record executions only",
+        "redis" => "one span per application pipeline", "workload_root" => true,
+        "controller_http_phases_serialization_materialization_spans" => false, "application_cache_spans" => false, "authorization_spans" => true,
         "solid_cache" => false, "active_record_query_cache" => true, "workload_warmups_per_profile" => 2,
         "cold_cache_policy" => "Redis DB 1 only; no Rails or PostgreSQL restart" },
       "working_tree_status" => capture("git", "status", "--short"), "cases" => @cases))
@@ -128,7 +132,7 @@ class ArticleTraceRefresh < ArticleCollection
           status = TraceArchive.new(base_url: @stack_env.fetch("JAEGER_BASE_URL"),
             timeout: Float(ENV.fetch("TRACE_EXPORT_TIMEOUT_SECONDS", "120")),
             quiet_seconds: Float(ENV.fetch("TRACE_QUIET_SECONDS", "5"))).archive(
-              trace_id: entry.fetch(:trace_id), parent_id: entry.fetch(:parent_id), output: entry.fetch(:output))
+              trace_id: entry.fetch(:trace_id), parent_id: entry.fetch(:parent_id), output: entry.fetch(:output), require_root: true)
           entry[:status] = status.fetch(:status)
           write_json(File.join(@out, "trace-index.json"), @index)
           unless status.fetch(:status) == "archived"
@@ -196,6 +200,49 @@ class ArticleTraceRefresh < ArticleCollection
     value
   end
 
+  def workload_trace(id, fixture, hierarchy_mode: nil, depth: nil, target_count: nil)
+    redis = @case.fetch('redis') == 'true'
+    phase = if !redis
+      'off'
+    elsif id.start_with?('warmup')
+      'warmup'
+    elsif id.end_with?('-cold')
+      'cold'
+    elsif id.end_with?('-prime')
+      'prime'
+    else
+      'warm'
+    end
+    intent = if hierarchy_mode
+      case hierarchy_mode
+      when 'walk' then "Walk #{depth} parent accounts"
+      when 'cte' then "Load #{depth}-level hierarchy with CTE"
+      when 'individual' then "Load #{target_count} hierarchies individually"
+      when 'batch' then "Load #{target_count} hierarchies in one batch"
+      end
+    elsif @case.fetch('id') == 'graphql-cache-b200'
+      'GraphQL MSP users and groups'
+    elsif @case.fetch('id').start_with?('graphql-')
+      'GraphQL hierarchy users and groups'
+    else
+      'Load organization users and groups'
+    end
+    fixture_name = fixture.fetch('name')
+    name = "#{intent} | #{@seed_profile}/#{fixture_name} (#{fixture.fetch('user_count')} users) | #{@case.fetch('auth')} | Redis #{phase} | #{@case.fetch('retrieval')} #{@case.fetch('batch_size')}"
+    name = "Warmup: #{name}" if id.start_with?('warmup')
+    attributes = {
+      'workload.intent' => intent, 'workload.case' => @case.fetch('id'), 'workload.sample' => id,
+      'workload.collection' => File.basename(@out), 'workload.stack' => @stack_env.fetch('BENCHMARK_STACK'),
+      'workload.revision' => @revision, 'fixture.name' => fixture_name,
+      'fixture.profile' => @seed_profile, 'workload.warmup' => id.start_with?('warmup'),
+      'fixture.account_count' => fixture.fetch('account_count'), 'fixture.user_count' => fixture.fetch('user_count'),
+      'authorization.mode' => @case.fetch('auth'), 'redis.enabled' => redis, 'redis.phase' => phase,
+      'retrieval.mode' => @case.fetch('retrieval'), 'retrieval.batch_size' => @case.fetch('batch_size'),
+      'hierarchy.method' => hierarchy_mode, 'hierarchy.depth' => depth, 'hierarchy.target_count' => target_count
+    }.compact
+    WorkloadTrace.new(endpoint: @stack_env.fetch('OTEL_COLLECTOR_BASE_URL'), name: name, attributes: attributes)
+  end
+
   def enqueue(id, trace_id, parent_id, output)
     entry = { id: id, case: @case.fetch("id"), trace_id: trace_id, parent_id: parent_id,
       output: output, kind: id.start_with?("authorization-") ? "subtree-source" : "complete", status: "pending" }
@@ -209,12 +256,18 @@ class ArticleTraceRefresh < ArticleCollection
     ids = fixture.fetch("accounts").map { |account| account.fetch("id") }
     ids = depth ? [ids.find { |target| HierarchyComparison.expected_chain(fixture, target).size == depth } || raise("Missing depth #{depth}")] : ids.last(8)
     directory = File.join(@directory, id)
+    workload = workload_trace(id, fixture, hierarchy_mode: mode, depth: depth, target_count: ids.size)
     result = HierarchyComparison.new(base_url: @stack_env.fetch("ACCOUNT_SERVICE_BASE_URL"), actor: actor(fixture),
       batch_size: 1000, timeout: Float(ENV.fetch("REQUEST_TIMEOUT_SECONDS", "600"))).measure(
         mode: mode, target_ids: ids, expected: ids.to_h { |target| [target, HierarchyComparison.expected_chain(fixture, target)] }, directory: directory)
+    workload.stop
+    result[:trace_name] = workload.export(trace_id: result.fetch(:trace_id), span_id: result.fetch(:initiating_span_id), outcome: result.fetch(:outcome))
     write_json(File.join(directory, "result.json"), result)
     raise "Hierarchy failed: #{id}: #{result}" unless result.fetch(:outcome) == "ok"
-    enqueue(id, result.fetch(:trace_id), result.fetch(:initiating_span_id), File.join(directory, "trace.json")) if archive
+    if archive
+      enqueue(id, result.fetch(:trace_id), result.fetch(:initiating_span_id), File.join(directory, "trace.json"))
+      @index.last[:trace_name] = result.fetch(:trace_name)
+    end
     result
   end
 
@@ -255,7 +308,10 @@ class ArticleTraceRefresh < ArticleCollection
       write_json(payload, body)
       args += ["-X", method, "-H", "Content-Type: application/json", "--data-binary", "@#{payload}"]
     end
+    fixture_name = body ? (@case.fetch('id') == 'graphql-cache-b200' ? 'massive_fanout_10k' : 'deep_chain') : @case.fetch('fixture')
+    workload = workload_trace(id, @fixtures.fetch(fixture_name))
     timing, error, status = Open3.capture3(*args, url)
+    workload.stop
     code, elapsed = timing.split
     File.write(File.join(directory, "curl-error.txt"), error)
     result = BenchmarkResponse.inspect_response(response_file, http_code: code.to_i,
@@ -277,16 +333,18 @@ class ArticleTraceRefresh < ArticleCollection
     end
     result.merge!("trace_id" => trace_id, "url" => url, "http_status" => code.to_i,
       "client_elapsed_seconds" => Float(elapsed), "warmup" => warmup)
+    result['trace_name'] = workload.export(trace_id: trace_id, span_id: parent_id, outcome: result.fetch('outcome'))
     write_json(File.join(directory, "result.json"), result)
     if archive
       enqueue(id, trace_id, parent_id, File.join(directory, "trace.json"))
       @index.last[:request_outcome] = result.fetch("outcome")
+      @index.last[:trace_name] = result.fetch('trace_name')
       @index.last[:publishable] = ENV["GALLERY_CORRECTNESS_REVIEW"] != "1" && archive && result.fetch("outcome") == "ok"
       write_json(File.join(@out, "trace-index.json"), @index)
     end
     if warmup
       settled = TraceArchive.new(base_url: @stack_env.fetch("JAEGER_BASE_URL"), timeout: 180, quiet_seconds: 5).archive(
-        trace_id: trace_id, parent_id: parent_id, output: File.join(directory, "trace.json"))
+        trace_id: trace_id, parent_id: parent_id, output: File.join(directory, "trace.json"), require_root: true)
       raise "Warmup did not settle: #{id}: #{settled}" unless settled.fetch(:status) == "archived"
     elsif result.fetch("outcome") != "ok"
       raise "Request failed: #{id}: #{result}; see #{directory}"

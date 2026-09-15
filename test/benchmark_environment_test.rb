@@ -10,6 +10,7 @@ class BenchmarkEnvironmentTest < Minitest::Test
     assert_equal "http://localhost:7501", values.fetch("USER_MANAGEMENT_BASE_URL")
     assert_equal "http://localhost:11360", values.fetch("ACCOUNT_SERVICE_BASE_URL")
     assert_equal "http://localhost:11290", values.fetch("JAEGER_BASE_URL")
+    assert_equal 'http://localhost:11270', values.fetch('OTEL_COLLECTOR_BASE_URL')
     assert_includes values.fetch("MANIFEST"), "data/production/"
     ENV["BENCHMARK_STACK"] = "dev"
     assert_equal "./dc_dev", BenchmarkEnvironment.values.fetch("BENCHMARK_WRAPPER")

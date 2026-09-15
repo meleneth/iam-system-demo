@@ -18,6 +18,12 @@ for entry in entries:
     assert trace['traceID'] == entry['trace_id'], entry['id']
     by_id = {span['spanID']: span for span in spans}
     assert len(by_id) == len(spans)
+    workload = by_id[entry['parent_id']]
+    assert not workload.get('references'), (entry['id'], 'Workload span must be the root')
+    assert workload['operationName'] == entry['trace_name']
+    workload_tags = {tag['key']: tag['value'] for tag in workload.get('tags', [])}
+    for key in ('workload.intent', 'workload.case', 'fixture.name', 'fixture.profile', 'authorization.mode', 'redis.phase', 'retrieval.mode', 'retrieval.batch_size'):
+        assert key in workload_tags, (entry['id'], 'Missing workload metadata', key)
     cross_service = 0
     external = set()
     redis = 0
@@ -62,14 +68,14 @@ for entry in entries:
             else:
                 raise AssertionError('Cyclic SQL ancestry')
         parents = [ref for ref in span.get('references', []) if ref['refType'] == 'CHILD_OF']
-        assert parents, (entry['id'], 'parentless span', span['spanID'])
+        assert parents or span['spanID'] == entry['parent_id'], (entry['id'], 'parentless span', span['spanID'])
         for ref in parents:
             assert ref['traceID'] == trace['traceID'], (entry['id'], 'foreign trace')
             if ref['spanID'] in by_id:
                 cross_service += by_id[ref['spanID']]['processID'] != span['processID']
             else:
                 external.add(ref['spanID'])
-    assert external == {entry['parent_id']}, (entry['id'], external)
+    assert not external, (entry['id'], external)
     assert http_clients and api_servers and sql_queries, (entry['id'], 'Missing HTTP, API, or SQL spans')
     assert cross_service > 0, (entry['id'], 'no cross-service ancestry')
     if entry['id'].startswith('graphql-'):

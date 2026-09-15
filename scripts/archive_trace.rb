@@ -15,7 +15,7 @@ class TraceArchive
     @fetch = fetch || method(:fetch_trace)
   end
 
-  def archive(trace_id:, parent_id:, output:)
+  def archive(trace_id:, parent_id:, output:, require_root: false)
     deadline = @clock.call + @timeout
     stable_since = nil
     previous = nil
@@ -34,7 +34,7 @@ class TraceArchive
             previous = fingerprint
             stable_since = @clock.call
           end
-          complete = connected?(spans, trace_id, parent_id)
+          complete = connected?(spans, trace_id, parent_id) && (!require_root || spans.any? { |span| span.fetch('spanID') == parent_id })
           status = "incomplete"
           reason = complete ? "Waiting for span count to settle" : "Root or referenced parent spans are missing"
           if complete && @clock.call - stable_since >= @quiet_seconds

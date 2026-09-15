@@ -101,6 +101,13 @@ scope count. Cache tracing retains one `Redis pipeline: N GET` (or mixed-command
 span per real pipeline, with command counts but no key/value lists. Individual
 Redis commands and application cache bookkeeping do not create spans; application
 SQL on cache misses remains visible.
+Each collected trace also has a real client-side workload root under the Jaeger
+service `trace-workloads`. Its name includes the intended operation, seed profile,
+fixture/user count, authorization mode, Redis phase, retrieval mode, and batch size.
+The root tags retain these values separately for searching, along with the case,
+sample, collection, revision, and observed outcome. Its duration covers the actual
+client workload; exporting and polling Jaeger happen afterward. Failed HTTP
+samples are marked as errors on this root even when a downstream server reports 200.
 
 The default `DEMO_SEED_PROFILE=full` retains the normal 1,000,000-user seed.
 

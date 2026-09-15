@@ -20,6 +20,7 @@ module BenchmarkEnvironment
       key = name == "ACCOUNT_SERVICE" ? "ACCOUNT_SERVICE_WEB_PORT" : "#{name}_WEB_PORT"
       result["#{name}_BASE_URL"] = "http://localhost:#{port.call(key, fallback)}"
     end
+    result['OTEL_COLLECTOR_BASE_URL'] = "http://localhost:#{port.call('OTEL_COLLECTOR_COLLECTOR_PORT', stack == 'prod' ? '11270' : '11140')}"
     { "ORGANIZATION_SERVICE" => (stack == "prod" ? "11380" : "11250") }.each do |name, fallback|
       result["#{name}_BASE_URL"] = "http://localhost:#{port.call("#{name}_WEB_PORT", fallback)}"
     end

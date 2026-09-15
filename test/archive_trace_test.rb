@@ -16,12 +16,12 @@ class ArchiveTraceTest < Minitest::Test
     { "data" => [{ "traceID" => TRACE, "spans" => spans, "processes" => {} }] }
   end
 
-  def archive(fetch, quiet: 2, timeout: 6)
+  def archive(fetch, quiet: 2, timeout: 6, require_root: false)
     now = 0.0
     Dir.mktmpdir do |dir|
       output = File.join(dir, "trace.json")
       result = TraceArchive.new(base_url: "http://unused", quiet_seconds: quiet, timeout: timeout,
-        fetch: fetch, clock: -> { now }, sleeper: ->(seconds) { now += seconds }).archive(trace_id: TRACE, parent_id: PARENT, output: output)
+        fetch: fetch, clock: -> { now }, sleeper: ->(seconds) { now += seconds }).archive(trace_id: TRACE, parent_id: PARENT, output: output, require_root: require_root)
       yield result, JSON.parse(File.read(output)), JSON.parse(File.read(File.join(dir, "trace.status.json")))
     end
   end
@@ -53,6 +53,17 @@ class ArchiveTraceTest < Minitest::Test
       assert_equal "missing", result.fetch(:status)
       assert_equal [], json.fetch("data")
       assert_includes status.fetch("error"), "backend unavailable"
+    end
+  end
+
+  def test_workload_root_must_arrive_before_export_is_complete
+    child = span('server', PARENT)
+    archive(->(_) { payload([child]) }, require_root: true) do |result, _json, _status|
+      assert_equal 'incomplete', result.fetch(:status)
+    end
+    root = {'spanID' => PARENT, 'startTime' => 900, 'duration' => 200, 'references' => []}
+    archive(->(_) { payload([root, child]) }, require_root: true) do |result, _json, _status|
+      assert_equal 'archived', result.fetch(:status)
     end
   end
 end
