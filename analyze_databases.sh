@@ -29,3 +29,21 @@ SQL_SH
       ;;
   esac
 done
+
+if grep -Fxq user-management-service <<<"$services"; then
+  echo "Analyzing User Management SQLite databases ($stack)..."
+  "$wrapper" exec -T user-management-service bin/rails runner - <<'RUBY'
+class AnalyzeDatabaseRecord < ActiveRecord::Base
+  self.abstract_class = true
+end
+
+ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |configuration|
+  next unless configuration.adapter == 'sqlite3'
+
+  AnalyzeDatabaseRecord.establish_connection(configuration)
+  AnalyzeDatabaseRecord.connection.execute('ANALYZE')
+  AnalyzeDatabaseRecord.remove_connection
+  puts "  #{configuration.name}"
+end
+RUBY
+fi
