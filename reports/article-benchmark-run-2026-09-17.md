@@ -27,6 +27,24 @@ The two 10k fanout cases at batch sizes 1,000 and 200 passed, including all
 10,000-batch cases make those cases failed collector results even though their
 response timings and account counts were recorded.
 
+### Why those traces were incomplete
+
+Each of the seven affected Jaeger traces contains child spans whose parent
+span is absent. The initiating request span is present. Re-querying Jaeger
+after the run returned the same span counts and missing parents, so waiting
+longer did not complete them.
+
+The OpenTelemetry collector log has a matching `Exporting failed. Dropping
+data.` entry inside each affected request's time window: 09:01:58, 09:04:23,
+09:13:37, 09:14:02, 09:24:18, 09:50:23, and 09:57:59 UTC. Jaeger's OTLP gRPC
+receiver rejected the export with `ResourceExhausted`: the decompressed message
+exceeded its 4,194,304-byte receive limit. The collector treated this as a
+permanent error and dropped each rejected batch (39–64 items in the matching
+log entries). The logs do not identify individual span IDs, but the timing and
+persistently missing spans support this as the cause of the trace gaps. The
+collector currently uses a default `batch: {}` processor before its Jaeger
+OTLP exporter; see [collector configuration](../otel-collector/otel-collector-config.yaml).
+
 ## Selected measured client times
 
 Values below are medians of three complete-walk samples in seconds. Redis-on
