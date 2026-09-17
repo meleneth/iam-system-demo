@@ -1,0 +1,42 @@
+[
+  {
+    "span_id": "930bec9a9c59f51b",
+    "category": "INTERNAL",
+    "operation": "Load capabilities for 3 accounts",
+    "target": "/capabilities/Account",
+    "host": null,
+    "status": 200,
+    "statement": null,
+    "scope_id": null
+  },
+  {
+    "span_id": "386e4a95b742539f",
+    "category": "INTERNAL",
+    "operation": "authorization.capabilities.account",
+    "target": null,
+    "host": null,
+    "status": null,
+    "statement": null,
+    "scope_id": "a1710000-0000-4000-8000-9f91161f4343"
+  },
+  {
+    "span_id": "88fbb4d608fea42b",
+    "category": "INTERNAL",
+    "operation": "authorization.capabilities.account",
+    "target": null,
+    "host": null,
+    "status": null,
+    "statement": null,
+    "scope_id": "a1710000-0000-4000-8000-7d10de8554ed"
+  },
+  {
+    "span_id": "d9e5ac1f3df170e2",
+    "category": "INTERNAL",
+    "operation": "authorization.capabilities.account",
+    "target": null,
+    "host": null,
+    "status": null,
+    "statement": null,
+    "scope_id": "a1710000-0000-4000-8000-656771905e1e"
+  }
+]

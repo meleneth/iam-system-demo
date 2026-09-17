@@ -1,0 +1,3034 @@
+{
+  "data": [
+    {
+      "traceID": "feb6840e3a684711817c26d19b67d1e7",
+      "spans": [
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "f8081906c7afaff2",
+          "operationName": "SQL GroupUser Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "6d5395f95567a45a"
+            }
+          ],
+          "startTime": 1789613165073839,
+          "duration": 601,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "group-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "GroupUser Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT DISTINCT \"group_users\".\"group_id\", \"group_users\".\"user_id\" FROM \"group_users\" INNER JOIN groups ON groups.id = group_users.group_id WHERE \"group_users\".\"user_id\" = 'a1710000-0000-4000-8000-8db307e4fdb1' /*action='memberships',application='GroupService',controller='contexts'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "6d5395f95567a45a",
+          "operationName": "Load 1 group membership for authorization",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "b47e669f39eab0b8"
+            }
+          ],
+          "startTime": 1789613165067471,
+          "duration": 8318,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "group-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/memberships"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1789613165065999,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "http.proxy.request.started"
+                }
+              ]
+            }
+          ],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "ae5a4604c9bc7600",
+          "operationName": "SQL OrganizationAccount Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "d6d2ba6dbcecd952"
+            }
+          ],
+          "startTime": 1789613165042012,
+          "duration": 691,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "organization-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "OrganizationAccount Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT \"organization_accounts\".\"account_id\", \"managed\".\"msp_account_id\", \"managed\".\"msp_organization_id\", \"managed\".\"client_organization_id\" FROM \"organization_accounts\" INNER JOIN msp_managed_organizations managed ON managed.client_organization_id = organization_accounts.organization_id INNER JOIN organization_accounts provider ON provider.account_id = managed.msp_account_id AND provider.organization_id = managed.msp_organization_id WHERE \"organization_accounts\".\"account_id\" = 'a1710000-0000-4000-8000-9f91161f4343' /*action='providers',application='OrganizationService',controller='account_contexts'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "ec7b46c8c9d04740",
+          "operationName": "SQL OrganizationAccount Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "8b3a38c87d83c27d"
+            }
+          ],
+          "startTime": 1789613165060663,
+          "duration": 605,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "organization-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "OrganizationAccount Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT \"organization_accounts\".\"account_id\", \"managed\".\"msp_account_id\", \"managed\".\"msp_organization_id\", \"managed\".\"client_organization_id\" FROM \"organization_accounts\" INNER JOIN msp_managed_organizations managed ON managed.client_organization_id = organization_accounts.organization_id INNER JOIN organization_accounts provider ON provider.account_id = managed.msp_account_id AND provider.organization_id = managed.msp_organization_id WHERE \"organization_accounts\".\"account_id\" = 'a1710000-0000-4000-8000-5c4c1964340a' /*action='providers',application='OrganizationService',controller='account_contexts'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "4760e2924e261c7a",
+          "operationName": "SQL OrganizationAccount Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "84e10c4b475099cf"
+            }
+          ],
+          "startTime": 1789613165122727,
+          "duration": 422,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "organization-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "OrganizationAccount Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT \"organization_accounts\".\"account_id\", \"managed\".\"msp_account_id\", \"managed\".\"msp_organization_id\", \"managed\".\"client_organization_id\" FROM \"organization_accounts\" INNER JOIN msp_managed_organizations managed ON managed.client_organization_id = organization_accounts.organization_id INNER JOIN organization_accounts provider ON provider.account_id = managed.msp_account_id AND provider.organization_id = managed.msp_organization_id WHERE \"organization_accounts\".\"account_id\" = 'a1710000-0000-4000-8000-7d10de8554ed' /*action='providers',application='OrganizationService',controller='account_contexts'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "29cb5d3ca8718d68",
+          "operationName": "SQL OrganizationAccount Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "4f0dd6aa7f46dfc3"
+            }
+          ],
+          "startTime": 1789613165143319,
+          "duration": 426,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "organization-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "OrganizationAccount Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT \"organization_accounts\".\"account_id\", \"managed\".\"msp_account_id\", \"managed\".\"msp_organization_id\", \"managed\".\"client_organization_id\" FROM \"organization_accounts\" INNER JOIN msp_managed_organizations managed ON managed.client_organization_id = organization_accounts.organization_id INNER JOIN organization_accounts provider ON provider.account_id = managed.msp_account_id AND provider.organization_id = managed.msp_organization_id WHERE \"organization_accounts\".\"account_id\" = 'a1710000-0000-4000-8000-5c4c1964340a' /*action='providers',application='OrganizationService',controller='account_contexts'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "dc9faff344c2f079",
+          "operationName": "SQL OrganizationAccount Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "d7ca5265b544da50"
+            }
+          ],
+          "startTime": 1789613165161941,
+          "duration": 606,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "organization-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "OrganizationAccount Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT \"organization_accounts\".\"account_id\", \"managed\".\"msp_account_id\", \"managed\".\"msp_organization_id\", \"managed\".\"client_organization_id\" FROM \"organization_accounts\" INNER JOIN msp_managed_organizations managed ON managed.client_organization_id = organization_accounts.organization_id INNER JOIN organization_accounts provider ON provider.account_id = managed.msp_account_id AND provider.organization_id = managed.msp_organization_id WHERE \"organization_accounts\".\"account_id\" = 'a1710000-0000-4000-8000-656771905e1e' /*action='providers',application='OrganizationService',controller='account_contexts'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "09f7f637dfb7320d",
+          "operationName": "SQL OrganizationAccount Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "7fd4e3683cab1534"
+            }
+          ],
+          "startTime": 1789613165177124,
+          "duration": 399,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "organization-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "OrganizationAccount Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT \"organization_accounts\".\"account_id\", \"managed\".\"msp_account_id\", \"managed\".\"msp_organization_id\", \"managed\".\"client_organization_id\" FROM \"organization_accounts\" INNER JOIN msp_managed_organizations managed ON managed.client_organization_id = organization_accounts.organization_id INNER JOIN organization_accounts provider ON provider.account_id = managed.msp_account_id AND provider.organization_id = managed.msp_organization_id WHERE \"organization_accounts\".\"account_id\" = 'a1710000-0000-4000-8000-042b229f0e88' /*action='providers',application='OrganizationService',controller='account_contexts'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "d6d2ba6dbcecd952",
+          "operationName": "Load 1 MSP relationship",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "dce70a60cc827749"
+            }
+          ],
+          "startTime": 1789613165041022,
+          "duration": 2232,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "8b3a38c87d83c27d",
+          "operationName": "Load 0 MSP relationships",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "78b1b9ae5d13bb9e"
+            }
+          ],
+          "startTime": 1789613165057154,
+          "duration": 5505,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "84e10c4b475099cf",
+          "operationName": "Load 1 MSP relationship",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "5dfaae120169dfe4"
+            }
+          ],
+          "startTime": 1789613165110609,
+          "duration": 15538,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "4f0dd6aa7f46dfc3",
+          "operationName": "Load 0 MSP relationships",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "cfe6c30281113276"
+            }
+          ],
+          "startTime": 1789613165141183,
+          "duration": 3671,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "d7ca5265b544da50",
+          "operationName": "Load 1 MSP relationship",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "2fd18ab04d773472"
+            }
+          ],
+          "startTime": 1789613165160008,
+          "duration": 2859,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "7fd4e3683cab1534",
+          "operationName": "Load 0 MSP relationships",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "f8848e5850bc8bc0"
+            }
+          ],
+          "startTime": 1789613165174222,
+          "duration": 3624,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "9b26963547dfadd3",
+          "operationName": "Redis pipeline: 1 GET",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "ed0383d42887e530"
+            }
+          ],
+          "startTime": 1789613165031261,
+          "duration": 661,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.redis_pipeline"
+            },
+            {
+              "key": "db.operation.name",
+              "type": "string",
+              "value": "PIPELINED"
+            },
+            {
+              "key": "db.redis.database_index",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.command_count",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.commands",
+              "type": "string",
+              "value": "1 GET"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "redis"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "accountcache"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 6379
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "6f5c68612fa461dd",
+          "operationName": "Redis pipeline: 1 GET",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "f76003bf4a576f67"
+            }
+          ],
+          "startTime": 1789613165048906,
+          "duration": 112,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.redis_pipeline"
+            },
+            {
+              "key": "db.operation.name",
+              "type": "string",
+              "value": "PIPELINED"
+            },
+            {
+              "key": "db.redis.database_index",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.command_count",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.commands",
+              "type": "string",
+              "value": "1 GET"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "redis"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "accountcache"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 6379
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "301c71b480776992",
+          "operationName": "Redis pipeline: 1 GET",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "61ace47fa020a6f9"
+            }
+          ],
+          "startTime": 1789613165096904,
+          "duration": 134,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.redis_pipeline"
+            },
+            {
+              "key": "db.operation.name",
+              "type": "string",
+              "value": "PIPELINED"
+            },
+            {
+              "key": "db.redis.database_index",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.command_count",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.commands",
+              "type": "string",
+              "value": "1 GET"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "redis"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "accountcache"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 6379
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "1d7ff6c0aef8327e",
+          "operationName": "Redis pipeline: 1 GET",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "9ea00ceedc225033"
+            }
+          ],
+          "startTime": 1789613165134555,
+          "duration": 100,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.redis_pipeline"
+            },
+            {
+              "key": "db.operation.name",
+              "type": "string",
+              "value": "PIPELINED"
+            },
+            {
+              "key": "db.redis.database_index",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.command_count",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.commands",
+              "type": "string",
+              "value": "1 GET"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "redis"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "accountcache"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 6379
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "e8b09c64e2c03b20",
+          "operationName": "Redis pipeline: 1 GET",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "c36e51b030d5436d"
+            }
+          ],
+          "startTime": 1789613165153171,
+          "duration": 411,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.redis_pipeline"
+            },
+            {
+              "key": "db.operation.name",
+              "type": "string",
+              "value": "PIPELINED"
+            },
+            {
+              "key": "db.redis.database_index",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.command_count",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.commands",
+              "type": "string",
+              "value": "1 GET"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "redis"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "accountcache"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 6379
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "c50e8464d4815242",
+          "operationName": "Redis pipeline: 1 GET",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "eabae894a2628d61"
+            }
+          ],
+          "startTime": 1789613165168777,
+          "duration": 367,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.redis_pipeline"
+            },
+            {
+              "key": "db.operation.name",
+              "type": "string",
+              "value": "PIPELINED"
+            },
+            {
+              "key": "db.redis.database_index",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.command_count",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.commands",
+              "type": "string",
+              "value": "1 GET"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "redis"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "accountcache"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 6379
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "ed0383d42887e530",
+          "operationName": "Load 3 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "1ef9bb0220129021"
+            }
+          ],
+          "startTime": 1789613165030327,
+          "duration": 2062,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1789613165031940,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Fetching cached account_with_parents SUCCESS!"
+                }
+              ]
+            }
+          ],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "f76003bf4a576f67",
+          "operationName": "Load 2 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "1745774ca5ade929"
+            }
+          ],
+          "startTime": 1789613165047787,
+          "duration": 3713,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1789613165049625,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Fetching cached account_with_parents SUCCESS!"
+                }
+              ]
+            }
+          ],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "61ace47fa020a6f9",
+          "operationName": "Load 2 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "333b6f7812980244"
+            }
+          ],
+          "startTime": 1789613165090797,
+          "duration": 8562,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1789613165097659,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Fetching cached account_with_parents SUCCESS!"
+                }
+              ]
+            }
+          ],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "9ea00ceedc225033",
+          "operationName": "Load 2 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "c27e002f0faa5013"
+            }
+          ],
+          "startTime": 1789613165133703,
+          "duration": 1838,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1789613165134665,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Fetching cached account_with_parents SUCCESS!"
+                }
+              ]
+            }
+          ],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "c36e51b030d5436d",
+          "operationName": "Load 1 account",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "e10a729ea5ac6b9d"
+            }
+          ],
+          "startTime": 1789613165151241,
+          "duration": 2764,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1789613165153598,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Fetching cached account_with_parents SUCCESS!"
+                }
+              ]
+            }
+          ],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "eabae894a2628d61",
+          "operationName": "Load 1 account",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "c220eb3024c02e95"
+            }
+          ],
+          "startTime": 1789613165167239,
+          "duration": 2145,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Ruby"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [
+            {
+              "timestamp": 1789613165169157,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Fetching cached account_with_parents SUCCESS!"
+                }
+              ]
+            }
+          ],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "1ef9bb0220129021",
+          "operationName": "Load 3 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "9e0be061173d6098"
+            }
+          ],
+          "startTime": 1789613165029435,
+          "duration": 3739,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "dce70a60cc827749",
+          "operationName": "Load 1 MSP relationship",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "9e0be061173d6098"
+            }
+          ],
+          "startTime": 1789613165040207,
+          "duration": 3449,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "1745774ca5ade929",
+          "operationName": "Load 2 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "9e0be061173d6098"
+            }
+          ],
+          "startTime": 1789613165047385,
+          "duration": 5107,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "78b1b9ae5d13bb9e",
+          "operationName": "Load 0 MSP relationships",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "9e0be061173d6098"
+            }
+          ],
+          "startTime": 1789613165056644,
+          "duration": 6406,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "b47e669f39eab0b8",
+          "operationName": "Load 1 group membership for authorization",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "9e0be061173d6098"
+            }
+          ],
+          "startTime": 1789613165066691,
+          "duration": 9958,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/memberships"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "group-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "333b6f7812980244",
+          "operationName": "Load 2 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "dc57a2175b9eb5df"
+            }
+          ],
+          "startTime": 1789613165090438,
+          "duration": 9592,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "5dfaae120169dfe4",
+          "operationName": "Load 1 MSP relationship",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "dc57a2175b9eb5df"
+            }
+          ],
+          "startTime": 1789613165110129,
+          "duration": 16698,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "c27e002f0faa5013",
+          "operationName": "Load 2 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "dc57a2175b9eb5df"
+            }
+          ],
+          "startTime": 1789613165133273,
+          "duration": 2888,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "cfe6c30281113276",
+          "operationName": "Load 0 MSP relationships",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "dc57a2175b9eb5df"
+            }
+          ],
+          "startTime": 1789613165140612,
+          "duration": 4740,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "e10a729ea5ac6b9d",
+          "operationName": "Load 1 account",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "009dfedb8238996c"
+            }
+          ],
+          "startTime": 1789613165150915,
+          "duration": 3726,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "2fd18ab04d773472",
+          "operationName": "Load 1 MSP relationship",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "009dfedb8238996c"
+            }
+          ],
+          "startTime": 1789613165159434,
+          "duration": 3902,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "c220eb3024c02e95",
+          "operationName": "Load 1 account",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "009dfedb8238996c"
+            }
+          ],
+          "startTime": 1789613165166498,
+          "duration": 3463,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/accounts_with_parents"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "account-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "f8848e5850bc8bc0",
+          "operationName": "Load 0 MSP relationships",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "009dfedb8238996c"
+            }
+          ],
+          "startTime": 1789613165173774,
+          "duration": 4386,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Net::HTTP"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.23.0"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/internal/auth/account_providers"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "organization-auth-service"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 80
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "72323d96647b2fc7",
+          "operationName": "SQL CapabilityGrant Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "9e0be061173d6098"
+            }
+          ],
+          "startTime": 1789613165080977,
+          "duration": 338,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "authz-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "CapabilityGrant Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT DISTINCT \"capability_grants\".\"permission\" FROM \"capability_grants\" WHERE \"capability_grants\".\"group_id\" = 'a1710000-0000-4000-8000-8970b7cd6d4a' AND \"capability_grants\".\"scope_type\" = 'Account' AND \"capability_grants\".\"scope_id\" IN ('a1710000-0000-4000-8000-4813494d137e', 'a1710000-0000-4000-8000-ddc9e6691942', 'a1710000-0000-4000-8000-9f91161f4343', 'a1710000-0000-4000-8000-2d2adb393946', 'a1710000-0000-4000-8000-5c4c1964340a') /*action='accounts',application='AuthorizationService',controller='capabilities'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "bdf954b875962606",
+          "operationName": "SQL CapabilityGrant Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "dc57a2175b9eb5df"
+            }
+          ],
+          "startTime": 1789613165147792,
+          "duration": 284,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "authz-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "CapabilityGrant Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT DISTINCT \"capability_grants\".\"permission\" FROM \"capability_grants\" WHERE \"capability_grants\".\"group_id\" = 'a1710000-0000-4000-8000-8970b7cd6d4a' AND \"capability_grants\".\"scope_type\" = 'Account' AND \"capability_grants\".\"scope_id\" IN ('a1710000-0000-4000-8000-4813494d137e', 'a1710000-0000-4000-8000-7d10de8554ed', 'a1710000-0000-4000-8000-2d2adb393946', 'a1710000-0000-4000-8000-5c4c1964340a') /*action='accounts',application='AuthorizationService',controller='capabilities'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "67a201c1c7e0c69a",
+          "operationName": "SQL CapabilityGrant Pluck",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "009dfedb8238996c"
+            }
+          ],
+          "startTime": 1789613165178500,
+          "duration": 197,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.application_sql"
+            },
+            {
+              "key": "db.name",
+              "type": "string",
+              "value": "authz-db_test"
+            },
+            {
+              "key": "db.query.name",
+              "type": "string",
+              "value": "CapabilityGrant Pluck"
+            },
+            {
+              "key": "db.statement",
+              "type": "string",
+              "value": "SELECT DISTINCT \"capability_grants\".\"permission\" FROM \"capability_grants\" WHERE \"capability_grants\".\"group_id\" = 'a1710000-0000-4000-8000-8970b7cd6d4a' AND \"capability_grants\".\"scope_type\" = 'Account' AND \"capability_grants\".\"scope_id\" IN ('a1710000-0000-4000-8000-656771905e1e', 'a1710000-0000-4000-8000-042b229f0e88') /*action='accounts',application='AuthorizationService',controller='capabilities'*/"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "postgresql"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "9e0be061173d6098",
+          "operationName": "authorization.capabilities.account",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "0d4d5179170a3054"
+            }
+          ],
+          "startTime": 1789613165020013,
+          "duration": 63924,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "authorization-service"
+            },
+            {
+              "key": "phase.elapsed_ms",
+              "type": "float64",
+              "value": 63.918642001226544
+            },
+            {
+              "key": "scope.id",
+              "type": "string",
+              "value": "a1710000-0000-4000-8000-9f91161f4343"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "internal"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "dc57a2175b9eb5df",
+          "operationName": "authorization.capabilities.account",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "0d4d5179170a3054"
+            }
+          ],
+          "startTime": 1789613165084639,
+          "duration": 63804,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "authorization-service"
+            },
+            {
+              "key": "phase.elapsed_ms",
+              "type": "float64",
+              "value": 63.79257098888047
+            },
+            {
+              "key": "scope.id",
+              "type": "string",
+              "value": "a1710000-0000-4000-8000-7d10de8554ed"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "internal"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "009dfedb8238996c",
+          "operationName": "authorization.capabilities.account",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "0d4d5179170a3054"
+            }
+          ],
+          "startTime": 1789613165148471,
+          "duration": 30960,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "authorization-service"
+            },
+            {
+              "key": "phase.elapsed_ms",
+              "type": "float64",
+              "value": 30.94927000347525
+            },
+            {
+              "key": "scope.id",
+              "type": "string",
+              "value": "a1710000-0000-4000-8000-656771905e1e"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "internal"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        },
+        {
+          "traceID": "feb6840e3a684711817c26d19b67d1e7",
+          "spanID": "0d4d5179170a3054",
+          "operationName": "Load capabilities for 3 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "feb6840e3a684711817c26d19b67d1e7",
+              "spanID": "0425ebdcab1b419d"
+            }
+          ],
+          "startTime": 1789613165014879,
+          "duration": 165622,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "localhost:11110"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/capabilities/Account"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Python-urllib/3.14"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": [
+            "parent span ID=0425ebdcab1b419d is not in the trace; skipping clock skew adjustment"
+          ]
+        }
+      ],
+      "processes": {
+        "p1": {
+          "serviceName": "group-auth-service",
+          "tags": [
+            {
+              "key": "deployment.role",
+              "type": "string",
+              "value": "authorization-group-lookup"
+            },
+            {
+              "key": "process.command",
+              "type": "string",
+              "value": "./bin/rails"
+            },
+            {
+              "key": "process.pid",
+              "type": "int64",
+              "value": 20
+            },
+            {
+              "key": "process.runtime.description",
+              "type": "string",
+              "value": "ruby 4.0.6 (2026-07-14 revision 03b6d3f889) +PRISM [x86_64-linux]"
+            },
+            {
+              "key": "process.runtime.name",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "process.runtime.version",
+              "type": "string",
+              "value": "4.0.6"
+            },
+            {
+              "key": "service.instance.id",
+              "type": "string",
+              "value": "81d6e19f255c:20"
+            },
+            {
+              "key": "telemetry.sdk.language",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "telemetry.sdk.name",
+              "type": "string",
+              "value": "opentelemetry"
+            },
+            {
+              "key": "telemetry.sdk.version",
+              "type": "string",
+              "value": "1.8.1"
+            }
+          ]
+        },
+        "p2": {
+          "serviceName": "organization-auth-service",
+          "tags": [
+            {
+              "key": "deployment.role",
+              "type": "string",
+              "value": "authorization-organization-lookup"
+            },
+            {
+              "key": "process.command",
+              "type": "string",
+              "value": "./bin/rails"
+            },
+            {
+              "key": "process.pid",
+              "type": "int64",
+              "value": 19
+            },
+            {
+              "key": "process.runtime.description",
+              "type": "string",
+              "value": "ruby 4.0.6 (2026-07-14 revision 03b6d3f889) +PRISM [x86_64-linux]"
+            },
+            {
+              "key": "process.runtime.name",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "process.runtime.version",
+              "type": "string",
+              "value": "4.0.6"
+            },
+            {
+              "key": "service.instance.id",
+              "type": "string",
+              "value": "9c6a205642a5:19"
+            },
+            {
+              "key": "telemetry.sdk.language",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "telemetry.sdk.name",
+              "type": "string",
+              "value": "opentelemetry"
+            },
+            {
+              "key": "telemetry.sdk.version",
+              "type": "string",
+              "value": "1.8.0"
+            }
+          ]
+        },
+        "p3": {
+          "serviceName": "account-auth-service",
+          "tags": [
+            {
+              "key": "deployment.role",
+              "type": "string",
+              "value": "authorization-account-lookup"
+            },
+            {
+              "key": "process.command",
+              "type": "string",
+              "value": "./bin/rails"
+            },
+            {
+              "key": "process.pid",
+              "type": "int64",
+              "value": 19
+            },
+            {
+              "key": "process.runtime.description",
+              "type": "string",
+              "value": "ruby 4.0.6 (2026-07-14 revision 03b6d3f889) +PRISM [x86_64-linux]"
+            },
+            {
+              "key": "process.runtime.name",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "process.runtime.version",
+              "type": "string",
+              "value": "4.0.6"
+            },
+            {
+              "key": "service.instance.id",
+              "type": "string",
+              "value": "e9f6c2dea1b2:19"
+            },
+            {
+              "key": "telemetry.sdk.language",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "telemetry.sdk.name",
+              "type": "string",
+              "value": "opentelemetry"
+            },
+            {
+              "key": "telemetry.sdk.version",
+              "type": "string",
+              "value": "1.8.0"
+            }
+          ]
+        },
+        "p4": {
+          "serviceName": "authorization-service",
+          "tags": [
+            {
+              "key": "deployment.role",
+              "type": "string",
+              "value": "web"
+            },
+            {
+              "key": "process.command",
+              "type": "string",
+              "value": "./bin/rails"
+            },
+            {
+              "key": "process.pid",
+              "type": "int64",
+              "value": 19
+            },
+            {
+              "key": "process.runtime.description",
+              "type": "string",
+              "value": "ruby 4.0.6 (2026-07-14 revision 03b6d3f889) +PRISM [x86_64-linux]"
+            },
+            {
+              "key": "process.runtime.name",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "process.runtime.version",
+              "type": "string",
+              "value": "4.0.6"
+            },
+            {
+              "key": "service.instance.id",
+              "type": "string",
+              "value": "57d18c006462:19"
+            },
+            {
+              "key": "telemetry.sdk.language",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "telemetry.sdk.name",
+              "type": "string",
+              "value": "opentelemetry"
+            },
+            {
+              "key": "telemetry.sdk.version",
+              "type": "string",
+              "value": "1.8.0"
+            }
+          ]
+        }
+      },
+      "warnings": null
+    }
+  ],
+  "total": 0,
+  "limit": 0,
+  "offset": 0,
+  "errors": null
+}
