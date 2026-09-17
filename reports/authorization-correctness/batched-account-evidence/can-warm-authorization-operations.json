@@ -1,0 +1,35 @@
+[
+  {
+    "span_id": "1072e2bafff70b46",
+    "category": "INTERNAL",
+    "operation": "Check account.read for 3 accounts",
+    "target": "/can/Account/account.read",
+    "host": null,
+    "status": 403,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "4a8d9a64803b35ad",
+    "category": "INTERNAL",
+    "operation": "authorization.permission.accounts",
+    "target": null,
+    "host": null,
+    "status": null,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "0bf149b838f6060e",
+    "category": "REDIS",
+    "operation": "Redis pipeline: 3 GET",
+    "target": null,
+    "host": "authcache",
+    "status": null,
+    "statement": null,
+    "redis_commands": "3 GET",
+    "redis_database": 1
+  }
+]

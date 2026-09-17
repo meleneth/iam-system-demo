@@ -1,0 +1,2 @@
+-- span 7800756bba52b766
+SELECT "capability_grants"."scope_id" FROM "capability_grants" WHERE "capability_grants"."group_id" = 'a1710000-0000-4000-8000-8970b7cd6d4a' AND "capability_grants"."scope_type" = 'Account' AND "capability_grants"."scope_id" IN ('a1710000-0000-4000-8000-4813494d137e', 'a1710000-0000-4000-8000-7d10de8554ed', 'a1710000-0000-4000-8000-2d2adb393946', 'a1710000-0000-4000-8000-5c4c1964340a') AND "capability_grants"."permission" = 'account.read' /*action='index',application='AuthorizationService',controller='can'*/;

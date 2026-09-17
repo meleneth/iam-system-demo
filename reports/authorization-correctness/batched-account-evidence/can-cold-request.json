@@ -1,0 +1,15 @@
+{
+  "phase": "can-cold",
+  "trace_id": "a6e56b7011f041cfaa757ae851047f49",
+  "parent_span_id": "b03d25207c774a17",
+  "actor": "a1710000-0000-4000-8000-8db307e4fdb1",
+  "request": {
+    "scope_id": [
+      "a1710000-0000-4000-8000-9f91161f4343",
+      "a1710000-0000-4000-8000-7d10de8554ed",
+      "a1710000-0000-4000-8000-656771905e1e"
+    ]
+  },
+  "status": 403,
+  "response": "{\"error\":\"Forbidden\"}"
+}

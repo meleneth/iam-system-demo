@@ -1,0 +1,112 @@
+[
+  {
+    "span_id": "357f1c286a4c9d5d",
+    "category": "INTERNAL",
+    "operation": "Check account.read for 3 accounts",
+    "target": "/can/Account/account.read",
+    "host": null,
+    "status": 403,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "a14203ccdd5d0dce",
+    "category": "INTERNAL",
+    "operation": "authorization.permission.accounts",
+    "target": null,
+    "host": null,
+    "status": null,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "94a154e6f3628309",
+    "category": "REDIS",
+    "operation": "Redis pipeline: 3 GET",
+    "target": null,
+    "host": "authcache",
+    "status": null,
+    "statement": null,
+    "redis_commands": "3 GET",
+    "redis_database": 1
+  },
+  {
+    "span_id": "00f78d29372cbd15",
+    "category": "HTTP",
+    "operation": "Load 6 accounts",
+    "target": "/accounts_with_parents",
+    "host": "account-auth-service",
+    "status": 200,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "eec0902e66797596",
+    "category": "HTTP",
+    "operation": "Load 3 MSP relationships",
+    "target": "/internal/auth/account_providers",
+    "host": "organization-auth-service",
+    "status": 200,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "f1d236878782f375",
+    "category": "HTTP",
+    "operation": "Load 3 accounts",
+    "target": "/accounts_with_parents",
+    "host": "account-auth-service",
+    "status": 200,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "320cb542f0cb7bcc",
+    "category": "HTTP",
+    "operation": "Load 0 MSP relationships",
+    "target": "/internal/auth/account_providers",
+    "host": "organization-auth-service",
+    "status": 200,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "aa4421b1e2e6957a",
+    "category": "HTTP",
+    "operation": "Load 1 group membership for authorization",
+    "target": "/internal/auth/memberships",
+    "host": "group-auth-service",
+    "status": 200,
+    "statement": null,
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "3cfd9f0397ce905f",
+    "category": "SQL",
+    "operation": "SQL CapabilityGrant Pluck",
+    "target": null,
+    "host": null,
+    "status": null,
+    "statement": "SELECT \"capability_grants\".\"scope_id\" FROM \"capability_grants\" WHERE \"capability_grants\".\"group_id\" = 'a1710000-0000-4000-8000-8970b7cd6d4a' AND \"capability_grants\".\"scope_type\" = 'Account' AND \"capability_grants\".\"scope_id\" IN ('a1710000-0000-4000-8000-4813494d137e', 'a1710000-0000-4000-8000-ddc9e6691942', 'a1710000-0000-4000-8000-9f91161f4343', 'a1710000-0000-4000-8000-2d2adb393946', 'a1710000-0000-4000-8000-5c4c1964340a', 'a1710000-0000-4000-8000-7d10de8554ed', 'a1710000-0000-4000-8000-656771905e1e', 'a1710000-0000-4000-8000-042b229f0e88') AND \"capability_grants\".\"permission\" = 'account.read' /*action='index',application='AuthorizationService',controller='can'*/",
+    "redis_commands": null,
+    "redis_database": null
+  },
+  {
+    "span_id": "42ca616dc6154f50",
+    "category": "REDIS",
+    "operation": "Redis pipeline: 3 SET",
+    "target": null,
+    "host": "authcache",
+    "status": null,
+    "statement": null,
+    "redis_commands": "3 SET",
+    "redis_database": 1
+  }
+]

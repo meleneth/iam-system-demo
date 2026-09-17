@@ -1,0 +1,15 @@
+{
+  "phase": "can-warm",
+  "trace_id": "2ad0880c45c24797900552169ba6dcb0",
+  "parent_span_id": "f9b347f12cd64ea5",
+  "actor": "a1710000-0000-4000-8000-8db307e4fdb1",
+  "request": {
+    "scope_id": [
+      "a1710000-0000-4000-8000-9f91161f4343",
+      "a1710000-0000-4000-8000-7d10de8554ed",
+      "a1710000-0000-4000-8000-656771905e1e"
+    ]
+  },
+  "status": 403,
+  "response": "{\"error\":\"Forbidden\"}"
+}

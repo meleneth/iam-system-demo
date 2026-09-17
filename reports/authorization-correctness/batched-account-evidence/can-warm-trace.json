@@ -1,0 +1,245 @@
+{
+  "data": [
+    {
+      "traceID": "2ad0880c45c24797900552169ba6dcb0",
+      "spans": [
+        {
+          "traceID": "2ad0880c45c24797900552169ba6dcb0",
+          "spanID": "0bf149b838f6060e",
+          "operationName": "Redis pipeline: 3 GET",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "2ad0880c45c24797900552169ba6dcb0",
+              "spanID": "4a8d9a64803b35ad"
+            }
+          ],
+          "startTime": 1789613628089203,
+          "duration": 590,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "iam.redis_pipeline"
+            },
+            {
+              "key": "db.operation.name",
+              "type": "string",
+              "value": "PIPELINED"
+            },
+            {
+              "key": "db.redis.database_index",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "db.redis.pipeline.command_count",
+              "type": "int64",
+              "value": 3
+            },
+            {
+              "key": "db.redis.pipeline.commands",
+              "type": "string",
+              "value": "3 GET"
+            },
+            {
+              "key": "db.system",
+              "type": "string",
+              "value": "redis"
+            },
+            {
+              "key": "net.peer.name",
+              "type": "string",
+              "value": "authcache"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 6379
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "client"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "2ad0880c45c24797900552169ba6dcb0",
+          "spanID": "4a8d9a64803b35ad",
+          "operationName": "authorization.permission.accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "2ad0880c45c24797900552169ba6dcb0",
+              "spanID": "1072e2bafff70b46"
+            }
+          ],
+          "startTime": 1789613628089023,
+          "duration": 993,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "authorization-service"
+            },
+            {
+              "key": "authorization.permission",
+              "type": "string",
+              "value": "account.read"
+            },
+            {
+              "key": "phase.elapsed_ms",
+              "type": "float64",
+              "value": 0.9890130022540689
+            },
+            {
+              "key": "scope.count",
+              "type": "int64",
+              "value": 3
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "internal"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "2ad0880c45c24797900552169ba6dcb0",
+          "spanID": "1072e2bafff70b46",
+          "operationName": "Check account.read for 3 accounts",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "2ad0880c45c24797900552169ba6dcb0",
+              "spanID": "f9b347f12cd64ea5"
+            }
+          ],
+          "startTime": 1789613628087703,
+          "duration": 2811,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "OpenTelemetry::Instrumentation::Rack"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.26.0"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "localhost:11110"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 403
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/can/Account/account.read"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Python-urllib/3.14"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": [
+            "parent span ID=f9b347f12cd64ea5 is not in the trace; skipping clock skew adjustment"
+          ]
+        }
+      ],
+      "processes": {
+        "p1": {
+          "serviceName": "authorization-service",
+          "tags": [
+            {
+              "key": "deployment.role",
+              "type": "string",
+              "value": "web"
+            },
+            {
+              "key": "process.command",
+              "type": "string",
+              "value": "./bin/rails"
+            },
+            {
+              "key": "process.pid",
+              "type": "int64",
+              "value": 19
+            },
+            {
+              "key": "process.runtime.description",
+              "type": "string",
+              "value": "ruby 4.0.6 (2026-07-14 revision 03b6d3f889) +PRISM [x86_64-linux]"
+            },
+            {
+              "key": "process.runtime.name",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "process.runtime.version",
+              "type": "string",
+              "value": "4.0.6"
+            },
+            {
+              "key": "service.instance.id",
+              "type": "string",
+              "value": "57d18c006462:19"
+            },
+            {
+              "key": "telemetry.sdk.language",
+              "type": "string",
+              "value": "ruby"
+            },
+            {
+              "key": "telemetry.sdk.name",
+              "type": "string",
+              "value": "opentelemetry"
+            },
+            {
+              "key": "telemetry.sdk.version",
+              "type": "string",
+              "value": "1.8.0"
+            }
+          ]
+        }
+      },
+      "warnings": null
+    }
+  ],
+  "total": 0,
+  "limit": 0,
+  "offset": 0,
+  "errors": null
+}
