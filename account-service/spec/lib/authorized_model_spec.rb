@@ -38,7 +38,7 @@ RSpec.describe AuthorizedModel::Base do
     end
   end
 
-  it "authorizes create at its parent and a moving update at both old and new parents" do
+  it "authorizes create, a moving update at both parents, and destroy at the existing parent" do
     stub_const("MutableAccountModel", Class.new(AuthorizedModel::Base))
     MutableAccountModel.table_name = "accounts"
     MutableAccountModel.requires_read_capability "account.read", scope_type: "Account",
@@ -68,6 +68,11 @@ RSpec.describe AuthorizedModel::Base do
       record = MutableAccountModel.find(record.id)
       record.update!(parent_account_id: new_parent.id)
     end
+    expect(authorization_client).to receive(:capabilities).ordered do |targets|
+      expect(targets.map(&:scope_id)).to eq([new_parent.id])
+      { "Account" => { new_parent.id => ["account.modify"] } }
+    end
+    AuthorizationContext.as_requesting_user(user_id: "actor") { record.destroy! }
   end
 
   it "isolates requesting-user context across concurrent model evaluations" do
