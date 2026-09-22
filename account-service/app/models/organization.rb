@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 # app/models/organization.rb
-class Organization < RemoteResource
+class Organization < AuthorizedResource::Base
+  requires_read_capability "organization.read", scope_type: "Organization", target: :id, iam: %w[IAM_SYSTEM]
+  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
   self.format = :json
 

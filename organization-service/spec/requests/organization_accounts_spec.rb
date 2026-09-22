@@ -24,19 +24,30 @@ RSpec.describe "Organization accounts", type: :request do
   let(:actor_user_id) { SecureRandom.uuid }
   let(:organization_id) { SecureRandom.uuid }
   let(:account_id) { SecureRandom.uuid }
+  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
 
   before do
     stub_const("ORGANIZATION_CACHE", FakeOrganizationAccountCache.new)
+    allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client)
     AuthorizationContext.as_iam do
       Organization.create!(id: organization_id)
       OrganizationAccount.create!(organization_id: organization_id, account_id: account_id)
     end
   end
 
+  def grant_capabilities(*grants)
+    allow(authorization_client).to receive(:capabilities) do |targets|
+      targets.group_by(&:scope_type).transform_values do |scoped|
+        scoped.to_h do |target|
+          allowed = grants.include?([target.scope_type, target.scope_id, target.capability])
+          [target.scope_id, allowed ? [target.capability] : []]
+        end
+      end
+    end
+  end
+
   it "checks organization.read.accounts before listing accounts by organization" do
-    expect(User).to receive(:user_can)
-      .with(actor_user_id, "Organization", "organization.read.accounts", organization_id)
-      .and_return(true)
+    grant_capabilities(["Organization", organization_id, "organization.read.accounts"])
 
     get "/organization_accounts",
         params: { organization_id: organization_id },
@@ -47,12 +58,7 @@ RSpec.describe "Organization accounts", type: :request do
   end
 
   it "rejects noncanonical organization account permissions for relationships, counts, and context" do
-    allow(User).to receive(:user_can) do |actor, scope, permission, id|
-      actor == actor_user_id && (
-        (scope == "Organization" && permission == "organization.accounts.read" && id == organization_id) ||
-        (scope == "Account" && permission == "account.read" && id == [account_id])
-      )
-    end
+    grant_capabilities(["Organization", organization_id, "organization.accounts.read"])
 
     get "/organization_accounts",
         params: { organization_id: organization_id },
@@ -77,9 +83,7 @@ RSpec.describe "Organization accounts", type: :request do
   end
 
   it "checks organization.read.accounts before returning account counts" do
-    expect(User).to receive(:user_can)
-      .with(actor_user_id, "Organization", "organization.read.accounts", organization_id)
-      .and_return(true)
+    grant_capabilities(["Organization", organization_id, "organization.read.accounts"])
 
     get "/organizations/accounts/counts/#{organization_id}",
         headers: { "pad-user-id" => actor_user_id }
@@ -92,13 +96,10 @@ RSpec.describe "Organization accounts", type: :request do
   end
 
   it "still checks account.read when resolving organization context from account IDs" do
-    expect(User).to receive(:user_can)
-      .with(actor_user_id, "Account", "account.read", [account_id])
-      .and_return(true)
-
-    expect(User).to receive(:user_can)
-      .with(actor_user_id, "Organization", "organization.read.accounts", organization_id)
-      .and_return(true)
+    grant_capabilities(
+      ["Account", account_id, "account.read"],
+      ["Organization", organization_id, "organization.read.accounts"]
+    )
 
     post "/organization_account_ids/for_account_ids",
          params: { account_ids: [account_id] },
@@ -110,12 +111,12 @@ RSpec.describe "Organization accounts", type: :request do
   end
   %w[organization account neither].each do |grant_scope|
     it "keeps row and filter lookups equivalent with #{grant_scope} authority" do
-      allow(User).to receive(:user_can) do |actor, scope, permission, id|
-        actor == actor_user_id && (
-          (grant_scope == "organization" && scope == "Organization" && permission == "organization.read.accounts" && id == organization_id) ||
-          (grant_scope == "account" && scope == "Account" && permission == "account.read" && id == account_id)
-        )
+      grants = case grant_scope
+      when "organization" then [["Organization", organization_id, "organization.read.accounts"]]
+      when "account" then [["Account", account_id, "account.read"]]
+      else []
       end
+      grant_capabilities(*grants)
       relationship = AuthorizationContext.as_iam do
         OrganizationAccount.find_by!(account_id: account_id)
       end
@@ -136,9 +137,7 @@ RSpec.describe "Organization accounts", type: :request do
     AuthorizationContext.as_iam do
       OrganizationAccount.create!(organization_id: organization_id, account_id: other_account)
     end
-    allow(User).to receive(:user_can) do |actor, scope, permission, id|
-      actor == actor_user_id && scope == "Account" && permission == "account.read" && id == account_id
-    end
+    grant_capabilities(["Account", account_id, "account.read"])
     get "/organization_accounts", params: {organization_id: organization_id}, headers: {"pad-user-id" => actor_user_id}
     expect(response).to have_http_status(:forbidden)
   end

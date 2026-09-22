@@ -3,6 +3,8 @@
 # app/models/organization.rb
 
 class Organization < ApplicationRecord
+  requires_read_capability "organization.read", scope_type: "Organization", target: :id, iam: %w[IAM_SYSTEM]
+  allows_iam_modify "IAM_SYSTEM"
   before_validation :assign_default_name, on: :create
   include Mel::Filterable
 

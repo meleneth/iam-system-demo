@@ -35,6 +35,7 @@ RUN apt-get update -qq && \
 
 # Install application gems
 COPY authorization-context /authorization-context
+COPY authorized-resource /authorized-resource
 COPY user-management-service/Gemfile user-management-service/Gemfile.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
@@ -58,6 +59,7 @@ FROM base
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /authorization-context /authorization-context
+COPY --from=build /authorized-resource /authorized-resource
 COPY --from=build /rails /rails
 
 # Run and own only the runtime files as a non-root user for security

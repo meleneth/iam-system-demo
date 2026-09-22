@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class MspManagedOrganization < ApplicationRecord
+  requires_read_capability "account.read", scope_type: "Account", target: :msp_account_id, iam: %w[IAM_SYSTEM]
+  allows_iam_modify "IAM_SYSTEM"
   validates :msp_organization_id, presence: true
   validates :msp_account_id, presence: true
   validates :client_organization_id, presence: true

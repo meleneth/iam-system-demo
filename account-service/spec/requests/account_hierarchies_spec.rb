@@ -37,9 +37,18 @@ RSpec.describe "Account hierarchies", type: :request do
 
   let(:cache) { FakeAccountHierarchyCache.new }
   let(:organization_id) { SecureRandom.uuid }
+  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
 
   before do
     stub_const("ACCOUNT_CACHE", cache)
+    allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client)
+  end
+
+  def allow_accounts(ids)
+    expect(authorization_client).to receive(:capabilities) do |targets|
+      expect(targets.map(&:scope_id)).to match_array(Array(ids).map(&:to_s))
+      { "Account" => Array(ids).to_h { |id| [id.to_s, ["account.read"]] } }
+    end
   end
 
   it "computes cold account hierarchy misses with one set-based CTE" do
@@ -78,7 +87,7 @@ RSpec.describe "Account hierarchies", type: :request do
 
   it "authorizes the real actor for the complete batch before looking up hierarchies" do
     ids = [SecureRandom.uuid, SecureRandom.uuid]
-    expect(User).to receive(:user_can).with("actor", "Account", "account.read", ids, { "X-IAM-Authorization-Purpose" => "requested_accounts" }).and_return(true)
+    allow_accounts(ids)
     expect_any_instance_of(AccountsController).to receive(:fetch_accounts_with_parents).with(ids).and_return([])
     post "/accounts_with_parents", params: { account_ids: ids }, headers: { "pad-user-id" => "actor" }, as: :json
     expect(response).to have_http_status(:ok)
@@ -86,7 +95,9 @@ RSpec.describe "Account hierarchies", type: :request do
 
   it "denies the entire batch without reading hierarchies when the actor lacks access" do
     ids = [SecureRandom.uuid, SecureRandom.uuid]
-    expect(User).to receive(:user_can).with("actor", "Account", "account.read", ids, { "X-IAM-Authorization-Purpose" => "requested_accounts" }).and_return(false)
+    expect(authorization_client).to receive(:capabilities).and_return(
+      "Account" => ids.to_h { |id| [id, []] }
+    )
     expect_any_instance_of(AccountsController).not_to receive(:fetch_accounts_with_parents)
     post "/accounts_with_parents", params: { account_ids: ids }, headers: { "pad-user-id" => "actor" }, as: :json
     expect(response).to have_http_status(:forbidden)
@@ -94,12 +105,15 @@ RSpec.describe "Account hierarchies", type: :request do
 
   it "distinguishes requested account authorization from returned hierarchy authorization" do
     start_id, ancestor_id = SecureRandom.uuid, SecureRandom.uuid
-    expect(User).to receive(:user_can).with("actor", "Account", "account.read", [start_id],
-      { "X-IAM-Authorization-Purpose" => "requested_accounts" }).ordered.and_return(true)
+    expect(authorization_client).to receive(:capabilities).ordered.and_return(
+      "Account" => { start_id => ["account.read"] }
+    )
     expect_any_instance_of(AccountsController).to receive(:fetch_accounts_with_parents).with([start_id])
       .and_return([[{ "id" => ancestor_id }, { "id" => start_id }]])
-    expect(User).to receive(:user_can).with("actor", "Account", "account.read", [ancestor_id, start_id],
-      { "X-IAM-Authorization-Purpose" => "returned_hierarchy" }).ordered.and_return(true)
+    expect(authorization_client).to receive(:capabilities).ordered do |targets|
+      expect(targets.map(&:scope_id)).to match_array([ancestor_id, start_id])
+      { "Account" => { ancestor_id => ["account.read"], start_id => ["account.read"] } }
+    end
     post "/accounts_with_parents", params: { account_ids: [start_id] }, headers: { "pad-user-id" => "actor" }, as: :json
     expect(response).to have_http_status(:ok)
   end
@@ -127,22 +141,33 @@ RSpec.describe "Account hierarchies", type: :request do
       [second.id, first.id].map(&:to_s)
     )
   end
+
+  it "returns an empty hierarchy for an unknown account without an organization lookup" do
+    unknown_id = SecureRandom.uuid
+    expect(OrganizationAccount).not_to receive(:account_ids_for_organizations_by_account_ids)
+
+    post "/accounts_with_parents",
+         params: { account_ids: [unknown_id] },
+         headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
+         as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body).to eq([[]])
+  end
 end
 
 RSpec.describe "Account search", type: :request do
-  FakeFaradayResponse = Struct.new(:status, :body)
-  FakeFaradayRequest = Struct.new(:headers, :body, keyword_init: true)
+  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
+
+  before { allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client) }
 
   it "checks account.read before returning an individual account" do
     account = Account.create!(name: "Customer Account")
     actor_user_id = SecureRandom.uuid
 
-    expect(User).to receive(:user_can).with(
-      actor_user_id,
-      "Account",
-      "account.read",
-      account.id
-    ).and_return(true)
+    expect(authorization_client).to receive(:capabilities).and_return(
+      "Account" => { account.id.to_s => ["account.read"] }
+    )
 
     get "/accounts/#{account.id}",
         headers: { "pad-user-id" => actor_user_id },
@@ -157,12 +182,9 @@ RSpec.describe "Account search", type: :request do
     actor_user_id = SecureRandom.uuid
     msp_account_id = SecureRandom.uuid
 
-    expect(User).to receive(:user_can).with(
-      actor_user_id,
-      "Account",
-      "account.read",
-      [account.id.to_s]
-    ).and_return(true)
+    expect(authorization_client).to receive(:capabilities).and_return(
+      "Account" => { account.id.to_s => ["account.read"] }
+    )
 
     post "/accounts/search",
          params: { id: [account.id] },
@@ -176,29 +198,14 @@ RSpec.describe "Account search", type: :request do
     expect(response.parsed_body.first).to include("id" => account.id, "name" => "Customer Account")
   end
 
-  it "checks batched account capabilities instead of calling /can in capabilities-only mode" do
+  it "sends a collection to one batched capability evaluation" do
     account_ids = [SecureRandom.uuid, SecureRandom.uuid]
-    request = nil
-    old_mode = ENV["AUTHORIZATION_CHECK_MODE"]
-    ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"
-
-    expect(Faraday).to receive(:post).with("#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/capabilities/Account") do |&block|
-      request = FakeFaradayRequest.new(headers: {})
-      block.call(request)
-      FakeFaradayResponse.new(
-        200,
-        account_ids.to_h { |account_id| [account_id, ["account.read"]] }.to_json
-      )
+    expect(authorization_client).to receive(:capabilities).once do |targets|
+      expect(targets.map(&:scope_id)).to match_array(account_ids)
+      { "Account" => account_ids.to_h { |id| [id, ["account.read"]] } }
     end
-
-    actor_user_id = SecureRandom.uuid
-    allowed = AuthorizationContext.as_requesting_user(user_id: actor_user_id) do
-      User.user_can(actor_user_id, "Account", "account.read", account_ids)
+    AuthorizationContext.as_requesting_user(user_id: SecureRandom.uuid) do
+      Account.authorize_records!(:read, account_ids.map { |id| Account.new(id: id) })
     end
-    expect(allowed).to eq(true)
-    expect(request.headers).to include("pad-user-id" => actor_user_id)
-    expect(JSON.parse(request.body)).to eq("scope_id" => account_ids)
-  ensure
-    ENV["AUTHORIZATION_CHECK_MODE"] = old_mode
   end
 end

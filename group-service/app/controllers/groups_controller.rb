@@ -6,9 +6,6 @@ class GroupsController < ApplicationController
     filters = params.slice(*Group.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = Group.where(*filters)
-    auth = authorize_group_collection_read!(results)
-    return render json: auth, status: :accepted if auth
-
     render json: results
   end
 
@@ -18,17 +15,11 @@ class GroupsController < ApplicationController
     raise BadFilterError unless filters.present?
 
     results = Group.where(*filters)
-    auth = authorize_group_collection_read!(results)
-    return render json: auth, status: :accepted if auth
-
     render json: results
   end
 
   # GET /groups/1
   def show
-    auth = authorize_group_collection_read!([@group])
-    return render json: auth, status: :accepted if auth
-
     render json: @group
   end
 
@@ -68,18 +59,4 @@ class GroupsController < ApplicationController
       params.fetch(:group, {})
     end
 
-  def authorize_group_collection_read!(groups)
-    user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise AuthorizationDenied, "no pad-user-id header sent" unless user_id
-    return if user_id == "IAM_SYSTEM"
-
-    account_ids = Array(groups).map(&:account_id).map(&:to_s).uniq
-    return if account_ids.empty?
-
-    if User.can_read_groups?(user_id, Array(groups).map { |group| [group.id, group.account_id] })
-      return
-    end
-
-    raise AuthorizationDenied, "no authorization for #{user_id} account.users.read #{account_ids}"
-  end
 end

@@ -8,8 +8,6 @@ class AccountsController < ApplicationController
     filters = params.slice(*Account.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = Account.where(*filters)
-    Instrumentation.trace("Account.collection.authorize") { authorize_account_collection_read!(results) }
-
     results.load if results.respond_to?(:load)
     render json: results
   end
@@ -19,8 +17,6 @@ class AccountsController < ApplicationController
     filters = params.permit(id: [])
     raise BadFilterError unless filters.present?
     results = Account.where(*filters)
-    Instrumentation.trace("Account.collection.authorize") { authorize_account_collection_read!(results) }
-
     results.load if results.respond_to?(:load)
     render json: results
   end
@@ -28,44 +24,26 @@ class AccountsController < ApplicationController
   # GET /with_parent_accounts/1
   def account_with_parents
     account_id = params.permit(:account_id)[:account_id]
+    authorize_hierarchy_records!([account_id], [])
     results = fetch_account_with_parents(account_id)
-
-    pad_user_id = request.headers['HTTP_PAD_USER_ID']
-    if pad_user_id != "IAM_SYSTEM"
-      raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{account_id}" unless User.user_can(pad_user_id, "Account", "account.read", account_id, { "X-IAM-Authorization-Purpose" => "requested_accounts" })
-    end
-
-    authorize_hierarchy_records!(pad_user_id, [results])
+    authorize_hierarchy_records!([], [results])
     results.load if results.respond_to?(:load)
     render json: results
   end
 
   # GET /with_parent_accounts
   def accounts_with_parents
-    pad_user_id = request.headers['HTTP_PAD_USER_ID']
     account_ids = params.permit(account_ids: [])[:account_ids]
     raise ActionController::BadRequest, "account_ids must be an array" unless account_ids.is_a?(Array)
-    unless pad_user_id == "IAM_SYSTEM"
-      unless pad_user_id.present? && User.user_can(pad_user_id, "Account", "account.read", account_ids.map(&:to_s).uniq, { "X-IAM-Authorization-Purpose" => "requested_accounts" })
-        return render json: { error: "forbidden" }, status: :forbidden
-      end
-    end
+    authorize_hierarchy_records!(account_ids, [])
     results = fetch_accounts_with_parents(account_ids)
-    authorize_hierarchy_records!(pad_user_id, results)
+    authorize_hierarchy_records!([], results)
     results.load if results.respond_to?(:load)
     render json: results
   end
 
   # GET /accounts/1
   def show
-    pad_user_id = request.headers['HTTP_PAD_USER_ID']
-    raise AuthorizationDenied, "Must pass a pad-user-id header" unless pad_user_id
-    if pad_user_id == "IAM_SYSTEM"
-      OpenTelemetry::Trace.current_span.add_event("Skipping auth for system user")
-    else
-      OpenTelemetry::Trace.current_span.add_event("Checking auth for user #{pad_user_id}")
-      raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{@account.id}" unless User.user_can(pad_user_id, "Account", "account.read",  @account.id)
-    end
     render json: @account
   end
 
@@ -96,12 +74,10 @@ class AccountsController < ApplicationController
 
   private
 
-  def authorize_hierarchy_records!(actor, hierarchies)
-    return if actor == "IAM_SYSTEM"
-    ids = Array(hierarchies).flatten.compact.map { |row| row.fetch("id").to_s }.uniq
-    raise AuthorizationDenied if actor.blank?
-    return if ids.empty?
-    raise AuthorizationDenied unless User.user_can(actor, "Account", "account.read", ids, { "X-IAM-Authorization-Purpose" => "returned_hierarchy" })
+  def authorize_hierarchy_records!(requested_ids, hierarchies)
+    returned_ids = Array(hierarchies).flatten.compact.map { |row| row.fetch("id").to_s }
+    records = (Array(requested_ids).map(&:to_s) + returned_ids).uniq.map { |id| Account.new(id: id) }
+    Account.authorized_read("hierarchy", records: records) { hierarchies }
   end
 
   # Use callbacks to share common setup or constraints between actions.
@@ -112,23 +88,6 @@ class AccountsController < ApplicationController
   # Only allow a list of trusted parameters through.
   def account_params
     params.permit(:parent_account_id)
-  end
-
-  def authorize_account_collection_read!(accounts)
-    pad_user_id = request.headers['HTTP_PAD_USER_ID']
-    raise AuthorizationDenied, "Must pass a pad-user-id header" unless pad_user_id
-
-    if pad_user_id == "IAM_SYSTEM"
-      OpenTelemetry::Trace.current_span.add_event("Skipping auth for system user")
-      return
-    end
-
-    account_ids = accounts.respond_to?(:distinct) ? accounts.distinct.pluck(:id) : Array(accounts).map(&:id)
-    account_ids = account_ids.map(&:to_s).uniq
-    return if account_ids.empty?
-
-    OpenTelemetry::Trace.current_span.add_event("Checking batched auth for user #{pad_user_id} account.read #{account_ids.size} accounts")
-    raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{account_ids}" unless User.user_can(pad_user_id, "Account", "account.read", account_ids)
   end
 
   def fetch_account_with_parents(account_id)
@@ -176,11 +135,14 @@ class AccountsController < ApplicationController
     if misses.any?
       OpenTelemetry::Trace.current_span.add_event("Fetching #{misses.size} account_with_parents misses")
       organization_payloads = {}
+      existing_misses = []
       AuthorizationContext.as_iam(originating_user_id: AuthorizationContext.current!.originating_user_id) do
-        organization_payloads = OrganizationAccount.account_ids_for_organizations_by_account_ids(misses)
+        existing_misses = Account.where(id: misses).pluck(:id).map(&:to_s)
+        organization_payloads = OrganizationAccount.account_ids_for_organizations_by_account_ids(existing_misses) if existing_misses.any?
       end
+      (misses - existing_misses).each { |id| by_id[id] = [] }
 
-      computed = compute_accounts_with_parents(misses, organization_payloads)
+      computed = compute_accounts_with_parents(existing_misses, organization_payloads)
       computed.each { |id, (results, _org_key_set)| by_id[id] = results }
 
       unless cache_disabled?

@@ -40,15 +40,23 @@ restore the prior immutable context even after exceptions and nonlocal exits.
 Deferred thread/fiber/job work must capture and explicitly re-enter a context;
 locals are not presumed to propagate.
 
-ActiveResource models inherit from each application's `RemoteResource`, whose
-shared connection guard covers collection/single reads, reloads, associations,
-existence calls, pagination and custom connection requests. Custom Faraday and
-cache paths call `current!` at their actual read boundary. Transport metadata is
-derived per invocation rather than stored in class headers or pooled
-connections. IAM requests include an internal credential validated by receiving
-services; `X-IAM-Authorization-Scope: iam` alone grants nothing. See
-[`authorization-context/README.md`](authorization-context/README.md) for the gem
-API and extension rules.
+ActiveResource models inherit directly from `AuthorizedResource::Base` and
+declare owning-scope read capability plus a modify capability or explicit
+read-only policy. The shared gem covers collection/single reads, reloads,
+associations, existence calls, pagination, mutations, and explicitly wrapped
+custom endpoints. It batches capability evaluation and derives transport
+metadata per invocation rather than mutating class headers or pooled
+connections. IAM requests are model-allowlisted and include an internal
+credential validated by receiving services; `X-IAM-Authorization-Scope: iam`
+alone grants nothing. See [`authorized-resource/README.md`](authorized-resource/README.md)
+for the model API and supported escape-hatch policy.
+
+Local persistence models use the same gem through
+`ApplicationRecord < AuthorizedModel::Base`. Relation materialization and
+create/update/destroy callbacks share the evaluator, batching, context rules,
+failure types, and telemetry used by remote resources. Aggregates and custom
+queries supply explicit targets because their scalar result cannot identify the
+records being disclosed.
 
 ## Service Ownership
 
@@ -256,7 +264,7 @@ This is the object-loading contract the services are supposed to enforce. "Ownin
 | --- | --- | --- | --- | --- |
 | Account row | account-service | `account.read` | Returned account ID | `GET /accounts/:id`, `GET /accounts`, `POST /accounts/search` |
 | Account parent chain | account-service | `account.read` | Requested account ID | `GET /account_with_parents/:account_id` |
-| Batched account parent chains | account-service | `IAM_SYSTEM` only | Requested account IDs | `POST /accounts_with_parents` |
+| Batched account parent chains | account-service | `account.read` (or allowlisted `IAM_SYSTEM`) | Requested and returned account IDs | `POST /accounts_with_parents` |
 | User row | user-service | `account.users.read` | User's `account_id` | `GET /users/:id` |
 | User collection/search | user-service | `account.users.read` | Distinct returned/requested user account IDs | `GET /users`, `POST /users/search` |
 | User counts by account | user-service | `account.users.read` | Requested account IDs | `GET /accounts/users/counts` |

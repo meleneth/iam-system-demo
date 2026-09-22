@@ -14,6 +14,10 @@ rescue ActiveRecord::PendingMigrationError => e
 end
 
 RSpec.configure do |config|
+  config.around do |example|
+    AuthorizationContext.as_iam { example.run }
+  end
+
   config.fixture_paths = [
     Rails.root.join("spec/fixtures")
   ]

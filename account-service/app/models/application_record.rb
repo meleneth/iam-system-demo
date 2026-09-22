@@ -1,4 +1,3 @@
-class ApplicationRecord < ActiveRecord::Base
+class ApplicationRecord < AuthorizedModel::Base
   primary_abstract_class
-  include AuthorizationContext::ActiveRecordProtection
 end

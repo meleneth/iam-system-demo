@@ -6,55 +6,44 @@ RSpec.describe "/group_users", type: :request do
   let(:user_id) { SecureRandom.uuid }
   let!(:group) { Group.create!(account_id: account_id, name: "Engineering") }
   let!(:group_user) { GroupUser.create!(group_id: group.id, user_id: user_id) }
+  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
 
-  describe "read authorization" do
-    it "checks account.users.read for an individual membership through the owning group" do
-      expect(User).to receive(:user_can)
-        .with(actor_user_id, "Account", "account.users.read", [account_id])
-        .and_return(true)
+  def allow_group_capabilities(map)
+    allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client)
+    expect(authorization_client).to receive(:capabilities).once.and_return("Group" => map)
+  end
 
-      get group_user_url(group_user), headers: { "pad-user-id" => actor_user_id }, as: :json
+  it "checks group capabilities, including inherited account capabilities" do
+    allow_group_capabilities(group.id => ["account.users.read"])
+    get group_user_url(group_user), headers: { "pad-user-id" => actor_user_id }, as: :json
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body).to include("group_id" => group.id, "user_id" => user_id)
+  end
 
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body).to include("id" => group_user.id, "group_id" => group.id, "user_id" => user_id)
-    end
+  it "batches distinct owning groups and denies a mixed unauthorized result" do
+    other = Group.create!(account_id: SecureRandom.uuid, name: "Support")
+    membership = GroupUser.create!(group_id: other.id, user_id: SecureRandom.uuid)
+    allow_group_capabilities(group.id => ["group.read"], other.id => [])
+    post "/group_users/search", params: { id: [group_user.id, membership.id] },
+         headers: { "pad-user-id" => actor_user_id }, as: :json
+    expect(response).to have_http_status(:forbidden)
+  end
 
-    it "checks account.users.read over distinct owning group account IDs" do
-      other_account_id = SecureRandom.uuid
-      other_group = Group.create!(account_id: other_account_id, name: "Support")
-      other_group_user = GroupUser.create!(group_id: other_group.id, user_id: SecureRandom.uuid)
+  it "allows IAM_SYSTEM without capability transport" do
+    expect(AuthorizedResource).not_to receive(:authorization_client)
+    get group_user_url(group_user), headers: {
+      "pad-user-id" => "IAM_SYSTEM",
+      "X-IAM-Authorization-Scope" => "iam",
+      "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")
+    }, as: :json
+    expect(response).to have_http_status(:ok)
+  end
 
-      expect(User).to receive(:user_can)
-        .with(actor_user_id, "Account", "account.users.read", match_array([account_id, other_account_id]))
-        .and_return(true)
-
-      post "/group_users/search",
-           params: { id: [group_user.id, other_group_user.id] },
-           headers: { "pad-user-id" => actor_user_id },
-           as: :json
-
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.length).to eq(2)
-    end
-
-    it "allows IAM_SYSTEM to read without actor grants" do
-      expect(User).not_to receive(:user_can)
-
-      get group_user_url(group_user), headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }, as: :json
-
-      expect(response).to have_http_status(:ok)
-    end
-
-    it "fails closed when a membership has no owning group" do
-      orphan = GroupUser.create!(group_id: SecureRandom.uuid, user_id: SecureRandom.uuid)
-      expect(User).not_to receive(:user_can)
-
-      expect do
-        post "/group_users/search",
-             params: { id: [group_user.id, orphan.id] },
-             headers: { "pad-user-id" => actor_user_id },
-             as: :json
-      end.to raise_error(RuntimeError, /group memberships reference missing groups/)
-    end
+  it "fails closed when a membership has no owning group capability" do
+    orphan = GroupUser.create!(group_id: SecureRandom.uuid, user_id: SecureRandom.uuid)
+    allow_group_capabilities(group.id => ["group.read"], orphan.group_id => [])
+    post "/group_users/search", params: { id: [group_user.id, orphan.id] },
+         headers: { "pad-user-id" => actor_user_id }, as: :json
+    expect(response).to have_http_status(:forbidden)
   end
 end

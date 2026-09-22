@@ -13,22 +13,14 @@ class OrganizationAccountsController < ApplicationController
     filters = params.slice(*OrganizationAccount.allowed_filters).permit!
     raise BadFilterError unless filters.present?
 
-    pad_user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise AuthorizationDenied, "no pad-user-id header sent" unless pad_user_id
-
     results = OrganizationAccount.where(filters).to_a
-    results.each { |relationship| authorize_relationship_read!(pad_user_id, relationship) }
-
     render json: results
   end
 
   def for_account
     filters = params.slice(:account_id).permit!
 
-    pad_user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise AuthorizationDenied, "no pad-user-id header sent" unless pad_user_id
-
-    authorize_account_read!(pad_user_id, filters[:account_id]) if filters[:account_id]
+    authorize_account_read!(filters[:account_id]) if filters[:account_id]
 
     results = organization_payloads_for_account_ids([filters[:account_id]])
     render json: results.fetch(filters[:account_id].to_s)
@@ -42,11 +34,7 @@ class OrganizationAccountsController < ApplicationController
       ids
     end
 
-    Instrumentation.trace("organization_accounts.authorize", attributes: { "scope.count" => account_ids.size }) do
-      pad_user_id = request.headers["HTTP_PAD_USER_ID"]
-      raise AuthorizationDenied, "no pad-user-id header sent" unless pad_user_id
-      authorize_account_read!(pad_user_id, account_ids)
-    end
+    authorize_account_read!(account_ids)
 
     payload = begin
       compressed_organization_account_ids_for_account_ids(account_ids)
@@ -56,9 +44,6 @@ class OrganizationAccountsController < ApplicationController
 
   # GET /organization_accounts/1
   def show
-    actor = request.headers["HTTP_PAD_USER_ID"]
-    raise AuthorizationDenied if actor.blank?
-    authorize_relationship_read!(actor, @organization_account)
     render json: @organization_account
   end
 
@@ -89,41 +74,14 @@ class OrganizationAccountsController < ApplicationController
 
   private
 
-  def authorize_relationship_read!(actor, relationship)
-    return if actor == "IAM_SYSTEM"
-
-    # Reuse organization decisions within this response, even for large listings.
-    @relationship_organization_reads ||= {}
-    organization_id = relationship.organization_id
-    organization_allowed = @relationship_organization_reads.fetch(organization_id) do
-      @relationship_organization_reads[organization_id] = organization_accounts_read?(actor, organization_id)
-    end
-    return if organization_allowed || User.user_can(actor, "Account", "account.read", relationship.account_id)
-
-    raise AuthorizationDenied
-  end
-
-  def authorize_account_read!(pad_user_id, account_ids)
-    return if pad_user_id == "IAM_SYSTEM"
-
-    unless User.user_can(pad_user_id, "Account", "account.read", account_ids)
-      raise AuthorizationDenied, "no authorization for #{pad_user_id} account.read #{account_ids}"
-    end
-  end
-
-  def organization_accounts_read?(pad_user_id, organization_id)
-    Array(organization_id).all? do |id|
-      User.user_can(pad_user_id, "Organization", "organization.read.accounts", id)
-    end
+  def authorize_account_read!(account_ids)
+    records = Array(account_ids).map { |account_id| OrganizationAccount.new(account_id: account_id) }
+    OrganizationAccount.authorized_read("account_context", records: records) { records }
   end
 
   def organization_payloads_for_account_ids(account_ids)
     ids = Array(account_ids).map(&:to_s)
     compressed = compressed_organization_account_ids_for_account_ids(ids)
-    actor = request.headers["HTTP_PAD_USER_ID"]
-    unless actor == "IAM_SYSTEM" || User.user_can(actor, "Organization", "organization.read", compressed.fetch(:organizations).keys)
-      raise AuthorizationDenied
-    end
     organizations = Organization.where(id: compressed.fetch(:organizations).keys).index_by { |organization| organization.id.to_s }
 
     ids.to_h do |account_id|
@@ -148,12 +106,9 @@ class OrganizationAccountsController < ApplicationController
     raise ActiveRecord::RecordNotFound, "No organization accounts for account_ids #{missing_ids}" if missing_ids.any?
 
     organization_ids = org_accounts.map { |org_account| org_account.organization_id.to_s }.uniq
-    actor = request.headers["HTTP_PAD_USER_ID"]
-    raise AuthorizationDenied if actor.blank?
-    unless actor == "IAM_SYSTEM" || organization_accounts_read?(actor, organization_ids)
-      raise AuthorizationDenied
-    end
     account_ids_by_organization_id = cached_account_ids_by_organization_id(organization_ids)
+    records = organization_ids.map { |organization_id| OrganizationAccount.new(organization_id: organization_id) }
+    OrganizationAccount.authorized_read("organization_context", records: records) { account_ids_by_organization_id }
 
     account_to_organization = ids.to_h do |account_id|
       org_account = org_account_by_account_id.fetch(account_id)

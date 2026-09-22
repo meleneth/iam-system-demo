@@ -6,10 +6,6 @@ class UsersController < ApplicationController
     filters = params.slice(*User.allowed_filters).permit!
     raise BadFilterError unless filters.present?
     results = User.where(*filters)
-    auth = Instrumentation.trace("User.collection.authorize") { authorize_user_collection_read!(results) }
-    return if performed?
-    return render json: auth, status: :accepted if auth
-
     results.load if results.respond_to?(:load)
     render json: results
   end
@@ -20,20 +16,12 @@ class UsersController < ApplicationController
     raise BadFilterError unless filters.present?
 
     results = User.where(*filters)
-    auth = Instrumentation.trace("User.collection.authorize") { authorize_user_collection_read!(results) }
-    return if performed?
-    return render json: auth, status: :accepted if auth
-
     results.load if results.respond_to?(:load)
     render json: results
   end
 
   # GET /users/1
   def show
-    auth = authorize_user_collection_read!([@user])
-    return if performed?
-    return render json: auth, status: :accepted if auth
-
     render json: @user
   end
 
@@ -76,26 +64,5 @@ class UsersController < ApplicationController
         :twitter, :tshirt_size, :pronouns, :timezone, :account_id
       )
     end
-
-  def authorize_user_collection_read!(users)
-    user_id = request.headers["HTTP_PAD_USER_ID"]
-    raise AuthorizationDenied, "no pad-user-id header sent" unless user_id
-    return if user_id == "IAM_SYSTEM"
-
-    account_ids = account_ids_for(users)
-    return if account_ids.empty?
-
-    return if User.user_can?(user_id: user_id, permission: "account.users.read", account_ids: account_ids)
-
-    render json: { error: "forbidden" }, status: :forbidden
-  end
-
-  def account_ids_for(users)
-    if users.respond_to?(:distinct)
-      users.distinct.pluck(:account_id).map(&:to_s)
-    else
-      Array(users).map(&:account_id).map(&:to_s)
-    end.uniq
-  end
 
 end

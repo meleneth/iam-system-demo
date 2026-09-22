@@ -23,16 +23,13 @@ keeps attribution when an authorization evaluator narrowly enters IAM scope.
 Requests claiming IAM authority must also authenticate with the shared internal
 token. The scope header alone is never trusted.
 
-ActiveResource models become protected by inheriting from an application-owned
-base that includes `AuthorizationContext::ActiveResourceProtection`. The base
-guards the connection at each HTTP invocation and derives fresh transport
-headers from the active context, avoiding class-header and pooled-connection
-mutation. Custom Faraday/cache retrievals must call `current!` before reading
-and use `transport_headers` for outbound metadata.
+ActiveResource models become protected by inheriting directly from
+`AuthorizedResource::Base`. That gem owns capability policy, operation
+instrumentation, connection guards, and fresh per-request transport headers.
+This gem remains the only identity/context store.
 
-Protected local models include `AuthorizationContext::ActiveRecordProtection`
-through their application-owned `ApplicationRecord`. It guards relations at
-execution time, including `unscoped` and association relations. Protected
-`load_async` is rejected because the current services do not propagate context
-into Active Record's executor; use an explicitly captured context in deliberate
-thread/job code or execute the relation synchronously inside the scope.
+Protected local models inherit through each service's conventional
+`ApplicationRecord < AuthorizedModel::Base`. `AuthorizedModel` owns model
+policy, relation/mutation enforcement, and operation telemetry while this gem
+remains the single context store. Protected `load_async` is rejected because
+the current services do not propagate context into Active Record's executor.

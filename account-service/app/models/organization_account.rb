@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 # app/models/organization.rb
-class OrganizationAccount < RemoteResource
+class OrganizationAccount < AuthorizedResource::Base
+  requires_read_capability "organization.read.accounts", scope_type: "Organization", target: :organization_id, iam: %w[IAM_SYSTEM]
+  requires_read_capability "account.read", scope_type: "Account", target: :account_id
+  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
   self.format = :json
 
@@ -24,30 +27,21 @@ class OrganizationAccount < RemoteResource
 
   def self.account_ids_for_organizations_by_account_ids(account_ids)
     url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_ids"
-
-    Instrumentation.trace("organization_accounts.lookup", attributes: { "scope.count" => account_ids.size }) do
-      outgoing_headers, body = begin
-        request_headers = AuthorizationContext.transport_headers.merge("Content-Type" => "application/json")
-        [request_headers, { account_ids: account_ids }.to_json]
-      end
+    authorized_read("organization_lookup", records: account_ids.map { |id| { account_id: id } }) do
+      outgoing_headers = AuthorizationContext.transport_headers.merge("Content-Type" => "application/json")
+      body = { account_ids: account_ids }.to_json
       response = Faraday.post(url) do |req|
         outgoing_headers.each { |key, value| req.headers[key] = value }
         req.body = body
       end
-
       raise "Failed to get org accounts for account_ids #{account_ids}" unless response.status == 200
-
-      data = begin
-        JSON.parse(response.body)
-      end
-      begin
-        organizations = data.fetch("organizations")
-        data.fetch("account_to_organization").to_h do |account_id, organization_id|
-          [account_id.to_s, {
-            organization: Organization.new(id: organization_id),
-            account_ids: organizations.fetch(organization_id.to_s)
-          }]
-        end
+      data = JSON.parse(response.body)
+      organizations = data.fetch("organizations")
+      data.fetch("account_to_organization").to_h do |account_id, organization_id|
+        [account_id.to_s, {
+          organization: Organization.new(id: organization_id),
+          account_ids: organizations.fetch(organization_id.to_s)
+        }]
       end
     end
   end

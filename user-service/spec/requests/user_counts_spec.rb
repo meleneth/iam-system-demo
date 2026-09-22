@@ -1,13 +1,24 @@
 require "rails_helper"
 
 RSpec.describe "User counts", type: :request do
-  it "accepts JSON batches with the real actor and preserves authorization denial" do
+  it "preserves authorization denial for aggregate targets" do
     account_id = SecureRandom.uuid
-    allow(User).to receive(:user_can?).with(user_id: "actor", permission: "account.users.read", account_ids: [account_id]).and_return(true, false)
-    post "/accounts/users/counts", params: { account_id: [account_id] }, headers: { "pad-user-id" => "actor" }, as: :json
-    expect(response).to have_http_status(:ok)
-    expect(JSON.parse(response.body)).to eq(account_id => 0)
-    post "/accounts/users/counts", params: { account_id: [account_id] }, headers: { "pad-user-id" => "actor" }, as: :json
-    expect(response).to have_http_status(:forbidden)
+    client = instance_double(AuthorizedResource::AuthorizationClient)
+    allow(AuthorizedResource).to receive(:authorization_client).and_return(client)
+    expect(client).to receive(:capabilities).ordered.and_return(
+      "Account" => { account_id => ["account.users.read"] }
+    )
+    expect(client).to receive(:capabilities).ordered.and_return(
+      "Account" => { account_id => [] }
+    )
+
+    2.times do
+      post "/accounts/users/counts", params: { account_id: [account_id] },
+           headers: { "pad-user-id" => "actor" }, as: :json
+      yield_status = response.status
+      @statuses ||= []
+      @statuses << yield_status
+    end
+    expect(@statuses).to eq([200, 403])
   end
 end

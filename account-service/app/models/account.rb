@@ -3,6 +3,8 @@
 # app/models/account.rb
 
 class Account < ApplicationRecord
+  requires_read_capability "account.read", scope_type: "Account", target: :id, iam: %w[IAM_SYSTEM]
+  allows_iam_modify "IAM_SYSTEM"
   include Mel::Filterable
   belongs_to :parent_account, class_name: "Account", optional: true
   has_many :child_accounts, class_name: "Account", foreign_key: :parent_account_id, dependent: :nullify

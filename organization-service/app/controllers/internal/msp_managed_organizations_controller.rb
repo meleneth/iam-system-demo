@@ -25,22 +25,24 @@ module Internal
 
       relationship = MspManagedOrganization.find_by(msp_account_id: msp_account_id)
       if actor && actor != "IAM_SYSTEM"
-        raise AuthorizationDenied unless relationship &&
-          OrganizationAccount.where(account_id: msp_account_id).distinct.pluck(:organization_id) == [relationship.msp_organization_id] &&
-          User.user_can(actor, "Account", "account.read", msp_account_id)
+        organization_ids = OrganizationAccount.authorized_read(
+          "msp_ownership",
+          records: [OrganizationAccount.new(account_id: msp_account_id)],
+          requirements: account_read_requirements
+        ) do
+          OrganizationAccount.where(account_id: msp_account_id).distinct.pluck(:organization_id)
+        end
+        raise AuthorizationDenied unless relationship && organization_ids == [relationship.msp_organization_id]
       end
       return render json: empty_page(msp_account_id) unless relationship
 
       account_scope = managed_account_scope(msp_account_id)
-      if actor && actor != "IAM_SYSTEM"
-        # The count describes the whole collection, not only this page. Prove
-        # authority for every target before disclosing IDs, counts or continuance.
-        account_scope.pluck(:account_id).map(&:to_s).uniq.each_slice(batch_size) do |ids|
-          raise AuthorizationDenied unless User.user_can(actor, "Account", "account.read", ids)
-        end
-      end
-      total_count = account_scope.count(:account_id)
-      account_ids = account_scope.offset(offset).limit(limit).pluck(:account_id).map(&:to_s)
+      relationships = OrganizationAccount.authorized_read(
+        "managed_accounts",
+        requirements: account_read_requirements
+      ) { account_scope.to_a }
+      total_count = relationships.size
+      account_ids = relationships.slice(offset, limit).to_a.map { |row| row.account_id.to_s }
       next_offset = offset + account_ids.length
 
       render json: {
@@ -69,6 +71,10 @@ module Internal
         .joins("INNER JOIN msp_managed_organizations ON msp_managed_organizations.client_organization_id = organization_accounts.organization_id")
         .where(msp_managed_organizations: { msp_account_id: msp_account_id })
         .distinct.order(:account_id)
+    end
+
+    def account_read_requirements
+      [OrganizationAccount.authorization_requirement("account.read", scope_type: "Account", target: :account_id)]
     end
 
     def empty_page(msp_account_id)

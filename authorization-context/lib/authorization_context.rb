@@ -88,6 +88,12 @@ module AuthorizationContext
       activate(normalize_context(context), &block)
     end
 
+    def without(&block)
+      raise ArgumentError, "block required" unless block
+
+      activate(nil, &block)
+    end
+
     def transport_headers(context = current!)
       headers = {
         "pad-user-id" => context.actor_id,
@@ -200,6 +206,3 @@ module AuthorizationContext
     end
   end
 end
-
-require_relative "authorization_context/active_resource_protection"
-require_relative "authorization_context/active_record_protection"

@@ -4,6 +4,14 @@ PATH
     authorization-context (0.1.0)
       activesupport (>= 7.1, < 9)
 
+PATH
+  remote: ../authorized-resource
+  specs:
+    authorized-resource (0.1.0)
+      activerecord (>= 7.1, < 9)
+      authorization-context (~> 0.1)
+      opentelemetry-api (>= 1.4, < 2)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -603,6 +611,7 @@ PLATFORMS
 DEPENDENCIES
   activeresource (~> 6.1)
   authorization-context!
+  authorized-resource!
   aws-sdk-sqs (~> 1.96)
   bootsnap
   brakeman
