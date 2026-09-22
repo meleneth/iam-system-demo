@@ -27,8 +27,11 @@ end
 `target:` may be an attribute name or a callable. It identifies the owning
 authorization scope, not necessarily the resource ID. Repeated declarations are
 alternatives for the same record; every returned record must satisfy at least
-one alternative. Collections are evaluated with the authorization service's
-batched capabilities endpoint, once per scope type, rather than once per row.
+one alternative. Collections honor `AUTHORIZATION_CHECK_MODE`. In
+`capabilities` mode they use the batched capabilities endpoint once per scope
+type. In `can` mode they use a precise batched `/can` request once per scope
+type and required capability. Neither mode turns a collection into one
+authorization request per row.
 
 IAM identities are explicit model policy. Listing an identity in `iam:` permits
 that operation to use the receiving service's authenticated IAM behavior; the

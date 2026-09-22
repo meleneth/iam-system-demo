@@ -2,6 +2,64 @@
 
 require_relative "../rails_helper"
 
+RSpec.describe AuthorizedResource::AuthorizationClient do
+  subject(:client) { described_class.new(base_url: "http://authorization.test") }
+
+  let(:target) do
+    AuthorizedResource::Target.new(
+      scope_type: "Account", scope_id: "account-1", capability: "account.users.read"
+    )
+  end
+  let(:http) { instance_double(Net::HTTP) }
+
+  around do |example|
+    previous = ENV["AUTHORIZATION_CHECK_MODE"]
+    AuthorizationContext.as_requesting_user(user_id: "actor") { example.run }
+  ensure
+    ENV["AUTHORIZATION_CHECK_MODE"] = previous
+  end
+
+  it "uses one precise batched /can request in can mode" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "can"
+    response = Net::HTTPOK.new("1.1", "200", "OK")
+    allow(Net::HTTP).to receive(:start).and_yield(http)
+    expect(http).to receive(:request) do |request|
+      expect(request.path).to eq("/can/Account/account.users.read")
+      expect(JSON.parse(request.body)).to eq("scope_id" => ["account-1"])
+      response
+    end
+
+    expect(client.capabilities([target])).to eq(
+      "Account" => { "account-1" => ["account.users.read"] }
+    )
+  end
+
+  it "keeps a /can denial distinct from transport failure" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "can"
+    response = Net::HTTPForbidden.new("1.1", "403", "Forbidden")
+    allow(Net::HTTP).to receive(:start).and_yield(http)
+    allow(http).to receive(:request).and_return(response)
+
+    expect(client.capabilities([target])).to eq({})
+  end
+
+  it "uses the batched capabilities endpoint only in capabilities mode" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"
+    response = Net::HTTPOK.new("1.1", "200", "OK")
+    response.body = JSON.generate("account-1" => ["account.users.read"])
+    response.instance_variable_set(:@read, true)
+    allow(Net::HTTP).to receive(:start).and_yield(http)
+    expect(http).to receive(:request) do |request|
+      expect(request.path).to eq("/capabilities/Account")
+      response
+    end
+
+    expect(client.capabilities([target])).to eq(
+      "Account" => { "account-1" => ["account.users.read"] }
+    )
+  end
+end
+
 RSpec.describe AuthorizedResource::ConnectionProxy do
   let(:connection) { instance_double(ActiveResource::Connection) }
   let(:proxy) { described_class.new(connection) }
