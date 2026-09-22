@@ -10,6 +10,7 @@ RSpec.describe "Group-owned grants" do
   let(:account) { SecureRandom.uuid }
   let(:other_account) { SecureRandom.uuid }
   let(:target_group) { SecureRandom.uuid }
+  let(:other_target_group) { SecureRandom.uuid }
   let(:memberships) { {actor => [readers, writers], peer => [readers], outsider => []} }
   let(:groups) { instance_double(Authorization::GroupContextClient) }
   let(:providers) { instance_double(Authorization::AccountContextClient, providers_for: {"accounts" => []}) }
@@ -69,6 +70,19 @@ RSpec.describe "Group-owned grants" do
     expect(service.for_group(target_group)).to eq(%w[group.modify group.read])
     expect(service.for_account(account)).to eq(["group.modify"])
     expect(service(outsider).for_group(target_group)).to eq([])
+  end
+
+  it "batches exact-group and owning-account permission checks" do
+    grant(readers, "account.users.read")
+    grant(readers, "account.users.read", other_target_group, "Group")
+    expect(groups).to receive(:groups).with([target_group, other_target_group]).once.and_return([
+      {"id" => target_group, "account_id" => account},
+      {"id" => other_target_group, "account_id" => other_account}
+    ])
+
+    expect(service.group_ids_with_permission(
+      [target_group, other_target_group], "account.users.read"
+    )).to eq(Set[target_group, other_target_group])
   end
 
   it "fails closed if membership lookup fails" do

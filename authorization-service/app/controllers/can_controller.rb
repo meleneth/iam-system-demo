@@ -39,7 +39,8 @@ class CanController < ApplicationController
     when "Group"
       capability_service = Authorization::Capabilities.new(user_id: user_id)
       ids = Array(scope_id).map(&:to_s).uniq
-      authorized = ids.any? && ids.all? { |id| capability_service.for_group(id).include?(permission) }
+      authorized_group_ids = capability_service.group_ids_with_permission(ids, permission)
+      authorized = ids.any? && ids.all? { |id| authorized_group_ids.include?(id) }
 
     else
       return render json: { error: "Invalid scope_type" }, status: :bad_request

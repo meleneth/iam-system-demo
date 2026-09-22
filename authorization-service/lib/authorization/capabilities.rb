@@ -62,6 +62,31 @@ module Authorization
       end
     end
 
+    def group_ids_with_permission(requested_group_ids, permission)
+      with_evaluation_context do
+        requested = Array(requested_group_ids).map(&:to_s).uniq
+        canonical_ids = requested.map(&:downcase).select { |id| valid_group_id?(id) }
+        return Set.new if canonical_ids.empty?
+
+        groups_by_id = @group_context_client.groups(canonical_ids).each_with_object({}) do |group, indexed|
+          group_id = group.fetch("id").to_s.downcase
+          next unless canonical_ids.include?(group_id)
+
+          indexed[group_id] = group
+        end
+        direct = CapabilityGrant.where(
+          group_id: group_ids, scope_type: "Group", scope_id: groups_by_id.keys, permission: permission
+        ).pluck(:scope_id).map { |id| id.to_s.downcase }.to_set
+        account_ids = groups_by_id.values.map { |group| group.fetch("account_id").to_s }.uniq
+        permitted_accounts = canonical_account_ids_with_permission(account_ids.map(&:downcase), permission)
+
+        requested.select do |requested_id|
+          group = groups_by_id[requested_id.downcase]
+          group && (direct.include?(requested_id.downcase) || permitted_accounts.include?(group.fetch("account_id").to_s.downcase))
+        end.to_set
+      end
+    end
+
     private
 
     def with_evaluation_context(&block)
@@ -131,6 +156,8 @@ module Authorization
     def valid_account_id?(account_id)
       UUID_PATTERN.match?(account_id)
     end
+
+    alias_method :valid_group_id?, :valid_account_id?
 
     def read_account_permission_cache(account_ids, permission, redis_enabled:)
       return {} unless redis_enabled
