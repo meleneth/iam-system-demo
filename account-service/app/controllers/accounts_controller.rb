@@ -136,6 +136,7 @@ class AccountsController < ApplicationController
   end
 
   def fetch_accounts_with_parents(account_ids)
+    AuthorizationContext.current!
     ids = Array(account_ids).map(&:to_s)
     cache_keys = ids.map { |id| account_with_parents_cache_key(id) }
 
@@ -175,7 +176,7 @@ class AccountsController < ApplicationController
     if misses.any?
       OpenTelemetry::Trace.current_span.add_event("Fetching #{misses.size} account_with_parents misses")
       organization_payloads = {}
-      OrganizationAccount.with_headers('pad-user-id' => 'IAM_SYSTEM') do
+      AuthorizationContext.as_iam(originating_user_id: AuthorizationContext.current!.originating_user_id) do
         organization_payloads = OrganizationAccount.account_ids_for_organizations_by_account_ids(misses)
       end
 
@@ -207,6 +208,7 @@ class AccountsController < ApplicationController
   end
 
   def compute_accounts_with_parents(account_ids, organization_payloads)
+    AuthorizationContext.current!
     OpenTelemetry::Trace.current_span.add_event("Fetching account_with_parents misses with set-based CTE")
 
     ids = Array(account_ids).map(&:to_s)

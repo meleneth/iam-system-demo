@@ -16,11 +16,8 @@ module Sources
           span.set_attribute("iam.downstream_request_count", (keys.map(&:to_s).uniq.size.to_f / IamDemo.batch_size).ceil)
           span.set_attribute("iam.batch_size", IamDemo.batch_size)
 
-          results = []
-          with_headers do
-            Account.with_headers('pad-user-id' => @as) do
-              results = Account.with_parents_batch_ordered(keys)
-            end
+          results = AuthorizationContext.as_requesting_user(user_id: @as) do
+            Account.with_parents_batch_ordered(keys)
           end
           results
         end

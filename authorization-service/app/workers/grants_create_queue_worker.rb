@@ -38,6 +38,10 @@ class GrantsCreateQueueWorker
   end
 
   def process(msg)
+    AuthorizationContext.as_iam { process_in_context(msg) }
+  end
+
+  def process_in_context(msg)
     body = AwsMessage.unwrap(msg)
 
     unless body["type"] == "demo.user.create"

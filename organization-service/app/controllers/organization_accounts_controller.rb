@@ -167,6 +167,7 @@ class OrganizationAccountsController < ApplicationController
   end
 
   def cached_account_ids_by_organization_id(organization_ids)
+    AuthorizationContext.current!
     cache_keys = organization_ids.map { |organization_id| account_ids_cache_key(organization_id) }
     cached_values = ORGANIZATION_CACHE.pipelined do |pipe|
       cache_keys.each { |cache_key| pipe.get(cache_key) }

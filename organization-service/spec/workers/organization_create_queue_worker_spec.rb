@@ -12,6 +12,8 @@ RSpec.describe OrganizationCreateQueueWorker do
   let(:msp_organization_id) { SecureRandom.uuid }
   let(:msp_account_id) { SecureRandom.uuid }
 
+  around { |example| AuthorizationContext.as_iam { example.run } }
+
   before do
     allow(worker).to receive(:delete)
   end

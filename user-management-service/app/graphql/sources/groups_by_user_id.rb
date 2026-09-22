@@ -15,10 +15,7 @@ module Sources
         trace("GroupUser & Group batch (users: #{keys.size})") do
           groups_by_user = Hash.new { |h, k| h[k] = [] }
 
-          with_headers do
-            request_headers = { 'pad-user-id' => @as }
-            GroupUser.with_headers(request_headers) do
-              Group.with_headers(request_headers) do
+          AuthorizationContext.as_requesting_user(user_id: @as) do
                 gus = keys.each_slice(IamDemo.batch_size).flat_map do |user_ids|
                   GroupUser.search(user_id: user_ids)
                 end
@@ -34,8 +31,6 @@ module Sources
                   end
                   groups_by_user[gu.user_id] << group
                 end
-              end
-            end
           end
 
           keys.map { |k| groups_by_user[k] }

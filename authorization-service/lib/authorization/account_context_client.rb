@@ -13,9 +13,18 @@ module Authorization
     end
 
     def providers_for(account_ids:)
+      originating_user_id = AuthorizationContext.current!.originating_user_id
+      AuthorizationContext.as_iam(originating_user_id: originating_user_id, identity: "IAM_SYSTEM_AUTH") do
+        perform_request(account_ids)
+      end
+    end
+
+    private
+
+    def perform_request(account_ids)
       uri = URI.join(@base_url, "/internal/auth/account_providers")
       request = Net::HTTP::Post.new(uri)
-      request["pad-user-id"] = "IAM_SYSTEM_AUTH"
+      AuthorizationContext.transport_headers.each { |key, value| request[key] = value }
       request["Content-Type"] = "application/json"
       request["Accept"] = "application/json"
       OpenTelemetry.propagation.inject(request)

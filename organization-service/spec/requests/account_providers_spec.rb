@@ -1,7 +1,9 @@
 require "rails_helper"
 
 RSpec.describe "Authorization provider contexts", type: :request do
-  let(:headers) { {"pad-user-id" => "IAM_SYSTEM_AUTH"} }
+  let(:headers) { {"pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")} }
+
+  around { |example| AuthorizationContext.as_iam { example.run } }
 
   it "links every client account through its organization, with no client account ownership edge" do
     provider_org, client_org, unrelated_org = Array.new(3) { Organization.create! }

@@ -40,7 +40,7 @@ RSpec.describe "/group_users", type: :request do
     it "allows IAM_SYSTEM to read without actor grants" do
       expect(User).not_to receive(:user_can)
 
-      get group_user_url(group_user), headers: { "pad-user-id" => "IAM_SYSTEM" }, as: :json
+      get group_user_url(group_user), headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }, as: :json
 
       expect(response).to have_http_status(:ok)
     end

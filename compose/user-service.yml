@@ -12,8 +12,10 @@ services:
       - SECRET_KEY_BASE=${USER_RAILS_SECRET_KEY_BASE}
       - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
       - IAM_DEMO_BATCH_SIZE=${IAM_DEMO_BATCH_SIZE:-1000}
+      - IAM_INTERNAL_TOKEN=${IAM_INTERNAL_TOKEN}
     build:
-      context: "./user-service"
+      context: "."
+      dockerfile: "user-service/Dockerfile"
     depends_on:
       user-db:
         condition: service_healthy

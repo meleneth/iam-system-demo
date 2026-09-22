@@ -52,6 +52,10 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
     end
     expect(json(response)).to eq(count) if count
   end
+  def check_missing_context(response)
+    expect(response.code).to eq('500')
+    expect(json(response)).to eq('error' => 'protected retrieval requires an explicit authorization context')
+  end
   def phases
     # First invocation starts with empty fixture caches; the second repeats the
     # same actor/target decisions without clearing them, including denied entries.
@@ -99,9 +103,10 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
       wrong = permission == :read ? 'users_child' : 'read_child'
       phases do
         check(call(service, "/#{resource}/#{target}", actor: "#{permission}_child"), true, ids: [target])
-        [wrong, "#{permission}_wrong_scope", 'nonmember', nil].each do |actor|
+        [wrong, "#{permission}_wrong_scope", 'nonmember'].each do |actor|
           check(call(service, "/#{resource}/#{target}", actor: actor), false)
         end
+        check_missing_context(call(service, "/#{resource}/#{target}", actor: nil))
       end
     end
   end
@@ -194,7 +199,8 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
         check(call('organization-service', "/organization_accounts/#{id("link_#{target}")}", actor: 'list_client'), true, ids: [id("link_#{target}")])
         check(call('organization-service', "/organization_accounts/#{id("link_#{target}")}", actor: 'org_client'), false)
       end
-      check(call('organization-service', "/organizations/#{id(:client)}", actor: nil), false)
+      check_missing_context(call('organization-service', "/organizations/#{id(:client)}", actor: nil))
+      # This endpoint rejects the absent actor before attempting its protected count.
       check(call('organization-service', "/organizations/accounts/counts/#{id(:client)}", actor: nil), false)
       # Listing every row by account grants is allowed only if every row is covered.
       check(call('organization-service', "/organization_accounts?organization_id=#{id(:client)}", actor: 'read_child'), false)
@@ -375,7 +381,7 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
   end
 
   it 'trusted authorization facts return exact owners and only actual MSP relationships' do
-    headers = {'pad-user-id' => 'IAM_SYSTEM_AUTH'}
+    headers = {'pad-user-id' => 'IAM_SYSTEM_AUTH', 'X-IAM-Authorization-Scope' => 'iam', 'X-IAM-Internal-Token' => ENV.fetch('IAM_INTERNAL_TOKEN')}
     response = call('group-service', '/internal/auth/group_contexts', actor: nil, body: {group_ids: [id(:group_child), id(:group_foreign)]}, headers: headers)
     check(response, true)
     expect(json(response).fetch('groups')).to match_array([

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # app/models/account.rb
-class CapabilityGrant < ActiveResource::Base
+class CapabilityGrant < RemoteResource
   self.site = ENV.fetch("AUTHORIZATION_SERVICE_API_BASE_URL", "http://authorization-service:80")
   self.format = :json
 
@@ -22,17 +22,8 @@ class CapabilityGrant < ActiveResource::Base
   self.collection_name = "capability_grants"
 
   # Optional: handle nested resources, errors, etc.
-  def self.with_headers(temp_headers)
-    old_headers = headers.dup
-    propagated_headers = temp_headers.dup
-    OpenTelemetry.propagation.inject(propagated_headers)
-    self.headers.merge!(propagated_headers)
-    yield
-  ensure
-    self.headers.replace(old_headers)
-  end
-
   def self.admin_user_for_organization(organization_id)
+    AuthorizationContext.current!
     url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/internal/admin_users/organization/#{organization_id}"
     response = Faraday.get(url) do |req|
       headers.each { |key, value| req.headers[key] = value }
@@ -45,8 +36,10 @@ class CapabilityGrant < ActiveResource::Base
   end
 
   def self.capabilities(scope_type, scope_id, user_id:)
+    context = AuthorizationContext.current!
+    raise AuthorizationContext::InvalidContextError, "authorization actor mismatch" unless context.user_id == user_id.to_s
     url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/capabilities/#{scope_type}/#{scope_id}"
-    outgoing_headers = { "pad-user-id" => user_id }
+    outgoing_headers = AuthorizationContext.transport_headers.dup
     OpenTelemetry.propagation.inject(outgoing_headers)
 
     response = Faraday.get(url) do |req|

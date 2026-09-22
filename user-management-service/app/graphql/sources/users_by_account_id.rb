@@ -15,14 +15,11 @@ module Sources
         trace("User.find(:all, account_id: [#{keys.size} ids])") do
           grouped = Hash.new { |h, k| h[k] = [] }
 
-          with_headers do
-            request_headers = { 'pad-user-id' => @as }
-            User.with_headers(request_headers) do
+          AuthorizationContext.as_requesting_user(user_id: @as) do
               users = keys.each_slice(IamDemo.batch_size).flat_map do |account_ids|
                 User.search(account_id: account_ids)
               end
               users.each { |u| grouped[u.account_id] << u }
-            end
           end
 
           keys.map { |k| grouped[k] }

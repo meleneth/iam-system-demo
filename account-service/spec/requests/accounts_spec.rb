@@ -51,10 +51,10 @@ RSpec.describe "/accounts", type: :request do
   describe "POST /create" do
     context "with valid parameters" do
       it "creates a new Account" do
-        expect {
-          post accounts_url,
-               params: { account: valid_attributes }, headers: valid_headers, as: :json
-        }.to change(Account, :count).by(1)
+      before_count = AuthorizationContext.as_iam { Account.count }
+      post accounts_url,
+           params: { account: valid_attributes }, headers: valid_headers, as: :json
+      expect(AuthorizationContext.as_iam { Account.count }).to eq(before_count + 1)
       end
 
       it "renders a JSON response with the new account" do
@@ -67,10 +67,10 @@ RSpec.describe "/accounts", type: :request do
 
     context "with invalid parameters" do
       it "does not create a new Account" do
-        expect {
-          post accounts_url,
-               params: { account: invalid_attributes }, as: :json
-        }.to change(Account, :count).by(0)
+      before_count = AuthorizationContext.as_iam { Account.count }
+      post accounts_url,
+           params: { account: invalid_attributes }, as: :json
+      expect(AuthorizationContext.as_iam { Account.count }).to eq(before_count)
       end
 
       it "renders a JSON response with errors for the new account" do

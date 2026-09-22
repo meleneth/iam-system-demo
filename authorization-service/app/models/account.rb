@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # app/models/account.rb
-class Account < ActiveResource::Base
+class Account < RemoteResource
   self.site = ENV.fetch("ACCOUNT_SERVICE_API_BASE_URL") # e.g., http://account-service:80/
   self.format = :json
 
@@ -11,16 +11,6 @@ class Account < ActiveResource::Base
     string 'id'
     string 'parent_account_id'
     string 'name'
-  end
-
-  def self.with_headers(temp_headers)
-    old_headers = headers.dup
-    propagated_headers = temp_headers.dup
-    OpenTelemetry.propagation.inject(propagated_headers)
-    self.headers.merge!(propagated_headers)
-    yield
-  ensure
-    self.headers.replace(old_headers)
   end
 
   # Optional: if the resource uses UUIDs instead of integers

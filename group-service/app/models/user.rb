@@ -19,12 +19,17 @@ class User
   def self.user_can(user_id, scope_type, permission, scope_id)
     scope_ids = Array(scope_id).map(&:to_s).uniq
     return true if scope_ids.empty?
-    return true if user_id == "IAM_SYSTEM"
+    context = AuthorizationContext.current!
+    if user_id == "IAM_SYSTEM"
+      raise AuthorizationContext::InvalidContextError, "IAM actor requires IAM scope" unless context.iam? && context.iam_identity == user_id
+      return true
+    end
+    raise AuthorizationContext::InvalidContextError, "authorization actor mismatch" unless context.user_id == user_id.to_s
     return capabilities_authorize?(user_id, scope_type, permission, scope_ids) if capabilities_mode?
 
     url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/can/#{scope_type}/#{permission}"
 
-    outgoing_headers = { "pad-user-id" => user_id }
+    outgoing_headers = AuthorizationContext.transport_headers.dup
     OpenTelemetry.propagation.inject(outgoing_headers)
 
     response = Faraday.post(url) do |req|
@@ -38,7 +43,7 @@ class User
 
   def self.capabilities_authorize?(user_id, scope_type, permission, scope_ids)
     url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/capabilities/#{scope_type}"
-    outgoing_headers = { "pad-user-id" => user_id }
+    outgoing_headers = AuthorizationContext.transport_headers.dup
     OpenTelemetry.propagation.inject(outgoing_headers)
 
     response = Faraday.post(url) do |req|

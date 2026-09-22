@@ -21,6 +21,35 @@ Both GitHub and GitLab render Mermaid diagrams directly from fenced `mermaid` co
 9. `IAM_SYSTEM_AUTH` is restricted to explicit authorization-context endpoints for organization relationships, group memberships and group ownership.
 10. Caches may store service-owned derived answers inside the owning service, or authorization-service's derived authorization answers. Caches must not turn another service's domain objects into local source-of-truth copies.
 
+## Explicit Authorization Contexts
+
+All protected retrievals execute inside an `AuthorizationContext` block. A
+requesting-user context carries the actor and any applicable account or
+organization boundary; an IAM context carries service authority separately
+from the originating actor. Scope selects execution authority and never
+replaces the capability checks described here.
+
+```ruby
+AuthorizationContext.as_requesting_user(user_id: actor_id, account_id: account_id) { Account.find(account_id) }
+AuthorizationContext.as_iam(originating_user_id: actor_id) { RelationshipFact.find(...) }
+```
+
+There is no default context. `current!` raises a dedicated
+`MissingContextError` before protected HTTP, SQL, or cache access. Nested blocks
+restore the prior immutable context even after exceptions and nonlocal exits.
+Deferred thread/fiber/job work must capture and explicitly re-enter a context;
+locals are not presumed to propagate.
+
+ActiveResource models inherit from each application's `RemoteResource`, whose
+shared connection guard covers collection/single reads, reloads, associations,
+existence calls, pagination and custom connection requests. Custom Faraday and
+cache paths call `current!` at their actual read boundary. Transport metadata is
+derived per invocation rather than stored in class headers or pooled
+connections. IAM requests include an internal credential validated by receiving
+services; `X-IAM-Authorization-Scope: iam` alone grants nothing. See
+[`authorization-context/README.md`](authorization-context/README.md) for the gem
+API and extension rules.
+
 ## Service Ownership
 
 ```mermaid
@@ -935,7 +964,9 @@ The proof is not that the system performs magic. It is that, within sane bounds,
 This repository is a demo proving the query model. It is not a complete production IAM implementation.
 
 1. Derived authorization caches are TTL-based. Production would need event-driven invalidation for grant, account-parent, organization-membership, and MSP relationship changes.
-2. Internal trust identities (`IAM_SYSTEM`, `IAM_SYSTEM_AUTH`) are header-based in this demo. Production would need service identity, mTLS/JWT, and explicit allowlists.
+2. Internal trust identities (`IAM_SYSTEM`, `IAM_SYSTEM_AUTH`) combine explicit
+   scope headers with a shared demo credential. Production would need workload
+   identity, mTLS/JWT, credential rotation, and explicit caller allowlists.
 3. No service should treat remote domain objects as locally owned. Existing allowed caches are documented above; new caches must be reviewed against the ownership table.
 4. Benchmark queries intentionally return large payloads. Normal UI queries should still paginate or split views, but the stress shape is valid as a proof.
 5. Organization and account read models are optimized for demo scale and cache behavior. Production would need more explicit operational limits, audit logs, and invalidation contracts.

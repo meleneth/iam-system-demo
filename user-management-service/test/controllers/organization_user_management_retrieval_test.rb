@@ -26,8 +26,6 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
     assert_equal GROUP_IDS.reverse.map { |id| [id] }, serial_calls.fetch(:groups)
     assert_equal 1, batched_calls.fetch(:group_users).length
     assert_equal 2, serial_calls.fetch(:group_users).length
-    assert batched_calls.fetch(:headers).all? { |headers| headers == { "pad-user-id" => ACTOR_ID } }
-    assert serial_calls.fetch(:headers).all? { |headers| headers == { "pad-user-id" => ACTOR_ID } }
   end
 
   test "rejects an unknown retrieval mode" do
@@ -104,7 +102,7 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
   def payload_for(mode, account_ids: ACCOUNT_IDS, deny_groups: false)
     old_mode = ENV["IAM_DEMO_RETRIEVAL_MODE"]
     ENV["IAM_DEMO_RETRIEVAL_MODE"] = mode
-    calls = { accounts: [], users: [], groups: [], group_users: [], headers: [] }
+    calls = { accounts: [], users: [], groups: [], group_users: [] }
     accounts = ACCOUNT_IDS.map.with_index do |account_id, index|
       Account.new(id: account_id, name: "Account #{index + 1}", parent_account_id: nil)
     end
@@ -120,10 +118,6 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
         user_id: user.id,
         group_id: groups[1 - index].id
       )
-    end
-    with_headers = lambda do |headers, &block|
-      calls[:headers] << headers
-      block.call
     end
     account_search = lambda do |params|
       calls[:accounts] << params.fetch(:id)
@@ -150,23 +144,17 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
       group_users.select { |group_user| ids.include?(group_user.user_id) }
     end
 
-    payload = Account.stub(:with_headers, with_headers) do
-      User.stub(:with_headers, with_headers) do
-        Group.stub(:with_headers, with_headers) do
-          GroupUser.stub(:with_headers, with_headers) do
-            Account.stub(:search, account_search) do
-              Account.stub(:find, account_find) do
-                User.stub(:search, user_search) do
-                  Group.stub(:search, group_search) do
-                    GroupUser.stub(:search, group_user_search) do
-                      controller = OrganizationUserManagementController.new
-                      controller.instance_variable_set(:@actor_user_id, ACTOR_ID)
-                      controller.instance_variable_set(:@organization_id, ORGANIZATION_ID)
-                      controller.instance_variable_set(:@mode, "organization")
-                      controller.send(:data_payload, account_ids: account_ids, total_account_count: ACCOUNT_IDS.length)
-                    end
-                  end
-                end
+    payload = AuthorizationContext.as_requesting_user(user_id: ACTOR_ID, organization_id: ORGANIZATION_ID) do
+      Account.stub(:search, account_search) do
+        Account.stub(:find, account_find) do
+          User.stub(:search, user_search) do
+            Group.stub(:search, group_search) do
+              GroupUser.stub(:search, group_user_search) do
+                controller = OrganizationUserManagementController.new
+                controller.instance_variable_set(:@actor_user_id, ACTOR_ID)
+                controller.instance_variable_set(:@organization_id, ORGANIZATION_ID)
+                controller.instance_variable_set(:@mode, "organization")
+                controller.send(:data_payload, account_ids: account_ids, total_account_count: ACCOUNT_IDS.length)
               end
             end
           end

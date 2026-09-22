@@ -15,9 +15,11 @@ services:
       - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
       - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
       - IAM_DEMO_BATCH_SIZE=${IAM_DEMO_BATCH_SIZE:-1000}
+      - IAM_INTERNAL_TOKEN=${IAM_INTERNAL_TOKEN}
       - SECRET_KEY_BASE=${AUTHORIZATION_RAILS_SECRET_KEY_BASE}
     build:
-      context: "./authorization-service"
+      context: "."
+      dockerfile: "authorization-service/Dockerfile"
     depends_on:
       authz-db:
         condition: service_healthy

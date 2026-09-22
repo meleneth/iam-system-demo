@@ -11,14 +11,12 @@ class FrontdoorController < ApplicationController
     permitted = params.permit(:organization_id, :account_id, :as)
     @actor_user_id = permitted.require(:as)
     @selected_account_id = permitted.require(:account_id)
-    @organization = Organization.with_headers("pad-user-id" => @actor_user_id) do
-      Organization.find(permitted.require(:organization_id))
+    AuthorizationContext.as_requesting_user(user_id: @actor_user_id) do
+      @organization = Organization.find(permitted.require(:organization_id))
+      links = OrganizationAccount.find(:all, params: {organization_id: @organization.id, account_id: @selected_account_id})
+      raise ActiveResource::ResourceNotFound unless links.any?
+      load_native_org_detail
     end
-    links = OrganizationAccount.with_headers("pad-user-id" => @actor_user_id) do
-      OrganizationAccount.find(:all, params: {organization_id: @organization.id, account_id: @selected_account_id})
-    end
-    raise ActiveResource::ResourceNotFound unless links.any?
-    load_native_org_detail
     render :random_record
   end
 
@@ -32,14 +30,10 @@ class FrontdoorController < ApplicationController
   private
 
   def load_native_org_detail
-    Organization.with_headers("pad-user-id" => @actor_user_id) do
-      @organization = Organization.find(@organization.id)
-    end
+    @organization = Organization.find(@organization.id)
 
-    OrganizationAccount.with_headers("pad-user-id" => @actor_user_id) do
-      @account_count = OrganizationAccount.accounts_counts(@organization.id).fetch(:accounts_count).to_i
-      @organization_account_links = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
-    end
+    @account_count = OrganizationAccount.accounts_counts(@organization.id).fetch(:accounts_count).to_i
+    @organization_account_links = OrganizationAccount.find(:all, params: { organization_id: @organization.id })
 
     @account_ids = @organization_account_links.map { |link| link.account_id.to_s }
     @user_counts_by_account_id = user_counts_for(@account_ids)
@@ -50,17 +44,13 @@ class FrontdoorController < ApplicationController
   end
 
   def user_counts_for(account_ids)
-    User.with_headers("pad-user-id" => @actor_user_id) do
-      account_ids.each_slice(IamDemo.batch_size).each_with_object({}) do |ids, counts|
-        counts.merge!(User.users_count(ids).transform_keys(&:to_s))
-      end
+    account_ids.each_slice(IamDemo.batch_size).each_with_object({}) do |ids, counts|
+      counts.merge!(User.users_count(ids).transform_keys(&:to_s))
     end
   end
 
   def fetch_accounts_for(account_ids)
-    Account.with_headers("pad-user-id" => @actor_user_id) do
-      account_ids.each_slice(IamDemo.batch_size).flat_map { |ids| Account.search(id: ids) }.index_by { |account| account.id.to_s }
-    end
+    account_ids.each_slice(IamDemo.batch_size).flat_map { |ids| Account.search(id: ids) }.index_by { |account| account.id.to_s }
   end
 
   def demo_queries

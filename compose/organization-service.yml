@@ -14,9 +14,11 @@ services:
       - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
       - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
       - IAM_DEMO_BATCH_SIZE=${IAM_DEMO_BATCH_SIZE:-1000}
+      - IAM_INTERNAL_TOKEN=${IAM_INTERNAL_TOKEN}
       - SECRET_KEY_BASE=${ORGANIZATION_RAILS_SECRET_KEY_BASE}
     build:
-      context: "./organization-service"
+      context: "."
+      dockerfile: "organization-service/Dockerfile"
     depends_on:
       organization-db:
         condition: service_healthy
@@ -34,6 +36,7 @@ services:
       - GLOBAL_IAM_DEMO_USE_REDIS=${GLOBAL_IAM_DEMO_USE_REDIS}
       - AUTHORIZATION_CHECK_MODE=${AUTHORIZATION_CHECK_MODE:-can}
       - IAM_DEMO_BATCH_SIZE=${IAM_DEMO_BATCH_SIZE:-1000}
+      - IAM_INTERNAL_TOKEN=${IAM_INTERNAL_TOKEN}
       - SECRET_KEY_BASE=${ORGANIZATION_RAILS_SECRET_KEY_BASE}
       - OTEL_SERVICE_NAME=organization-auth-service
       - IAM_DEPLOYMENT_ROLE=authorization-organization-lookup

@@ -1,3 +1,9 @@
+PATH
+  remote: ../authorization-context
+  specs:
+    authorization-context (0.1.0)
+      activesupport (>= 7.1, < 9)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -654,6 +660,7 @@ PLATFORMS
 DEPENDENCIES
   activeresource (~> 6.1)
   async (~> 2.26)
+  authorization-context!
   awesome_print (~> 1.9)
   aws-sdk-sns (~> 1.100)
   aws-sdk-sqs (~> 1.96)

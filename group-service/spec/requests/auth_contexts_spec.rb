@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Authorization group contexts", type: :request do
   let(:actor) { SecureRandom.uuid }
-  let(:headers) { {"pad-user-id" => "IAM_SYSTEM_AUTH"} }
+  let(:headers) { {"pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")} }
   let!(:group) { Group.create!(account_id: SecureRandom.uuid, name: "Readers") }
 
   it "returns explicit memberships only, deduplicated and excluding dangling groups" do

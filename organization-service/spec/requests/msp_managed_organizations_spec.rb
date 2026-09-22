@@ -11,12 +11,14 @@ RSpec.describe "internal MSP managed organizations", type: :request do
 
   it "returns paginated account IDs managed by an MSP account" do
     create_valid_relationship!
-    OrganizationAccount.create!(organization_id: client_organization_id, account_id: account_2_id)
-    OrganizationAccount.create!(organization_id: client_organization_id, account_id: account_1_id)
+    AuthorizationContext.as_iam do
+      OrganizationAccount.create!(organization_id: client_organization_id, account_id: account_2_id)
+      OrganizationAccount.create!(organization_id: client_organization_id, account_id: account_1_id)
+    end
 
     get "/internal/msp_managed_organizations/#{msp_account_id}",
         params: { limit: 1 },
-        headers: { "pad-user-id" => "IAM_SYSTEM" }
+        headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }
 
     expect(response).to have_http_status(:ok)
     first_page = response.parsed_body
@@ -28,7 +30,7 @@ RSpec.describe "internal MSP managed organizations", type: :request do
 
     get "/internal/msp_managed_organizations/#{msp_account_id}",
         params: { continuance: first_page.fetch("continuance"), limit: 1 },
-        headers: { "pad-user-id" => "IAM_SYSTEM" }
+        headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }
 
     expect(response).to have_http_status(:ok)
     second_page = response.parsed_body
@@ -41,13 +43,15 @@ RSpec.describe "internal MSP managed organizations", type: :request do
     ENV["IAM_DEMO_BATCH_SIZE"] = "2"
 
     create_valid_relationship!
-    [account_1_id, account_2_id, account_3_id].each do |account_id|
-      OrganizationAccount.create!(organization_id: client_organization_id, account_id: account_id)
+    AuthorizationContext.as_iam do
+      [account_1_id, account_2_id, account_3_id].each do |account_id|
+        OrganizationAccount.create!(organization_id: client_organization_id, account_id: account_id)
+      end
     end
 
     get "/internal/msp_managed_organizations/#{msp_account_id}",
         params: { limit: 100 },
-        headers: { "pad-user-id" => "IAM_SYSTEM" }
+        headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }
 
     expect(response).to have_http_status(:ok)
     page = response.parsed_body
@@ -67,13 +71,15 @@ RSpec.describe "internal MSP managed organizations", type: :request do
   end
 
   def create_valid_relationship!
-    Organization.create!(id: msp_organization_id)
-    Organization.create!(id: client_organization_id)
-    OrganizationAccount.create!(organization_id: msp_organization_id, account_id: msp_account_id)
-    MspManagedOrganization.create!(
-      msp_organization_id: msp_organization_id,
-      msp_account_id: msp_account_id,
-      client_organization_id: client_organization_id
-    )
+    AuthorizationContext.as_iam do
+      Organization.create!(id: msp_organization_id)
+      Organization.create!(id: client_organization_id)
+      OrganizationAccount.create!(organization_id: msp_organization_id, account_id: msp_account_id)
+      MspManagedOrganization.create!(
+        msp_organization_id: msp_organization_id,
+        msp_account_id: msp_account_id,
+        client_organization_id: client_organization_id
+      )
+    end
   end
 end

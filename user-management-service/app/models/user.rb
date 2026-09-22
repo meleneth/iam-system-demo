@@ -2,7 +2,7 @@
 require "json"
 
 # app/models/user.rb
-class User < ActiveResource::Base
+class User < RemoteResource
   self.site = ENV.fetch("USER_SERVICE_API_BASE_URL", "http://user-service:80")
   self.format = :json
 
@@ -14,25 +14,20 @@ class User < ActiveResource::Base
 
   # Optional: handle nested resources, errors, etc.
  
-  def self.with_headers(temp_headers)
-    old_headers = headers.dup
-    propagated_headers = temp_headers.dup
-    OpenTelemetry.propagation.inject(propagated_headers)
-    self.headers.merge!(propagated_headers)
-    yield
-  ensure
-    self.headers.replace(old_headers)
-  end
-
   def can(scope_type, permission, scope_id)
+    context = AuthorizationContext.current!
     scope_ids = Array(scope_id).map(&:to_s).uniq
     return true if scope_ids.empty?
-    return true if id == "IAM_SYSTEM"
+    if id == "IAM_SYSTEM"
+      raise AuthorizationContext::InvalidContextError, "IAM actor requires IAM scope" unless context.iam? && context.iam_identity == id
+      return true
+    end
+    raise AuthorizationContext::InvalidContextError, "authorization actor mismatch" unless context.user_id == id.to_s
     return capabilities_authorize?(scope_type, permission, scope_ids) if self.class.capabilities_mode?
 
     url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/can/#{scope_type}/#{permission}"
 
-    outgoing_headers = { "pad-user-id" => id }
+    outgoing_headers = AuthorizationContext.transport_headers.dup
     OpenTelemetry.propagation.inject(outgoing_headers)
 
     response = Faraday.post(url) do |req|
@@ -46,7 +41,7 @@ class User < ActiveResource::Base
 
   def capabilities_authorize?(scope_type, permission, scope_ids)
     url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/capabilities/#{scope_type}"
-    outgoing_headers = { "pad-user-id" => id }
+    outgoing_headers = AuthorizationContext.transport_headers.dup
     OpenTelemetry.propagation.inject(outgoing_headers)
 
     response = Faraday.post(url) do |req|
@@ -65,6 +60,7 @@ class User < ActiveResource::Base
   end
 
   def self.users_count(account_ids)
+    AuthorizationContext.current!
     account_ids = Array(account_ids)
 
     url = "#{Env::USER_SERVICE_API_BASE_URL}/accounts/users/counts"
@@ -85,6 +81,7 @@ class User < ActiveResource::Base
   end
 
   def self.search(params)
+    AuthorizationContext.current!
     raw = connection.post(
       "/users/search",
       params.to_json,

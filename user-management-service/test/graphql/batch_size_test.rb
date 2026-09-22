@@ -84,7 +84,9 @@ class BatchSizeTest < ActiveSupport::TestCase
       Struct.new(:body).new(ids.reverse.map { |id| [{ id: id }] }.to_json)
     end
     Account.stub(:connection, connection) do
-      assert_equal [%w[c], %w[a], %w[b], %w[c]], Account.with_parents_batch_ordered(%w[c a b c]).map { |rows| rows.map(&:id) }
+      AuthorizationContext.as_requesting_user(user_id: "actor") do
+        assert_equal [%w[c], %w[a], %w[b], %w[c]], Account.with_parents_batch_ordered(%w[c a b c]).map { |rows| rows.map(&:id) }
+      end
     end
     assert_equal [["/accounts_with_parents", %w[c a], "application/json"], ["/accounts_with_parents", %w[b], "application/json"]], calls
   end

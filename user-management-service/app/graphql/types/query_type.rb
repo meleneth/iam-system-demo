@@ -37,7 +37,7 @@ module Types
       context[:tracer] = TRACER
       otel_ctx = context[:otel_ctx] || OpenTelemetry::Context.current
       context[:otel_ctx] = otel_ctx
-      Organization.with_headers("pad-user-id" => as) do
+      AuthorizationContext.as_requesting_user(user_id: as) do
         Organization.find(id)
       end
     end
@@ -49,7 +49,7 @@ module Types
       context[:otel_ctx] = otel_ctx
 
       # Pass caller identity to downstream via header you already use
-      Account.with_headers("pad-user-id" => as) do
+      AuthorizationContext.as_requesting_user(user_id: as) do
         # You likely already have Account.find(id) on ActiveResource
         # If your service expects ?id= or a path, adjust accordingly.
         record = Account.find(id)
@@ -79,7 +79,9 @@ module Types
       context[:tracer] = TRACER
       context[:otel_ctx] ||= OpenTelemetry::Context.current
 
-      page = MspManagedOrganization.page(msp_account_id, user_id: as, continuance: continuance)
+      page = AuthorizationContext.as_requesting_user(user_id: as, account_id: msp_account_id) do
+        MspManagedOrganization.page(msp_account_id, user_id: as, continuance: continuance)
+      end
       msp_organization_id = page["msp_organization_id"]
       raise GraphQL::ExecutionError, "Unknown MSP account #{msp_account_id}" if msp_organization_id.blank?
 

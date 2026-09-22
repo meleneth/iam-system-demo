@@ -25,8 +25,6 @@ class AccountHierarchyBatchingTest < ActiveSupport::TestCase
 
   test "accountHierarchies makes one batch request and restores requested order" do
     calls = []
-    headers = []
-    user_headers = []
     batch = lambda do |ids|
       calls << ids
       [
@@ -35,41 +33,33 @@ class AccountHierarchyBatchingTest < ActiveSupport::TestCase
       ]
     end
 
-    Account.stub(:with_headers, ->(value, &block) { headers << value; block.call }) do
-      Account.stub(:with_parents_batch, batch) do
-        User.stub(:with_headers, ->(value, &block) { user_headers << value; block.call }) do
-          User.stub(:search, []) do
-            result = UserManagementServiceSchema.execute(<<~GRAPHQL).to_h
-              {
-                accountHierarchies(ids: ["first", "second", "first"], as: "#{ACTOR_ID}") {
-                  id
-                }
-              }
-            GRAPHQL
+    Account.stub(:with_parents_batch, batch) do
+      User.stub(:search, []) do
+        result = UserManagementServiceSchema.execute(<<~GRAPHQL).to_h
+          {
+            accountHierarchies(ids: ["first", "second", "first"], as: "#{ACTOR_ID}") {
+              id
+            }
+          }
+        GRAPHQL
 
-            assert_nil result["errors"], result.inspect
-            assert_equal [["first"], ["second"], ["first"]],
-              result.dig("data", "accountHierarchies").map { |hierarchy| hierarchy.map { |account| account.fetch("id") } }
-          end
-        end
+        assert_nil result["errors"], result.inspect
+        assert_equal [["first"], ["second"], ["first"]],
+          result.dig("data", "accountHierarchies").map { |hierarchy| hierarchy.map { |account| account.fetch("id") } }
       end
     end
 
     assert_equal [["first", "second"]], calls
-    assert_equal [{ "pad-user-id" => ACTOR_ID }], headers
-    assert_equal [{ "pad-user-id" => ACTOR_ID }], user_headers
   end
 
   test "accountWithParents dataloader makes one batch request for multiple fields" do
     calls = []
-    headers = []
     batch = lambda do |ids|
       calls << ids
       ids.reverse.map { |id| [Account.new(id: id, name: id.capitalize)] }
     end
 
-    Account.stub(:with_headers, ->(value, &block) { headers << value; block.call }) do
-      Account.stub(:with_parents_batch, batch) do
+    Account.stub(:with_parents_batch, batch) do
         result = UserManagementServiceSchema.execute(<<~GRAPHQL).to_h
           {
             first: accountWithParents(id: "first", as: "#{ACTOR_ID}") { id }
@@ -80,11 +70,9 @@ class AccountHierarchyBatchingTest < ActiveSupport::TestCase
         assert_nil result["errors"], result.inspect
         assert_equal ["first"], result.dig("data", "first").map { |account| account.fetch("id") }
         assert_equal ["second"], result.dig("data", "second").map { |account| account.fetch("id") }
-      end
     end
 
     assert_equal [["first", "second"]], calls
-    assert_equal [{ "pad-user-id" => ACTOR_ID }], headers
   end
 
   test "both GraphQL hierarchy paths propagate Account Service failure" do
@@ -96,8 +84,7 @@ class AccountHierarchyBatchingTest < ActiveSupport::TestCase
       )
     end
 
-    Account.stub(:with_headers, ->(*, &block) { block.call }) do
-      Account.stub(:with_parents_batch, failure) do
+    Account.stub(:with_parents_batch, failure) do
         assert_raises(ActiveResource::ServerError) do
           UserManagementServiceSchema.execute(<<~GRAPHQL).to_h
             { accountHierarchies(ids: ["first", "second"], as: "#{ACTOR_ID}") { id } }
@@ -108,7 +95,6 @@ class AccountHierarchyBatchingTest < ActiveSupport::TestCase
             { accountWithParents(id: "third", as: "#{ACTOR_ID}") { id } }
           GRAPHQL
         end
-      end
     end
 
     assert_equal 2, calls
@@ -118,7 +104,6 @@ class AccountHierarchyBatchingTest < ActiveSupport::TestCase
     tracer = FakeTracer.new
     otel_context = Object.new
     restored_contexts = []
-    headers = []
     context_wrapper = lambda do |context, &block|
       restored_contexts << context
       block.call
@@ -126,15 +111,13 @@ class AccountHierarchyBatchingTest < ActiveSupport::TestCase
     source = Sources::AccountsWithParentsById.new(as: ACTOR_ID, tracer: tracer, otel_ctx: otel_context)
 
     OpenTelemetry::Context.stub(:with_current, context_wrapper) do
-      Account.stub(:with_headers, ->(value, &block) { headers << value; block.call }) do
-        Account.stub(
+      Account.stub(
           :with_parents_batch_ordered,
           [[Account.new(id: "first")], [Account.new(id: "second")], [Account.new(id: "first")]]
-        ) do
+      ) do
           result = source.fetch(["first", "second", "first"])
 
           assert_equal 3, result.length
-        end
       end
     end
 
@@ -142,6 +125,5 @@ class AccountHierarchyBatchingTest < ActiveSupport::TestCase
     assert_equal "Account.with_parents_batch", tracer.span_name
     assert_equal 2, tracer.span.attributes.fetch("iam.requested_unique_id_count")
     assert_equal 1, tracer.span.attributes.fetch("iam.downstream_request_count")
-    assert_equal [{ "pad-user-id" => ACTOR_ID }], headers
   end
 end

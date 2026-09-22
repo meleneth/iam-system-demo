@@ -13,6 +13,8 @@ RSpec.describe GrantsCreateQueueWorker do
   let(:users_group_id) { SecureRandom.uuid }
   let(:admins_group_id) { SecureRandom.uuid }
 
+  around { |example| AuthorizationContext.as_iam { example.run } }
+
   before do
     allow(worker).to receive(:delete)
   end

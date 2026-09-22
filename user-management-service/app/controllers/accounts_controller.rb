@@ -3,16 +3,11 @@ require 'async'
 class AccountsController < ApplicationController
   TRACER = OpenTelemetry.tracer_provider.tracer('accounts-controller', '1.0.0')
 
-  around_action :with_actor_headers, only: %i[view slow_view slowest_view]
+  around_action :with_actor_context, only: %i[view slow_view slowest_view]
 
-  def with_actor_headers
+  def with_actor_context
     @as_user_id = params.require(:as)
-    operation = -> { yield }
-    [Account, Organization, OrganizationAccount, User, Group, GroupUser].reverse_each do |resource|
-      nested = operation
-      operation = -> { resource.with_headers("pad-user-id" => @as_user_id) { nested.call } }
-    end
-    operation.call
+    AuthorizationContext.as_requesting_user(user_id: @as_user_id) { yield }
   end
 
   def view
@@ -21,22 +16,16 @@ class AccountsController < ApplicationController
     account_id = permitted[:id]
 
     TRACER.in_span("Account.with_parents(#{account_id})") do
-      Account.with_headers('pad-user-id' => @as_user_id) do
-        @accounts = Account.with_parents(account_id)
-      end
+      @accounts = Account.with_parents(account_id)
     end
 
     @account = @accounts[-1]
     org_accounts = nil
 
     TRACER.in_span("OrganizationAccount.account_ids_for_organizations_by_account_ids()") do
-      OrganizationAccount.with_headers('pad-user-id' => @as_user_id) do
-        # mixed response: Organization object since organization-service service owns Organization
-        # account_ids because organization-service does not own Acccounts
-        response = OrganizationAccount.account_ids_for_organization_by_account_id(@account.id)
-        @org_account_ids = response[:account_ids]
-        @organization = response[:organization]
-      end
+      response = OrganizationAccount.account_ids_for_organization_by_account_id(@account.id)
+      @org_account_ids = response[:account_ids]
+      @organization = response[:organization]
     end
 
     TRACER.in_span("fetch_accounts_async") do
@@ -44,9 +33,7 @@ class AccountsController < ApplicationController
       if do_fetch_accounts_async then
         @organization_accounts = fetch_accounts_async(@org_account_ids)
       else
-        Account.with_headers('pad-user-id' => @as_user_id) do
-          @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
-        end
+        @organization_accounts = org_accounts.map {|org_account| Account.find(org_account.account_id)}
       end
     end
 
@@ -126,13 +113,16 @@ class AccountsController < ApplicationController
 
   def fetch_parent_accounts_async()
     parent_ctx = OpenTelemetry::Context.current
+    authorization_context = AuthorizationContext.capture
 
     @organization_accounts = Async do |task|
       account_ids.each_slice(IamDemo.batch_size).map do |group|
         task.async do
-          OpenTelemetry::Context.with_current(parent_ctx) do
-            TRACER.in_span("Account.fetch_group[#{group.first}-#{group.last}]") do
-              Account.search(id: group)
+          AuthorizationContext.with(authorization_context) do
+            OpenTelemetry::Context.with_current(parent_ctx) do
+              TRACER.in_span("Account.fetch_group[#{group.first}-#{group.last}]") do
+                Account.search(id: group)
+              end
             end
           end
         end
@@ -142,13 +132,14 @@ class AccountsController < ApplicationController
 
   def fetch_accounts_async(account_ids)
     parent_ctx = OpenTelemetry::Context.current
+    authorization_context = AuthorizationContext.capture
 
     @organization_accounts = Async do |task|
       account_ids.each_slice(IamDemo.batch_size).map do |group|
         task.async do
-          OpenTelemetry::Context.with_current(parent_ctx) do
-            TRACER.in_span("Account.fetch_group[#{group.first}-#{group.last}]") do
-              Account.with_headers('pad-user-id' => @as_user_id) do
+          AuthorizationContext.with(authorization_context) do
+            OpenTelemetry::Context.with_current(parent_ctx) do
+              TRACER.in_span("Account.fetch_group[#{group.first}-#{group.last}]") do
                 Account.search(id: group)
               end
             end

@@ -13,9 +13,11 @@ RSpec.describe "internal auth account contexts", type: :request do
 
   it "returns managed account contexts and constrains parent IDs to the client organization" do
     create_valid_relationship!
-    OrganizationAccount.create!(organization_id: client_organization_id, account_id: target_account_id)
-    OrganizationAccount.create!(organization_id: client_organization_id, account_id: client_parent_account_id)
-    OrganizationAccount.create!(organization_id: other_organization_id, account_id: outside_parent_account_id)
+    AuthorizationContext.as_iam do
+      OrganizationAccount.create!(organization_id: client_organization_id, account_id: target_account_id)
+      OrganizationAccount.create!(organization_id: client_organization_id, account_id: client_parent_account_id)
+      OrganizationAccount.create!(organization_id: other_organization_id, account_id: outside_parent_account_id)
+    end
 
     post "/internal/auth/account_contexts",
          params: {
@@ -32,7 +34,7 @@ RSpec.describe "internal auth account contexts", type: :request do
              }
            ]
          },
-         headers: { "pad-user-id" => "IAM_SYSTEM_AUTH" },
+         headers: { "pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
          as: :json
 
     expect(response).to have_http_status(:ok)
@@ -49,7 +51,7 @@ RSpec.describe "internal auth account contexts", type: :request do
 
   it "omits accounts outside the provided MSP organization and account context" do
     create_valid_relationship!
-    OrganizationAccount.create!(organization_id: client_organization_id, account_id: target_account_id)
+    AuthorizationContext.as_iam { OrganizationAccount.create!(organization_id: client_organization_id, account_id: target_account_id) }
 
     post "/internal/auth/account_contexts",
          params: {
@@ -61,7 +63,7 @@ RSpec.describe "internal auth account contexts", type: :request do
              }
            ]
          },
-         headers: { "pad-user-id" => "IAM_SYSTEM_AUTH" },
+         headers: { "pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
          as: :json
 
     expect(response).to have_http_status(:ok)
@@ -71,7 +73,7 @@ RSpec.describe "internal auth account contexts", type: :request do
   it "rejects non-auth-system callers" do
     post "/internal/auth/account_contexts",
          params: { contexts: [] },
-         headers: { "pad-user-id" => "IAM_SYSTEM" },
+         headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
          as: :json
 
     expect(response).to have_http_status(:forbidden)
@@ -80,24 +82,26 @@ RSpec.describe "internal auth account contexts", type: :request do
 
   it "rechecks persisted ownership after a relationship is removed" do
     create_valid_relationship!
-    OrganizationAccount.create!(organization_id: client_organization_id, account_id: target_account_id)
+    AuthorizationContext.as_iam { OrganizationAccount.create!(organization_id: client_organization_id, account_id: target_account_id) }
     payload = {contexts: [{msp_organization_id: msp_organization_id, msp_account_id: msp_account_id, accounts: [{account_id: target_account_id, parent_account_ids: []}]}]}
-    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH"}, as: :json
+    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")}, as: :json
     expect(response.parsed_body.fetch("accounts").map { |row| row.fetch("account_id") }).to eq([target_account_id])
-    MspManagedOrganization.where(client_organization_id: client_organization_id).destroy_all
-    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH"}, as: :json
+    AuthorizationContext.as_iam { MspManagedOrganization.where(client_organization_id: client_organization_id).destroy_all }
+    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")}, as: :json
     expect(response.parsed_body).to eq("accounts" => [])
   end
 
   def create_valid_relationship!
-    Organization.create!(id: msp_organization_id)
-    Organization.create!(id: client_organization_id)
-    Organization.create!(id: other_organization_id)
-    OrganizationAccount.create!(organization_id: msp_organization_id, account_id: msp_account_id)
-    MspManagedOrganization.create!(
-      msp_organization_id: msp_organization_id,
-      msp_account_id: msp_account_id,
-      client_organization_id: client_organization_id
-    )
+    AuthorizationContext.as_iam do
+      Organization.create!(id: msp_organization_id)
+      Organization.create!(id: client_organization_id)
+      Organization.create!(id: other_organization_id)
+      OrganizationAccount.create!(organization_id: msp_organization_id, account_id: msp_account_id)
+      MspManagedOrganization.create!(
+        msp_organization_id: msp_organization_id,
+        msp_account_id: msp_account_id,
+        client_organization_id: client_organization_id
+      )
+    end
   end
 end

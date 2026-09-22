@@ -10,7 +10,7 @@ module Sources
 
     def fetch(account_ids)
       map = OpenTelemetry::Context.with_current(@otel_ctx) do
-        User.with_headers("pad-user-id" => @as) do
+        AuthorizationContext.as_requesting_user(user_id: @as) do
           account_ids.each_slice(IamDemo.batch_size).each_with_object({}) do |ids, counts|
             counts.merge!(User.users_count(ids))
           end

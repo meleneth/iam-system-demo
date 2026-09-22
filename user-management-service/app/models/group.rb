@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # app/models/user.rb
-class Group < ActiveResource::Base
+class Group < RemoteResource
   self.site = ENV.fetch("GROUP_SERVICE_API_BASE_URL", "http://group-service:80")
   self.format = :json
 
@@ -13,17 +13,8 @@ class Group < ActiveResource::Base
 
   # Optional: handle nested resources, errors, etc.
  
-  def self.with_headers(temp_headers)
-    old_headers = headers.dup
-    propagated_headers = temp_headers.dup
-    OpenTelemetry.propagation.inject(propagated_headers)
-    self.headers.merge!(propagated_headers)
-    yield
-  ensure
-    self.headers.replace(old_headers)
-  end
-
   def self.search(params)
+    AuthorizationContext.current!
     raw = connection.post(
       "/groups/search",
       params.to_json,
@@ -36,6 +27,7 @@ class Group < ActiveResource::Base
   end
 
   def self.groups_count(account_ids)
+    AuthorizationContext.current!
     account_ids = Array(account_ids)
 
     url = "#{Env::GROUP_SERVICE_API_BASE_URL}/accounts/groups/counts"

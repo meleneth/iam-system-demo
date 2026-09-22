@@ -10,7 +10,6 @@ RSpec.describe "Authorization invariant parity" do
 
   before do
     allow_any_instance_of(Authorization::GroupContextClient).to receive(:group_ids_for).with(actor).and_return([group])
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch) do |ids|
       ids.map { |id| [OpenStruct.new(id: id.downcase, parent_account_id: nil)] }
     end

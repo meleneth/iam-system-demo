@@ -25,7 +25,6 @@ RSpec.describe "Group-owned grants" do
   before do
     allow(groups).to receive(:group_ids_for) { |user| memberships.fetch(user, []) }
     allow(groups).to receive(:groups).with([target_group]).and_return([{"id" => target_group, "account_id" => account}])
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch) { |ids| ids.map { |id| [OpenStruct.new(id: id, parent_account_id: nil)] } }
   end
 

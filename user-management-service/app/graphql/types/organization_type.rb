@@ -14,7 +14,7 @@ module Types
     end
 
     def accounts
-      account_ids = OrganizationAccount.with_headers("pad-user-id" => context[:as]) do
+      account_ids = AuthorizationContext.as_requesting_user(user_id: context[:as]) do
         OrganizationAccount.find(:all, params: { organization_id: object.id }).map(&:account_id)
       end
       dataloader.with(Sources::AccountById, as: context[:as],

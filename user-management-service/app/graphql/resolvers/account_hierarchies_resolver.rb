@@ -10,20 +10,16 @@ module Resolvers
     def resolve(ids:, as:)
       context.scoped_set!(:as, as)
 
-      hierarchies = []
-      Account.with_headers('pad-user-id' => as) do
+      hierarchies = AuthorizationContext.as_requesting_user(user_id: as) do
         hierarchies = Account.with_parents_batch_ordered(ids)
-      end
 
-      # Preload users for *all* accounts across all hierarchies
-      account_ids = hierarchies.flatten.map(&:id).uniq
-      users = []
-      User.with_headers('pad-user-id' => as) do
+        account_ids = hierarchies.flatten.map(&:id).uniq
         users = account_ids.each_slice(IamDemo.batch_size).flat_map do |ids|
           User.search(account_id: ids)
         end
+        context.scoped_set!(:users_by_account_id, users.group_by(&:account_id))
+        hierarchies
       end
-      context.scoped_set!(:users_by_account_id, users.group_by(&:account_id))
 
       hierarchies
     end

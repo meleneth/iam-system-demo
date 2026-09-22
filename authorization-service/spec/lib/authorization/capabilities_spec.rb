@@ -101,7 +101,6 @@ RSpec.describe Authorization::Capabilities do
     provider_root, provider, client_root, target, unrelated = Array.new(5) { SecureRandom.uuid }
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.users.read", scope_type: "Account", scope_id: provider_root)
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.users.create", scope_type: "Account", scope_id: unrelated)
-    allow(Account).to receive(:with_headers).and_yield
     allow(Account).to receive(:with_parents_batch).with([target]).and_return([[
       OpenStruct.new(id: client_root, parent_account_id: nil), OpenStruct.new(id: target, parent_account_id: client_root)
     ]])
@@ -124,7 +123,6 @@ RSpec.describe Authorization::Capabilities do
       scope_type: "Account",
       scope_id: account_ids.first
     )
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with(account_ids).and_return(
       account_ids.map { |account_id| [OpenStruct.new(id: account_id)] }
     )
@@ -144,7 +142,6 @@ RSpec.describe Authorization::Capabilities do
     account_id = SecureRandom.uuid
     redis.seed("can:#{user_id}:Account:account.read:#{account_id}", "true")
     redis.seed("capabilities:#{user_id}:Account:#{account_id}", '["account.read"]')
-    allow(Account).to receive(:with_headers).and_yield
     allow(Account).to receive(:with_parents_batch).and_return([[OpenStruct.new(id: account_id, parent_account_id: nil)]])
     expect(service.account_ids_with_permission([account_id], "account.read")).to be_empty
     expect(service.for_account(account_id)).to eq([])
@@ -157,7 +154,6 @@ RSpec.describe Authorization::Capabilities do
     missing_id = SecureRandom.uuid
     redis.seed("group-grants-v2:can:#{user_id}:Account:#{permission}:#{positive_id}", "true")
     redis.seed("group-grants-v2:can:#{user_id}:Account:#{permission}:#{negative_id}", "false")
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with([missing_id]).and_return(
       [[OpenStruct.new(id: missing_id)]]
     )
@@ -192,7 +188,6 @@ RSpec.describe Authorization::Capabilities do
       scope_type: "Account",
       scope_id: account_id
     )
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with([account_id]).and_return(
       [[OpenStruct.new(id: account_id)]]
     )
@@ -207,7 +202,6 @@ RSpec.describe Authorization::Capabilities do
     account_ids.each do |account_id|
       CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: permission, scope_type: "Account", scope_id: account_id)
     end
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with(account_ids).and_return(
       account_ids.reverse.map { |account_id| [OpenStruct.new(id: account_id, parent_account_id: nil)] }
     )
@@ -224,7 +218,6 @@ RSpec.describe Authorization::Capabilities do
       CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: permission, scope_type: "Account", scope_id: account_id)
     end
     requested_ids = [present_id, missing_id, duplicated_id]
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with(requested_ids).and_return(
       [
         [OpenStruct.new(id: duplicated_id, parent_account_id: nil)],
@@ -251,7 +244,6 @@ RSpec.describe Authorization::Capabilities do
     requested_ids.each do |account_id|
       CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: permission, scope_type: "Account", scope_id: account_id)
     end
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with(requested_ids).and_return(
       [
         [
@@ -273,7 +265,6 @@ RSpec.describe Authorization::Capabilities do
 
   it "does not reflect grants onto an invalid hierarchy target" do
     target = SecureRandom.uuid
-    allow(Account).to receive(:with_headers).and_yield
     allow(Account).to receive(:with_parents_batch).and_return([])
     expect_any_instance_of(Authorization::AccountContextClient).not_to receive(:providers_for)
     expect(service.account_ids_with_permission([target], "account.read")).to be_empty
@@ -310,7 +301,6 @@ RSpec.describe Authorization::Capabilities do
     }
     requested_ids = [root_id, granted_child_id, grandchild_id, sibling_id]
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: permission, scope_type: "Account", scope_id: granted_child_id)
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with(requested_ids).and_return(
       requested_ids.reverse.map { |account_id| hierarchies.fetch(account_id) }
     )
@@ -326,7 +316,6 @@ RSpec.describe Authorization::Capabilities do
     read_permission = "account.users.read"
     write_permission = "account.users.create"
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: read_permission, scope_type: "Account", scope_id: account_id)
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with([account_id]).and_return(
       [[OpenStruct.new(id: account_id, parent_account_id: nil)]]
     )
@@ -365,7 +354,6 @@ RSpec.describe Authorization::Capabilities do
     granted_ids.each do |account_id|
       CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: permission, scope_type: "Account", scope_id: account_id)
     end
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch) do |requested_ids|
       requested_ids.reverse.map { |account_id| hierarchy_for.call(account_id) }
     end
@@ -384,7 +372,6 @@ RSpec.describe Authorization::Capabilities do
   it "observes grant revocation after the documented five-minute decision TTL, without refreshing a hit" do
     account_id = SecureRandom.uuid
     grant = CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.users.read", scope_type: "Account", scope_id: account_id)
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).with([account_id]).and_return([[Account.new(id: account_id, parent_account_id: nil)]])
     expect(service.for_account(account_id)).to eq(["account.users.read"])
     expect(service.account_ids_with_permission([account_id], "account.users.read")).to eq(Set[account_id])
@@ -400,7 +387,6 @@ RSpec.describe Authorization::Capabilities do
   it "never caches an allow when the hierarchy dependency fails" do
     target = SecureRandom.uuid
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.read", scope_type: "Account", scope_id: target)
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch).and_raise(IOError, "owning service unavailable")
     expect { service.account_ids_with_permission([target], "account.read") }.to raise_error(IOError)
     expect(redis.sets).to eq([])
@@ -410,7 +396,6 @@ RSpec.describe Authorization::Capabilities do
     target, cohort, msp = Array.new(3) { SecureRandom.uuid }
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "organization.users.manage", scope_type: "Organization", scope_id: msp)
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.read", scope_type: "Account", scope_id: cohort)
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch) { |ids| ids.map { |id| [Account.new(id: id, parent_account_id: nil)] } }
     client = instance_double(Authorization::AccountContextClient)
     allow(client).to receive(:providers_for).and_raise(IOError, "relationship service unavailable")
@@ -424,7 +409,6 @@ RSpec.describe Authorization::Capabilities do
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "organization.users.manage", scope_type: "Organization", scope_id: msp)
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.read", scope_type: "Account", scope_id: cohort)
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "direct.read", scope_type: "Account", scope_id: target)
-    allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
     allow(Account).to receive(:with_parents_batch) { |ids| ids.map { |id| [Account.new(id: id, parent_account_id: nil)] } }
     client = instance_double(Authorization::AccountContextClient)
     allow(client).to receive(:providers_for).and_return({"accounts" => []})
@@ -441,7 +425,6 @@ RSpec.describe Authorization::Capabilities do
   it "shares canonical cache entries between UUID spellings without changing requested result IDs" do
     account = "ab100000-0000-4000-8000-000000000001"
     CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.read", scope_type: "Account", scope_id: account)
-    allow(Account).to receive(:with_headers).and_yield
     expect(Account).to receive(:with_parents_batch).with([account]).twice.and_return([[OpenStruct.new(id: account, parent_account_id: nil)]])
     2.times do
       [account.upcase, account].each do |spelling|

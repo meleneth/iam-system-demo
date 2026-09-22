@@ -7,7 +7,7 @@ module Sources
     end
 
     def fetch(org_ids)
-      OrganizationAccount.with_headers("pad-user-id" => @as) do
+      AuthorizationContext.as_requesting_user(user_id: @as) do
         org_ids.map do |id|
           counts = OrganizationAccount.accounts_counts(id)
           raise "Organization count returned the wrong scope" unless counts.fetch(:organization_id) == id

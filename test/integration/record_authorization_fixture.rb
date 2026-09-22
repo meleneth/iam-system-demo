@@ -91,4 +91,8 @@ module RecordAuthorizationFixture
     end
   end
 end
-RecordAuthorizationFixture.seed!(ENV.fetch('RECORD_AUTHORIZATION_FIXTURE_SERVICE')) if ENV.key?('RECORD_AUTHORIZATION_FIXTURE_SERVICE')
+if ENV.key?('RECORD_AUTHORIZATION_FIXTURE_SERVICE')
+  AuthorizationContext.as_iam do
+    RecordAuthorizationFixture.seed!(ENV.fetch('RECORD_AUTHORIZATION_FIXTURE_SERVICE'))
+  end
+end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # app/models/account.rb
-class CapabilityGrant < ActiveResource::Base
+class CapabilityGrant < RemoteResource
   self.site = ENV.fetch("AUTHORIZATION_SERVICE_API_BASE_URL") # e.g., http://account-service:80/
   self.format = :json
 
@@ -22,13 +22,4 @@ class CapabilityGrant < ActiveResource::Base
   self.collection_name = "capability_grants"
 
   # Optional: handle nested resources, errors, etc.
-  def self.with_headers(temp_headers)
-    old_headers = headers.dup
-    propagated_headers = temp_headers.dup
-    OpenTelemetry.propagation.inject(propagated_headers)
-    self.headers.merge!(propagated_headers)
-    yield
-  ensure
-    self.headers.replace(old_headers)
-  end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # app/models/organization.rb
-class OrganizationAccount < ActiveResource::Base
+class OrganizationAccount < RemoteResource
   self.site = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
   self.format = :json
 
@@ -16,16 +16,6 @@ class OrganizationAccount < ActiveResource::Base
     Organization.find(self.organization_id)
   end
 
-  def self.with_headers(temp_headers)
-    old_headers = headers.dup
-    propagated_headers = temp_headers.dup
-    OpenTelemetry.propagation.inject(propagated_headers)
-    self.headers.merge!(propagated_headers)
-    yield
-  ensure
-    self.headers.replace(old_headers)
-  end
-
   def self.account_ids_for_organization_by_account_id(account_id)
     raise "One account_id only please" if account_id.is_a? Array
 
@@ -37,10 +27,7 @@ class OrganizationAccount < ActiveResource::Base
 
     Instrumentation.trace("organization_accounts.lookup", attributes: { "scope.count" => account_ids.size }) do
       outgoing_headers, body = begin
-        request_headers = {
-          "pad-user-id" => headers["pad-user-id"],
-          "Content-Type" => "application/json"
-        }
+        request_headers = AuthorizationContext.transport_headers.merge("Content-Type" => "application/json")
         [request_headers, { account_ids: account_ids }.to_json]
       end
       response = Faraday.post(url) do |req|

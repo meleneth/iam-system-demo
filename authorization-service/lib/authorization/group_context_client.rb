@@ -24,9 +24,16 @@ module Authorization
     private
 
     def request(path, payload)
+      originating_user_id = AuthorizationContext.current!.originating_user_id
+      AuthorizationContext.as_iam(originating_user_id: originating_user_id, identity: "IAM_SYSTEM_AUTH") do
+        perform_request(path, payload)
+      end
+    end
+
+    def perform_request(path, payload)
       uri = URI.join(@base_url, "/internal/auth/#{path}")
       request = Net::HTTP::Post.new(uri)
-      request["pad-user-id"] = "IAM_SYSTEM_AUTH"
+      AuthorizationContext.transport_headers.each { |key, value| request[key] = value }
       request["Content-Type"] = "application/json"
       OpenTelemetry.propagation.inject(request)
       request.body = JSON.generate(payload)

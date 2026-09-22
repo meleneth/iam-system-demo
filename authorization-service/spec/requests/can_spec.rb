@@ -44,7 +44,6 @@ RSpec.describe "Cans", type: :request do
         scope_type: "Account",
         scope_id: parent_account_id
       )
-      allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
       allow(Account).to receive(:with_parents_batch).with([customer_account_id]).and_return(
         [[
           OpenStruct.new(id: parent_account_id, parent_account_id: nil),
@@ -61,7 +60,6 @@ RSpec.describe "Cans", type: :request do
     end
 
     it "does not authorize stale MSP headers without native account grants" do
-      allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
       allow(Account).to receive(:with_parents_batch).with([customer_account_id]).and_return(
         [[OpenStruct.new(id: customer_account_id)]]
       )
@@ -82,7 +80,6 @@ RSpec.describe "Cans", type: :request do
         scope_id: customer_account_id
       )
       requested_account_ids = [customer_account_id, other_customer_account_id]
-      allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
       allow(Account).to receive(:with_parents_batch).with(requested_account_ids).and_return(
         [
           [OpenStruct.new(id: customer_account_id)],

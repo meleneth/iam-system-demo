@@ -30,7 +30,9 @@ class OrganizationUserManagementController < ApplicationController
     @frame_id = permitted[:frame_id].presence || "organization-user-management-partition-root"
 
     cursor = decode_continuance(permitted[:continuance])
-    partition = organization_partition(cursor)
+    partition = AuthorizationContext.as_requesting_user(user_id: @actor_user_id, organization_id: @organization_id) do
+      organization_partition(cursor)
+    end
 
     @partition_payload = partition.fetch(:payload)
     @next_continuance = encode_continuance(partition.fetch(:next_cursor)) if partition[:next_cursor]
@@ -59,9 +61,7 @@ class OrganizationUserManagementController < ApplicationController
   end
 
   def organization_account_ids
-    OrganizationAccount.with_headers("pad-user-id" => @actor_user_id) do
-      OrganizationAccount.find(:all, params: { organization_id: @organization_id }).map { |link| link.account_id.to_s }
-    end
+    OrganizationAccount.find(:all, params: { organization_id: @organization_id }).map { |link| link.account_id.to_s }
   end
 
   def data_payload(account_ids:, total_account_count:)
@@ -98,46 +98,34 @@ class OrganizationUserManagementController < ApplicationController
   def users_for(account_ids)
     return [] if account_ids.empty?
 
-    User.with_headers(service_headers) do
-      retrieve_by_join_key(User, :account_id, account_ids).map { |user| resource_attributes(user) }
-    end
+    retrieve_by_join_key(User, :account_id, account_ids).map { |user| resource_attributes(user) }
   end
 
   def groups_for(group_ids)
     return [] if group_ids.empty?
 
-    Group.with_headers(service_headers) do
-      retrieve_by_join_key(Group, :id, group_ids).map { |group| resource_attributes(group) }
-    end
+    retrieve_by_join_key(Group, :id, group_ids).map { |group| resource_attributes(group) }
   end
 
   def group_users_for(user_ids)
     return [] if user_ids.empty?
 
-    GroupUser.with_headers(service_headers) do
-      retrieve_by_join_key(GroupUser, :user_id, user_ids).map { |group_user| resource_attributes(group_user) }
-    end
+    retrieve_by_join_key(GroupUser, :user_id, user_ids).map { |group_user| resource_attributes(group_user) }
   end
 
   def accounts_for(account_ids)
     return [] if account_ids.empty?
 
-    Account.with_headers(service_headers) do
-      accounts = if serial_retrieval?
-        account_ids.map { |account_id| Account.find(account_id) }
-      else
-        account_ids.each_slice(IamDemo.batch_size).flat_map { |ids| Account.search(id: ids) }
-      end
-      returned_ids = accounts.map { |account| account.id.to_s }
-      unless returned_ids.sort == account_ids.map(&:to_s).sort
-        raise IncompleteResponse, "Account Service returned an incomplete or unexpected account set"
-      end
-      accounts.map { |account| resource_attributes(account) }
+    accounts = if serial_retrieval?
+      account_ids.map { |account_id| Account.find(account_id) }
+    else
+      account_ids.each_slice(IamDemo.batch_size).flat_map { |ids| Account.search(id: ids) }
     end
-  end
-
-  def service_headers
-    { "pad-user-id" => @actor_user_id }
+    returned_ids = accounts.map { |account| account.id.to_s }
+    unless returned_ids.sort == account_ids.map(&:to_s).sort
+      raise IncompleteResponse, "Account Service returned an incomplete or unexpected account set"
+    end
+    accounts.map { |account| resource_attributes(account) }
   end
 
   def retrieve_by_join_key(resource_class, join_key, ids)

@@ -11,7 +11,6 @@ RSpec.describe "Group scope authorization", type: :request do
       ids.map { |id| {"id" => id, "account_id" => account} }
     end
     allow_any_instance_of(Authorization::AccountContextClient).to receive(:providers_for).and_return({"accounts" => []})
-    allow(Account).to receive(:with_headers).and_yield
     allow(Account).to receive(:with_parents_batch).and_return([[OpenStruct.new(id: account, parent_account_id: nil)]])
     headers = {"pad-user-id" => actor}
     get "/capabilities/Group/#{target}", headers: headers

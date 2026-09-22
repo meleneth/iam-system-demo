@@ -27,8 +27,10 @@ RSpec.describe "Organization accounts", type: :request do
 
   before do
     stub_const("ORGANIZATION_CACHE", FakeOrganizationAccountCache.new)
-    Organization.create!(id: organization_id)
-    OrganizationAccount.create!(organization_id: organization_id, account_id: account_id)
+    AuthorizationContext.as_iam do
+      Organization.create!(id: organization_id)
+      OrganizationAccount.create!(organization_id: organization_id, account_id: account_id)
+    end
   end
 
   it "checks organization.read.accounts before listing accounts by organization" do
@@ -58,7 +60,9 @@ RSpec.describe "Organization accounts", type: :request do
 
     expect(response).to have_http_status(:forbidden)
 
-    relationship = OrganizationAccount.find_by!(account_id: account_id)
+    relationship = AuthorizationContext.as_iam do
+      OrganizationAccount.find_by!(account_id: account_id)
+    end
     get "/organization_accounts/#{relationship.id}", headers: { "pad-user-id" => actor_user_id }
     expect(response).to have_http_status(:forbidden)
 
@@ -112,7 +116,9 @@ RSpec.describe "Organization accounts", type: :request do
           (grant_scope == "account" && scope == "Account" && permission == "account.read" && id == account_id)
         )
       end
-      relationship = OrganizationAccount.find_by!(account_id: account_id)
+      relationship = AuthorizationContext.as_iam do
+        OrganizationAccount.find_by!(account_id: account_id)
+      end
       expected_status = grant_scope == "neither" ? :forbidden : :ok
       get "/organization_accounts/#{relationship.id}", headers: {"pad-user-id" => actor_user_id}
       expect(response).to have_http_status(expected_status)
@@ -127,7 +133,9 @@ RSpec.describe "Organization accounts", type: :request do
 
   it "rejects a collection containing a relationship outside the actor's scope" do
     other_account = SecureRandom.uuid
-    OrganizationAccount.create!(organization_id: organization_id, account_id: other_account)
+    AuthorizationContext.as_iam do
+      OrganizationAccount.create!(organization_id: organization_id, account_id: other_account)
+    end
     allow(User).to receive(:user_can) do |actor, scope, permission, id|
       actor == actor_user_id && scope == "Account" && permission == "account.read" && id == account_id
     end

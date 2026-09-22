@@ -39,31 +39,22 @@ last_result = results[-1]
 
 puts "Fetching OrgAccount for account #{last_result["id"]}"
 
-org_id = nil
-OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
+AuthorizationContext.as_iam do
   org_account = OrganizationAccount.find(:first, params: {account_id: last_result["id"]})
   org_id = org_account.organization_id
   puts "Looked up #{org_account.account_id} got #{org_account.organization_id}"
-end
 
-organization = nil
-Organization.with_headers("pad-user-id" => "IAM_SYSTEM") do
   organization = Organization.find(org_id)
-end
 
-puts "Found Organization #{organization.id}"
+  puts "Found Organization #{organization.id}"
 
-accounts = []
-Organization.with_headers("pad-user-id" => "IAM_SYSTEM") do
-  OrganizationAccount.with_headers("pad-user-id" => "IAM_SYSTEM") do
-    accounts = organization.accounts
-  end
+  accounts = organization.accounts
 end
 
 toplevel_accounts = accounts.filter { |account| account.parent_account_id == nil}
 
 def find_admin_user(organization, toplevel_accounts)
-  User.with_headers("pad-user-id" => "IAM_SYSTEM") do
+  AuthorizationContext.as_iam do
     toplevel_accounts.each do |account|
       puts "Checking account #{account.id}"
       account.users.each do |user|

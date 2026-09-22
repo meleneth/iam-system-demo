@@ -17,44 +17,56 @@ module Authorization
     end
 
     def for_organization(organization_id)
-      organization_id = organization_id.to_s.downcase
-      cached(scope_type: "Organization", scope_id: organization_id) do
-        CapabilityGrant.where(
-          group_id: group_ids,
-          scope_type: "Organization",
-          scope_id: organization_id
-        ).distinct.pluck(:permission).sort
+      with_evaluation_context do
+        organization_id = organization_id.to_s.downcase
+        cached(scope_type: "Organization", scope_id: organization_id) do
+          CapabilityGrant.where(
+            group_id: group_ids,
+            scope_type: "Organization",
+            scope_id: organization_id
+          ).distinct.pluck(:permission).sort
+        end
       end
     end
 
     def for_account(account_id)
-      account_id = account_id.to_s.downcase
-      cached(scope_type: "Account", scope_id: account_id) do
-        scopes = account_scope_ids_for([account_id.to_s]).fetch(account_id.to_s)
-        CapabilityGrant.where(group_id: group_ids, scope_type: "Account", scope_id: scopes)
-          .distinct.pluck(:permission).sort
+      with_evaluation_context do
+        account_id = account_id.to_s.downcase
+        cached(scope_type: "Account", scope_id: account_id) do
+          scopes = account_scope_ids_for([account_id.to_s]).fetch(account_id.to_s)
+          CapabilityGrant.where(group_id: group_ids, scope_type: "Account", scope_id: scopes)
+            .distinct.pluck(:permission).sort
+        end
       end
     end
 
     def for_group(group_id)
-      group_id = group_id.to_s.downcase
-      cached(scope_type: "Group", scope_id: group_id) do
-        group = @group_context_client.groups([group_id]).find { |row| row.fetch("id").to_s == group_id.to_s }
-        next [] unless group
+      with_evaluation_context do
+        group_id = group_id.to_s.downcase
+        cached(scope_type: "Group", scope_id: group_id) do
+          group = @group_context_client.groups([group_id]).find { |row| row.fetch("id").to_s == group_id.to_s }
+          next [] unless group
 
-        direct = CapabilityGrant.where(group_id: group_ids, scope_type: "Group", scope_id: group_id)
-          .distinct.pluck(:permission)
-        (direct + for_account(group.fetch("account_id"))).uniq.sort
+          direct = CapabilityGrant.where(group_id: group_ids, scope_type: "Group", scope_id: group_id)
+            .distinct.pluck(:permission)
+          (direct + for_account(group.fetch("account_id"))).uniq.sort
+        end
       end
     end
 
     def account_ids_with_permission(account_ids, permission)
-      requested = Array(account_ids).map(&:to_s).uniq
-      authorized = canonical_account_ids_with_permission(requested.map(&:downcase), permission)
-      requested.select { |id| authorized.include?(id.downcase) }.to_set
+      with_evaluation_context do
+        requested = Array(account_ids).map(&:to_s).uniq
+        authorized = canonical_account_ids_with_permission(requested.map(&:downcase), permission)
+        requested.select { |id| authorized.include?(id.downcase) }.to_set
+      end
     end
 
     private
+
+    def with_evaluation_context(&block)
+      AuthorizationContext.as_iam(originating_user_id: @user_id, &block)
+    end
 
     def canonical_account_ids_with_permission(account_ids, permission)
       account_ids = Array(account_ids).map(&:to_s).uniq
@@ -195,7 +207,7 @@ module Authorization
     def account_hierarchy_ids_for(account_ids)
       requested_ids = Array(account_ids).map(&:to_s).uniq
       hierarchies = nil
-      Account.with_headers("pad-user-id" => "IAM_SYSTEM") do
+      AuthorizationContext.as_iam(originating_user_id: @user_id) do
         hierarchies = Account.with_parents_batch(requested_ids)
       end
 

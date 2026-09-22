@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # app/models/organization.rb
-class Organization < ActiveResource::Base
+class Organization < RemoteResource
   self.site = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
   self.format = :json
 
@@ -13,16 +13,6 @@ class Organization < ActiveResource::Base
 
   # Optional: handle nested resources, errors, etc.
  
-  def self.with_headers(temp_headers)
-    old_headers = headers.dup
-    propagated_headers = temp_headers.dup
-    OpenTelemetry.propagation.inject(propagated_headers)
-    self.headers.merge!(propagated_headers)
-    yield
-  ensure
-    self.headers.replace(old_headers)
-  end
-
   def accounts
     account_ids = organization_accounts.map(&:account_id)
     accounts = []

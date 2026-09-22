@@ -1,3 +1,9 @@
+PATH
+  remote: ../authorization-context
+  specs:
+    authorization-context (0.1.0)
+      activesupport (>= 7.1, < 9)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -588,6 +594,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  authorization-context!
   aws-sdk-sqs (~> 1.100)
   bootsnap
   brakeman

@@ -5,7 +5,8 @@ services:
     ports:
       - "${USER_MANAGEMENT_WEB_PORT}:80"
     build:
-      context: "./user-management-service"
+      context: "."
+      dockerfile: "user-management-service/Dockerfile"
     environment:
       USER_SERVICE_API_BASE_URL: http://user-service:80
       GROUP_SERVICE_API_BASE_URL: http://group-service:80
@@ -16,3 +17,4 @@ services:
       AUTHORIZATION_CHECK_MODE: "${AUTHORIZATION_CHECK_MODE:-can}"
       IAM_DEMO_BATCH_SIZE: "${IAM_DEMO_BATCH_SIZE:-1000}"
       IAM_DEMO_RETRIEVAL_MODE: "${IAM_DEMO_RETRIEVAL_MODE:-batched}"
+      IAM_INTERNAL_TOKEN: "${IAM_INTERNAL_TOKEN}"

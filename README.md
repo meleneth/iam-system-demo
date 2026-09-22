@@ -95,7 +95,11 @@ user-management-service: 7499, 7500, 7501
 
 the UI that users have access to.
 
-/accounts/#{account_id}?as=IAM_SYSTEM will show 'the information' for that account with no auth checks.  if as has a user_id, that user's permission will be checked.
+Protected reads run in an explicit authorization-context block. User-facing
+requests establish requesting-user scope from the authenticated actor and still
+perform the normal permission checks. Internal callers may use IAM scope only
+with the configured service credential; an `as=IAM_SYSTEM` query parameter or
+an IAM header by itself does not grant authority.
 
 organization-service: 11120, 11250, 11380
 
@@ -126,7 +130,11 @@ this shows the spans that the system generates via OpenTelemetry as things happe
 See [request timing in Jaeger](docs/request-tracing.md) for controller spans,
 configuration switches, and timing boundaries.
 
-The current implementation does have header-based authorization, and `IAM_SYSTEM` is a system bypass used by internal requests and scripts. See [`authorization-service/app/controllers/can_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/authorization-service/app/controllers/can_controller.rb), [`organization-service/app/controllers/organization_accounts_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/organization-service/app/controllers/organization_accounts_controller.rb), and [`account-service/app/controllers/accounts_controller.rb`](https://github.com/meleneth/iam-system-demo/blob/main/account-service/app/controllers/accounts_controller.rb).
+The current demo propagates authorization scope in headers and authenticates
+IAM claims with `IAM_INTERNAL_TOKEN`. Production should replace that shared
+credential with workload identity and mTLS/JWT. See
+[`authorization-context/README.md`](authorization-context/README.md) and
+[`FINAL_ARCHITECTURE.md`](FINAL_ARCHITECTURE.md#explicit-authorization-contexts).
 
 # Solution Space
 

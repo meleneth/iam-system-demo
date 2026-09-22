@@ -29,7 +29,7 @@ RSpec.describe "/users", type: :request do
   # UsersController, or in your router and rack
   # middleware. Be sure to keep this updated too.
   let(:valid_headers) {
-    { "pad-user-id" => "IAM_SYSTEM" }
+    { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }
   }
 
   describe "GET /index" do
@@ -133,7 +133,10 @@ RSpec.describe "/users", type: :request do
         )
       end
 
-      expect(User.user_can?(user_id: "reader-user", permission: "account.users.read", account_ids: account_ids)).to eq(true)
+      allowed = AuthorizationContext.as_requesting_user(user_id: "reader-user") do
+        User.user_can?(user_id: "reader-user", permission: "account.users.read", account_ids: account_ids)
+      end
+      expect(allowed).to eq(true)
       expect(JSON.parse(request.body)).to eq("scope_id" => account_ids)
     ensure
       ENV["AUTHORIZATION_CHECK_MODE"] = old_mode
@@ -157,13 +160,14 @@ RSpec.describe "/users", type: :request do
         )
       end
 
-      expect(
+      allowed = AuthorizationContext.as_requesting_user(user_id: "reader-user") do
         User.user_can?(
           user_id: "reader-user",
           permission: "account.users.read",
           account_ids: [authorized_account_id, unauthorized_account_id]
         )
-      ).to eq(false)
+      end
+      expect(allowed).to eq(false)
     ensure
       ENV["AUTHORIZATION_CHECK_MODE"] = old_mode
     end

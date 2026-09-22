@@ -12,7 +12,12 @@ class User < ApplicationRecord
   def self.user_can?(user_id:, permission:, account_ids:)
     ids = Array(account_ids).map(&:to_s).uniq
     return true if ids.empty?
-    return true if user_id == "IAM_SYSTEM"
+    context = AuthorizationContext.current!
+    if user_id == "IAM_SYSTEM"
+      raise AuthorizationContext::InvalidContextError, "IAM actor requires IAM scope" unless context.iam? && context.iam_identity == user_id
+      return true
+    end
+    raise AuthorizationContext::InvalidContextError, "authorization actor mismatch" unless context.user_id == user_id.to_s
     return capabilities_authorize?(user_id: user_id, scope_type: "Account", permission: permission, scope_ids: ids) if capabilities_mode?
 
     response = Faraday.post("#{authorization_service_url}/can/Account/#{permission}") do |req|
@@ -41,7 +46,7 @@ class User < ApplicationRecord
   end
 
   def self.outgoing_headers(user_id)
-    { "pad-user-id" => user_id }.tap { |headers| OpenTelemetry.propagation.inject(headers) }
+    AuthorizationContext.transport_headers.dup.tap { |headers| OpenTelemetry.propagation.inject(headers) }
   end
 
   def self.capabilities_mode?

@@ -49,7 +49,6 @@ RSpec.describe "Capabilities", type: :request do
       CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "do.some.mcguffin", scope_type: "Account", scope_id: target_account_id)
       CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.users.create", scope_type: "Account", scope_id: other_account_id)
 
-      allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
       allow(Account).to receive(:with_parents_batch).with([target_account_id]).and_return(
         [
           [
@@ -71,7 +70,6 @@ RSpec.describe "Capabilities", type: :request do
     it "returns capabilities keyed by requested account ID" do
       account_id = SecureRandom.uuid
       CapabilityGrant.create!(group_id: grant_group_id(user_id), permission: "account.read", scope_type: "Account", scope_id: account_id)
-      allow(Account).to receive(:with_headers).with("pad-user-id" => "IAM_SYSTEM").and_yield
       allow(Account).to receive(:with_parents_batch).with([account_id]).and_return(
         [[OpenStruct.new(id: account_id)]]
       )

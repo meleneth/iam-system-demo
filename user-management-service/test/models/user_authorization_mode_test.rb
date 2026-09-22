@@ -26,7 +26,9 @@ class UserAuthorizationModeTest < ActiveSupport::TestCase
       )
     end
 
-    assert user.can("Account", "account.read", account_ids)
+    AuthorizationContext.as_requesting_user(user_id: user.id) do
+      assert user.can("Account", "account.read", account_ids)
+    end
 
     assert_equal "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/capabilities/Account", called_url
     assert_equal({ "scope_id" => account_ids }, JSON.parse(request.body))

@@ -2,8 +2,10 @@
 
 class MspManagedOrganization
   def self.page(msp_account_id, user_id:, continuance: nil)
+    context = AuthorizationContext.current!
+    raise AuthorizationContext::InvalidContextError, "authorization actor mismatch" unless context.user_id == user_id.to_s
     url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/msp_managed_organizations/#{msp_account_id}"
-    outgoing_headers = { "pad-user-id" => user_id }
+    outgoing_headers = AuthorizationContext.transport_headers.dup
     OpenTelemetry.propagation.inject(outgoing_headers)
 
     params = {}

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # app/models/organization.rb
-class Organization < ActiveResource::Base
+class Organization < RemoteResource
   self.site = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL", "http://organization-service:80")
   self.format = :json
 
@@ -13,17 +13,8 @@ class Organization < ActiveResource::Base
 
   # Optional: handle nested resources, errors, etc.
  
-  def self.with_headers(temp_headers)
-    old_headers = headers.dup
-    propagated_headers = temp_headers.dup
-    OpenTelemetry.propagation.inject(propagated_headers)
-    self.headers.merge!(propagated_headers)
-    yield
-  ensure
-    self.headers.replace(old_headers)
-  end
-
   def self.random_internal
+    AuthorizationContext.current!
     url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/internal/random/organization"
     response = Faraday.get(url) do |req|
       headers.each { |key, value| req.headers[key] = value }

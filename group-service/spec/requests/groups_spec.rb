@@ -30,8 +30,9 @@ RSpec.describe "/groups", type: :request do
         .with(actor_user_id, "Account", "account.users.read", match_array([account_id, other_account_id]))
         .and_return(true)
 
+      group_ids = AuthorizationContext.as_iam { Group.where(account_id: [account_id, other_account_id]).pluck(:id) }
       post "/groups/search",
-           params: { id: Group.where(account_id: [account_id, other_account_id]).pluck(:id) },
+           params: { id: group_ids },
            headers: { "pad-user-id" => actor_user_id },
            as: :json
 
@@ -70,7 +71,7 @@ RSpec.describe "/groups", type: :request do
     it "allows IAM_SYSTEM to read without actor grants" do
       expect(User).not_to receive(:user_can)
 
-      get group_url(group), headers: { "pad-user-id" => "IAM_SYSTEM" }, as: :json
+      get group_url(group), headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }, as: :json
 
       expect(response).to have_http_status(:ok)
     end
@@ -92,7 +93,10 @@ RSpec.describe "/groups", type: :request do
         )
       end
 
-      expect(User.user_can(actor_user_id, "Account", "account.users.read", account_ids)).to eq(true)
+      allowed = AuthorizationContext.as_requesting_user(user_id: actor_user_id) do
+        User.user_can(actor_user_id, "Account", "account.users.read", account_ids)
+      end
+      expect(allowed).to eq(true)
       expect(JSON.parse(request.body)).to eq("scope_id" => account_ids)
     ensure
       ENV["AUTHORIZATION_CHECK_MODE"] = old_mode

@@ -50,7 +50,6 @@ RSpec.describe "Account hierarchies", type: :request do
     seed_ids = [grandparent.id, parent.id, child_one.id, child_two.id].map(&:to_s)
     organization = Struct.new(:id).new(organization_id)
 
-    allow(OrganizationAccount).to receive(:with_headers).and_yield
     allow(OrganizationAccount).to receive(:account_ids_for_organizations_by_account_ids).with(
       [child_one.id, child_two.id].map(&:to_s)
     ).and_return(
@@ -65,7 +64,7 @@ RSpec.describe "Account hierarchies", type: :request do
 
     post "/accounts_with_parents",
          params: { account_ids: [child_one.id, child_two.id] },
-         headers: { "pad-user-id" => "IAM_SYSTEM" },
+         headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
          as: :json
 
     expect(response).to have_http_status(:ok)
@@ -112,7 +111,6 @@ RSpec.describe "Account hierarchies", type: :request do
     seed_ids = [first.id, second.id].map(&:to_s)
     organization = Struct.new(:id).new(organization_id)
 
-    allow(OrganizationAccount).to receive(:with_headers).and_yield
     allow(OrganizationAccount).to receive(:account_ids_for_organizations_by_account_ids).with(
       [first.id.to_s]
     ).and_return(
@@ -121,7 +119,7 @@ RSpec.describe "Account hierarchies", type: :request do
 
     post "/accounts_with_parents",
          params: { account_ids: [first.id] },
-         headers: { "pad-user-id" => "IAM_SYSTEM" },
+         headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
          as: :json
 
     expect(response).to have_http_status(:ok)
@@ -193,7 +191,11 @@ RSpec.describe "Account search", type: :request do
       )
     end
 
-    expect(User.user_can(actor_user_id = SecureRandom.uuid, "Account", "account.read", account_ids)).to eq(true)
+    actor_user_id = SecureRandom.uuid
+    allowed = AuthorizationContext.as_requesting_user(user_id: actor_user_id) do
+      User.user_can(actor_user_id, "Account", "account.read", account_ids)
+    end
+    expect(allowed).to eq(true)
     expect(request.headers).to include("pad-user-id" => actor_user_id)
     expect(JSON.parse(request.body)).to eq("scope_id" => account_ids)
   ensure

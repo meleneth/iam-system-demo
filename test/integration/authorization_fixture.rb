@@ -64,4 +64,8 @@ module AuthorizationFixture
     end
   end
 end
-AuthorizationFixture.seed!(ENV.fetch("AUTHORIZATION_FIXTURE_SERVICE")) if ENV.key?("AUTHORIZATION_FIXTURE_SERVICE")
+if ENV.key?("AUTHORIZATION_FIXTURE_SERVICE")
+  AuthorizationContext.as_iam do
+    AuthorizationFixture.seed!(ENV.fetch("AUTHORIZATION_FIXTURE_SERVICE"))
+  end
+end
