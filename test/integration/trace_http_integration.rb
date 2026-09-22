@@ -21,8 +21,6 @@ class RequestTracingTest < Minitest::Test
   require_relative "../../account-service/lib/http_request_tracing"
 
   class Widget < AuthorizedResource::Base
-    requires_read_capability "widget.read", scope_type: "Widget", target: :id
-    read_only!
     self.format = :json
   end
 
@@ -39,12 +37,6 @@ class RequestTracingTest < Minitest::Test
     port = server.binder.ios.first.addr[1]
     server.run
     base = "http://127.0.0.1:#{port}"
-    client = Object.new
-    client.define_singleton_method(:capabilities) do |targets|
-      { "Widget" => targets.to_h { |target| [target.scope_id, ["widget.read"]] } }
-    end
-    previous_client = AuthorizedResource.authorization_client
-    AuthorizedResource.authorization_client = client
     OpenTelemetry.tracer_provider.tracer("test").in_span("application.lookup") do
       assert_equal "200", Net::HTTP.get_response(URI("#{base}/direct"), "pad-user-id" => "real-actor").code
       response = Faraday.post("#{base}/faraday", '{"ids":[1]}', "pad-user-id" => "real-actor")
@@ -62,10 +54,9 @@ class RequestTracingTest < Minitest::Test
     assert_equal 3, servers.size
     root = spans.find { |s| s.name == "application.lookup" }
     operation = spans.find { |s| s.name == "authorized_resource.RequestTracingTest::Widget.find" }
-    authorization = spans.find { |s| s.name == "authorized_resource.authorize" }
     refute_nil operation
     assert_equal root.span_id, operation.parent_span_id
-    assert_equal operation.span_id, authorization.parent_span_id
+    refute spans.any? { |span| span.name == "authorized_resource.authorize" }
     clients.each do |client|
       api = servers.find { |s| s.parent_span_id == client.span_id }
       refute_nil api
@@ -83,7 +74,6 @@ class RequestTracingTest < Minitest::Test
     refute spans.flat_map { |span| span.attributes.to_a }.flatten.join(" ").include?("real-actor")
     refute spans.any? { |span| span.name.match?(/\Aconnect\z|HTTP CONNECT|http\.(connection|request\.write|response)|Controller#|rack\.response/) }
   ensure
-    AuthorizedResource.authorization_client = previous_client if previous_client
     server&.stop(true)
   end
 end

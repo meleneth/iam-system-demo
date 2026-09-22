@@ -2,8 +2,6 @@
 
 # app/models/account.rb
 class Account < AuthorizedResource::Base
-  requires_read_capability "account.read", scope_type: "Account", target: :id, iam: %w[IAM_SYSTEM]
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("ACCOUNT_SERVICE_API_BASE_URL") # e.g., http://account-service:80/
   self.format = :json
 

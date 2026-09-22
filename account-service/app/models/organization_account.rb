@@ -2,9 +2,6 @@
 
 # app/models/organization.rb
 class OrganizationAccount < AuthorizedResource::Base
-  requires_read_capability "organization.read.accounts", scope_type: "Organization", target: :organization_id, iam: %w[IAM_SYSTEM]
-  requires_read_capability "account.read", scope_type: "Account", target: :account_id
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL") # e.g., http://user-service:3000/
   self.format = :json
 
@@ -27,7 +24,7 @@ class OrganizationAccount < AuthorizedResource::Base
 
   def self.account_ids_for_organizations_by_account_ids(account_ids)
     url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_ids"
-    authorized_read("organization_lookup", records: account_ids.map { |id| { account_id: id } }) do
+    authorized_read("organization_lookup") do
       outgoing_headers = AuthorizationContext.transport_headers.merge("Content-Type" => "application/json")
       body = { account_ids: account_ids }.to_json
       response = Faraday.post(url) do |req|

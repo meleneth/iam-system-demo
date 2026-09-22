@@ -2,7 +2,6 @@
 
 # app/models/account.rb
 class CapabilityGrant < AuthorizedResource::Base
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("AUTHORIZATION_SERVICE_API_BASE_URL") # e.g., http://account-service:80/
   self.format = :json
 

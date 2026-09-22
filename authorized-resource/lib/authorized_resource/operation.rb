@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module AuthorizedResource
-  VERSION = "0.1.0"
+  VERSION = "0.2.0"
 
   module Operation
     STORAGE_KEY = :iam_demo_authorized_resource_operation

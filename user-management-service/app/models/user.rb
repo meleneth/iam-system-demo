@@ -3,8 +3,6 @@ require "json"
 
 # app/models/user.rb
 class User < AuthorizedResource::Base
-  requires_read_capability "account.users.read", scope_type: "Account", target: :account_id, iam: %w[IAM_SYSTEM]
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("USER_SERVICE_API_BASE_URL", "http://user-service:80")
   self.format = :json
 
@@ -16,7 +14,7 @@ class User < AuthorizedResource::Base
 
   def self.users_count(account_ids)
     account_ids = Array(account_ids)
-    authorized_read("counts", records: account_ids.map { |id| { account_id: id } }) do
+    authorized_read("counts") do
       url = "#{Env::USER_SERVICE_API_BASE_URL}/accounts/users/counts"
       outgoing_headers = headers.dup
       OpenTelemetry.propagation.inject(outgoing_headers)

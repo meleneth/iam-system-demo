@@ -6,10 +6,10 @@ RSpec.describe "/group_users", type: :request do
   let(:user_id) { SecureRandom.uuid }
   let!(:group) { Group.create!(account_id: account_id, name: "Engineering") }
   let!(:group_user) { GroupUser.create!(group_id: group.id, user_id: user_id) }
-  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
+  let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }
 
   def allow_group_capabilities(map)
-    allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client)
+    allow(AuthorizedModel).to receive(:authorization_client).and_return(authorization_client)
     expect(authorization_client).to receive(:capabilities).once.and_return("Group" => map)
   end
 
@@ -30,7 +30,7 @@ RSpec.describe "/group_users", type: :request do
   end
 
   it "allows IAM_SYSTEM without capability transport" do
-    expect(AuthorizedResource).not_to receive(:authorization_client)
+    expect(AuthorizedModel).not_to receive(:authorization_client)
     get group_user_url(group_user), headers: {
       "pad-user-id" => "IAM_SYSTEM",
       "X-IAM-Authorization-Scope" => "iam",

@@ -77,12 +77,8 @@ class BatchSizeTest < ActiveSupport::TestCase
 
   test "hierarchy client sends JSON POST chunks and restores input ordering" do
     calls = []
-    authorization_calls = []
     authorization_client = Object.new
-    authorization_client.define_singleton_method(:capabilities) do |targets|
-      authorization_calls << targets.map(&:scope_id)
-      { "Account" => targets.to_h { |target| [target.scope_id, ["account.read"]] } }
-    end
+    authorization_client.define_singleton_method(:capabilities) { |_targets| flunk("remote retrieval re-authorized locally") }
     connection = Object.new
     connection.define_singleton_method(:post) do |path, body, headers|
       ids = JSON.parse(body).fetch("account_ids")
@@ -90,14 +86,13 @@ class BatchSizeTest < ActiveSupport::TestCase
       Struct.new(:body).new(ids.reverse.map { |id| [{ id: id }] }.to_json)
     end
     Account.stub(:connection, connection) do
-      AuthorizedResource.stub(:authorization_client, authorization_client) do
+      AuthorizedModel.stub(:authorization_client, authorization_client) do
         AuthorizationContext.as_requesting_user(user_id: "actor") do
           assert_equal [%w[c], %w[a], %w[b], %w[c]], Account.with_parents_batch_ordered(%w[c a b c]).map { |rows| rows.map(&:id) }
         end
       end
     end
     assert_equal [["/accounts_with_parents", %w[c a], "application/json"], ["/accounts_with_parents", %w[b], "application/json"]], calls
-    assert_equal [%w[a c], %w[b]], authorization_calls
   end
 
   test "organization partitions and join lookups use configured size" do

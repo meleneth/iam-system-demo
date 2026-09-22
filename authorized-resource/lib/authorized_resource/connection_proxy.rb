@@ -4,23 +4,22 @@ module AuthorizedResource
   class ConnectionProxy
     HTTP_METHODS = %i[get head delete post put patch].freeze
 
-    def initialize(connection)
+    def initialize(connection, resource_class)
       @connection = connection
+      @resource_class = resource_class
       freeze
     end
 
     HTTP_METHODS.each do |method_name|
       define_method(method_name) do |*args, **kwargs, &block|
-        unless Operation.current
-          raise UnsupportedOperationError,
-            "direct ActiveResource connection #{method_name.upcase} is unsupported; use authorized_read or authorized_modify"
+        kind = %i[get head].include?(method_name) ? :read : :modify
+        Operation.within(@resource_class, "connection_#{method_name}", kind) do
+          context_headers = AuthorizationContext.transport_headers
+          header_index = %i[post put patch].include?(method_name) ? 2 : 1
+          supplied = args[header_index].is_a?(Hash) ? args[header_index] : {}
+          args[header_index] = supplied.merge(context_headers)
+          @connection.public_send(method_name, *args, **kwargs, &block)
         end
-
-        context_headers = AuthorizationContext.transport_headers
-        header_index = %i[post put patch].include?(method_name) ? 2 : 1
-        supplied = args[header_index].is_a?(Hash) ? args[header_index] : {}
-        args[header_index] = supplied.merge(context_headers)
-        @connection.public_send(method_name, *args, **kwargs, &block)
       end
     end
 

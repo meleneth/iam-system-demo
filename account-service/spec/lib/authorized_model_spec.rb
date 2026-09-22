@@ -4,14 +4,14 @@ require_relative "../rails_helper"
 require "opentelemetry/sdk"
 
 RSpec.describe AuthorizedModel::Base do
-  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
+  let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }
 
   before do
-    @previous_client = AuthorizedResource.authorization_client
-    AuthorizedResource.authorization_client = authorization_client
+    @previous_client = AuthorizedModel.authorization_client
+    AuthorizedModel.authorization_client = authorization_client
   end
 
-  after { AuthorizedResource.authorization_client = @previous_client }
+  after { AuthorizedModel.authorization_client = @previous_client }
 
   it "fails before SQL when context or concrete model policy is missing" do
     expect { Account.first }.to raise_error(AuthorizationContext::MissingContextError)

@@ -2,9 +2,6 @@
 
 # app/models/group_user.rb
 class GroupUser < AuthorizedResource::Base
-  requires_read_capability "group.read", scope_type: "Group", target: :group_id, iam: %w[IAM_SYSTEM]
-  requires_read_capability "account.users.read", scope_type: "Group", target: :group_id
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("GROUP_SERVICE_API_BASE_URL", "http://group-service:80")
   self.format = :json
 

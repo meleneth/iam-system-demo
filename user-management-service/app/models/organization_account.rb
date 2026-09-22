@@ -2,9 +2,6 @@
 
 # app/models/organization.rb
 class OrganizationAccount < AuthorizedResource::Base
-  requires_read_capability "organization.read.accounts", scope_type: "Organization", target: :organization_id, iam: %w[IAM_SYSTEM]
-  requires_read_capability "account.read", scope_type: "Account", target: :account_id
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = Env::ORGANIZATION_SERVICE_API_BASE_URL # e.g., http://user-service:3000/
   self.format = :json
 
@@ -28,7 +25,7 @@ class OrganizationAccount < AuthorizedResource::Base
   end
 
   def self.account_ids_for_organizations_by_account_ids(account_ids)
-    authorized_read("organization_lookup", records: account_ids.map { |id| { account_id: id } }) do
+    authorized_read("organization_lookup") do
       url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organization_account_ids/for_account_ids"
       outgoing_headers = AuthorizationContext.transport_headers.merge("Content-Type" => "application/json")
       OpenTelemetry.propagation.inject(outgoing_headers)
@@ -54,7 +51,7 @@ class OrganizationAccount < AuthorizedResource::Base
       raise "One organization_id only please" unless org_id.count == 1 
       org_id = org_id[0]
     end
-    authorized_read("accounts_count", records: [{ organization_id: org_id }]) do
+    authorized_read("accounts_count") do
       url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/organizations/accounts/counts/#{org_id}"
       outgoing_headers = AuthorizationContext.transport_headers.dup
       OpenTelemetry.propagation.inject(outgoing_headers)
@@ -68,7 +65,7 @@ class OrganizationAccount < AuthorizedResource::Base
   end
 
   def self.random_account_for_organization(organization_id)
-    authorized_read("random_account", records: [{ organization_id: organization_id }]) do
+    authorized_read("random_account") do
       url = "#{Env::ORGANIZATION_SERVICE_API_BASE_URL}/internal/random/organizations/#{organization_id}/account"
       response = Faraday.get(url) do |req|
         headers.each { |key, value| req.headers[key] = value }

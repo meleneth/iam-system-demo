@@ -41,22 +41,27 @@ Deferred thread/fiber/job work must capture and explicitly re-enter a context;
 locals are not presumed to propagate.
 
 ActiveResource models inherit directly from `AuthorizedResource::Base` and
-declare owning-scope read capability plus a modify capability or explicit
-read-only policy. The shared gem covers collection/single reads, reloads,
-associations, existence calls, pagination, mutations, and explicitly wrapped
-custom endpoints. It batches capability evaluation and derives transport
-metadata per invocation rather than mutating class headers or pooled
-connections. IAM requests are model-allowlisted and include an internal
-credential validated by receiving services; `X-IAM-Authorization-Scope: iam`
-alone grants nothing. See [`authorized-resource/README.md`](authorized-resource/README.md)
-for the model API and supported escape-hatch policy.
+configure only their normal remote transport. **AuthorizedResource requires and
+propagates authorization context. It does not evaluate capabilities or
+re-authorize returned records. The receiving service authenticates the context
+and enforces authorization.** The shared gem covers collection/single reads,
+reloads, associations, existence calls, pagination, mutations, and named custom
+endpoints. It derives fresh transport and trace metadata per invocation rather
+than mutating class headers or pooled connections. Ordinary resource operations
+therefore do not add a caller-side `/can` evaluation. Requesting-user authority
+is forwarded unchanged. IAM authority is forwarded only from an explicit IAM
+context, includes originating-user attribution and an internal credential, and
+remains subject to the receiving service's allowlist; the scope header alone
+grants nothing. See [`authorized-resource/README.md`](authorized-resource/README.md)
+for the remote model API.
 
 Local persistence models use the same gem through
 `ApplicationRecord < AuthorizedModel::Base`. Relation materialization and
-create/update/destroy callbacks share the evaluator, batching, context rules,
-failure types, and telemetry used by remote resources. Aggregates and custom
-queries supply explicit targets because their scalar result cannot identify the
-records being disclosed.
+create/update/destroy callbacks evaluate the server-declared capability policy
+against the actual target. Aggregates and custom queries supply explicit targets
+because their scalar result cannot identify the records being disclosed. These
+receiving-service checks, including their authorization spans and batched `/can`
+calls, remain the authoritative enforcement boundary.
 
 ## Service Ownership
 

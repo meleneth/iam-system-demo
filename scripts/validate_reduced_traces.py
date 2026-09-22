@@ -30,6 +30,8 @@ for entry in entries:
     http_clients = 0
     api_servers = 0
     sql_queries = 0
+    authorization_requests_by_caller = collections.Counter()
+    client_authorization_spans = 0
     for span in spans:
         name = span['operationName']
         tags = {tag['key']: tag['value'] for tag in span.get('tags', [])}
@@ -48,6 +50,10 @@ for entry in entries:
             assert 'db.statement' not in tags, (entry['id'], 'Per-key Redis details')
         http_clients += tags.get('otel.scope.name') == 'OpenTelemetry::Instrumentation::Net::HTTP'
         api_servers += tags.get('span.kind') == 'server'
+        path = tags.get('url.path', tags.get('http.target', ''))
+        if tags.get('otel.scope.name') == 'OpenTelemetry::Instrumentation::Net::HTTP' and re.match(r'^/(?:can|capabilities)/', path):
+            client_authorization_spans += 1
+            authorization_requests_by_caller[trace['processes'][span['processID']]['serviceName']] += 1
         if tags.get('db.system') == 'postgresql':
             sql_queries += 1
             assert tags.get('otel.scope.name') == 'iam.application_sql', (entry['id'], tags)
@@ -78,6 +84,9 @@ for entry in entries:
     assert not external, (entry['id'], external)
     assert http_clients and api_servers and sql_queries, (entry['id'], 'Missing HTTP, API, or SQL spans')
     assert cross_service > 0, (entry['id'], 'no cross-service ancestry')
+    assert authorization_requests_by_caller['user-management-service'] == 0, (
+        entry['id'], 'AuthorizedResource performed caller-side authorization',
+        dict(authorization_requests_by_caller))
     if entry['id'].startswith('graphql-'):
         assert any(s['operationName'].startswith('GraphQL') and
                    any(t['key'] == 'graphql.document' and t['value'] for t in s.get('tags', []))
@@ -86,6 +95,8 @@ for entry in entries:
     results.append(dict(id=entry['id'], trace_id=trace['traceID'], spans=len(spans),
         outcome=entry.get('request_outcome', 'ok'), cross_service_parent_links=cross_service,
         http_client_spans=http_clients, api_server_spans=api_servers, sql_queries=sql_queries, redis_spans=redis, application_cache_spans=sum(count for name, count in names.items() if '.cache.' in name),
+        authorization_client_requests=client_authorization_spans,
+        authorization_requests_by_caller=dict(authorization_requests_by_caller),
         envelope_seconds=(max(s['startTime'] + s['duration'] for s in spans) - min(s['startTime'] for s in spans)) / 1e6,
         operation_counts=dict(names)))
 assert any(item['redis_spans'] for item in results), 'No Redis spans retained'

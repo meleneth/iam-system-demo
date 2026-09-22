@@ -4,7 +4,7 @@ require "json"
 require "net/http"
 require "uri"
 
-module AuthorizedResource
+module AuthorizedModel
   class AuthorizationClient
     def initialize(base_url:)
       @base_url = base_url.end_with?("/") ? base_url : "#{base_url}/"
@@ -20,7 +20,7 @@ module AuthorizedResource
       when "can"
         can_for(targets)
       else
-        raise AuthorizationTransportError,
+        raise AuthorizedResource::AuthorizationTransportError,
           "unsupported AUTHORIZATION_CHECK_MODE=#{authorization_mode.inspect}"
       end
     end
@@ -59,18 +59,20 @@ module AuthorizedResource
       uri = URI.join(@base_url, "capabilities/#{URI.encode_www_form_component(scope_type)}")
       response = post(uri, scope_ids)
       unless response.is_a?(Net::HTTPSuccess)
-        raise AuthorizationTransportError,
+        raise AuthorizedResource::AuthorizationTransportError,
           "authorization capability lookup failed with HTTP #{response.code}"
       end
 
       decoded = JSON.parse(response.body)
       unless decoded.is_a?(Hash)
-        raise AuthorizationTransportError, "authorization capability lookup returned an invalid response"
+        raise AuthorizedResource::AuthorizationTransportError,
+          "authorization capability lookup returned an invalid response"
       end
 
       decoded.transform_keys(&:to_s).transform_values { |values| Array(values).map(&:to_s).freeze }.freeze
     rescue JSON::ParserError => error
-      raise AuthorizationTransportError, "authorization capability lookup failed: #{error.class}"
+      raise AuthorizedResource::AuthorizationTransportError,
+        "authorization capability lookup failed: #{error.class}"
     end
 
     def request_can(scope_type, capability, scope_ids)
@@ -80,7 +82,8 @@ module AuthorizedResource
       return true if response.is_a?(Net::HTTPSuccess)
       return false if response.is_a?(Net::HTTPForbidden)
 
-      raise AuthorizationTransportError, "authorization /can lookup failed with HTTP #{response.code}"
+      raise AuthorizedResource::AuthorizationTransportError,
+        "authorization /can lookup failed with HTTP #{response.code}"
     end
 
     def post(uri, scope_ids)
@@ -97,10 +100,11 @@ module AuthorizedResource
         open_timeout: 5,
         read_timeout: 30
       ) { |http| http.request(request) }
-    rescue AuthorizationContext::Error, AuthorizationTransportError
+    rescue AuthorizationContext::Error, AuthorizedResource::AuthorizationTransportError
       raise
     rescue IOError, SystemCallError, Timeout::Error, SocketError, URI::Error => error
-      raise AuthorizationTransportError, "authorization lookup failed: #{error.class}"
+      raise AuthorizedResource::AuthorizationTransportError,
+        "authorization lookup failed: #{error.class}"
     end
   end
 end

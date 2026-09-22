@@ -37,11 +37,11 @@ RSpec.describe "Account hierarchies", type: :request do
 
   let(:cache) { FakeAccountHierarchyCache.new }
   let(:organization_id) { SecureRandom.uuid }
-  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
+  let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }
 
   before do
     stub_const("ACCOUNT_CACHE", cache)
-    allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client)
+    allow(AuthorizedModel).to receive(:authorization_client).and_return(authorization_client)
   end
 
   def allow_accounts(ids)
@@ -157,9 +157,9 @@ RSpec.describe "Account hierarchies", type: :request do
 end
 
 RSpec.describe "Account search", type: :request do
-  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
+  let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }
 
-  before { allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client) }
+  before { allow(AuthorizedModel).to receive(:authorization_client).and_return(authorization_client) }
 
   it "checks account.read before returning an individual account" do
     account = Account.create!(name: "Customer Account")

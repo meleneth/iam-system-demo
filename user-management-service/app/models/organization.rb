@@ -2,8 +2,6 @@
 
 # app/models/organization.rb
 class Organization < AuthorizedResource::Base
-  requires_read_capability "organization.read", scope_type: "Organization", target: :id, iam: %w[IAM_SYSTEM]
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("ORGANIZATION_SERVICE_API_BASE_URL", "http://organization-service:80")
   self.format = :json
 

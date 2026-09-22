@@ -2,8 +2,28 @@
 
 require "active_record"
 require_relative "authorized_resource/core"
+require_relative "authorized_resource/policy"
+require_relative "authorized_resource/authorization_client"
+require_relative "authorized_resource/evaluator"
 
 module AuthorizedModel
+  class << self
+    attr_writer :authorization_service_url, :authorization_client
+
+    def authorization_service_url
+      @authorization_service_url || ENV.fetch("AUTHORIZATION_SERVICE_API_BASE_URL")
+    end
+
+    def authorization_client
+      @authorization_client ||= AuthorizationClient.new(base_url: authorization_service_url)
+    end
+
+    def reset_configuration!
+      @authorization_service_url = nil
+      @authorization_client = nil
+    end
+  end
+
   module RelationProtection
     def exec_queries(...)
       model.authorized_read("query") { super }
@@ -27,7 +47,7 @@ module AuthorizedModel
 
   class Base < ActiveRecord::Base
     self.abstract_class = true
-    class_attribute :authorization_policy, instance_writer: false, default: AuthorizedResource::Policy.new
+    class_attribute :authorization_policy, instance_writer: false, default: Policy.new
 
     class << self
       def inherited(subclass)
@@ -38,7 +58,7 @@ module AuthorizedModel
       def requires_read_capability(capability, scope_type:, target:, iam: [])
         self.authorization_policy = authorization_policy.with_requirement(
           :read,
-          AuthorizedResource::Requirement.new(
+          Requirement.new(
             capability: capability.to_s,
             scope_type: scope_type.to_s,
             resolver: resolver_for(target)
@@ -50,7 +70,7 @@ module AuthorizedModel
       def requires_modify_capability(capability, scope_type:, target:, iam: [])
         self.authorization_policy = authorization_policy.with_requirement(
           :modify,
-          AuthorizedResource::Requirement.new(
+          Requirement.new(
             capability: capability.to_s,
             scope_type: scope_type.to_s,
             resolver: resolver_for(target)
@@ -72,7 +92,7 @@ module AuthorizedModel
       end
 
       def authorization_requirement(capability, scope_type:, target:)
-        AuthorizedResource::Requirement.new(
+        Requirement.new(
           capability: capability.to_s,
           scope_type: scope_type.to_s,
           resolver: resolver_for(target)
@@ -80,7 +100,7 @@ module AuthorizedModel
       end
 
       def authorize_records!(kind, records, operation: kind, requirements: nil)
-        result = AuthorizedResource::Evaluator.authorize!(self, kind, records, operation: operation,
+        result = Evaluator.authorize!(self, kind, records, operation: operation,
           requirements: requirements)
         if kind == :read
           result.each { |record| record.__send__(:mark_authorized_snapshot!) if record.respond_to?(:mark_authorized_snapshot!, true) }
@@ -97,7 +117,7 @@ module AuthorizedModel
       end
 
       def authorized_aggregate(logical_operation)
-        AuthorizedResource::Evaluator.ensure_policy!(self, authorization_policy, :read)
+        Evaluator.ensure_policy!(self, authorization_policy, :read)
         context = AuthorizationContext.current!
         unless context.iam? && authorization_policy.iam_readers.include?(context.iam_identity)
           raise AuthorizedResource::UnsupportedOperationError,
@@ -130,7 +150,7 @@ module AuthorizedModel
       end
 
       def perform_authorized(kind, logical_operation, records:, requirements:)
-        AuthorizedResource::Evaluator.ensure_policy!(self, authorization_policy, kind)
+        Evaluator.ensure_policy!(self, authorization_policy, kind)
         AuthorizedResource::Operation.within(self, logical_operation, kind) do |span, outermost|
           next yield unless outermost
 

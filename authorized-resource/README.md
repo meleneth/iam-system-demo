@@ -1,122 +1,106 @@
 # Authorized Resource
 
-The gem supplies two entry points backed by the same policy evaluator,
-execution-local operation state, authorization client, errors, and telemetry:
+The gem supplies two deliberately different boundaries:
 
-- `AuthorizedResource::Base` protects ActiveResource clients.
-- `AuthorizedModel::Base` protects local Active Record models (the repository's
-  persistence-backed ActiveModel implementation).
+- `AuthorizedResource::Base` wraps remote ActiveResource operations.
+- `AuthorizedModel::Base` protects records in the service that owns them.
 
-A concrete model must declare a read policy and either a modify policy or
-`read_only!`:
+**AuthorizedResource requires and propagates authorization context. It does not
+evaluate capabilities or re-authorize returned records. The receiving service
+authenticates the context and enforces authorization.**
+
+## Remote resources
+
+Remote models inherit directly from `AuthorizedResource::Base` and configure
+only their normal ActiveResource transport:
 
 ```ruby
 class User < AuthorizedResource::Base
-  requires_read_capability "account.users.read",
-    scope_type: "Account", target: :account_id, iam: %w[IAM_SYSTEM]
-  read_only!(iam: %w[IAM_SYSTEM])
-end
-
-class Account < AuthorizedModel::Base
-  requires_read_capability "account.read",
-    scope_type: "Account", target: :id, iam: %w[IAM_SYSTEM]
-  allows_iam_modify "IAM_SYSTEM"
+  self.site = ENV.fetch("USER_SERVICE_API_BASE_URL")
+  self.format = :json
 end
 ```
 
-`target:` may be an attribute name or a callable. It identifies the owning
-authorization scope, not necessarily the resource ID. Repeated declarations are
-alternatives for the same record; every returned record must satisfy at least
-one alternative. Collections honor `AUTHORIZATION_CHECK_MODE`. In
-`capabilities` mode they use the batched capabilities endpoint once per scope
-type. In `can` mode they use a precise batched `/can` request once per scope
-type and required capability. Neither mode turns a collection into one
-authorization request per row.
+Every protected operation requires an active `AuthorizationContext`. Missing
+context raises `AuthorizationContext::MissingContextError` before cache access
+or network I/O; the gem never supplies a default identity or enters IAM scope.
+Requesting-user contexts propagate the actor and optional account/organization
+metadata. IAM contexts propagate the explicitly selected IAM identity, its
+internal authentication token, and any originating-user attribution. IAM still
+follows the receiving service's existing service-authority rules.
 
-IAM identities are explicit model policy. Listing an identity in `iam:` permits
-that operation to use the receiving service's authenticated IAM behavior; the
-gem never converts a requesting-user context to IAM and never treats every IAM
-identity as globally privileged. Originating-user metadata continues to come
-from `AuthorizationContext`.
+The transport boundary derives fresh headers for every request. It never stores
+identity in ActiveResource class headers or shared connection state. Nested
+contexts, exception restoration, deferred-work capture/re-entry, and
+thread/fiber isolation remain owned by the `authorization-context` gem.
 
-## Supported operations
-
-The base protects `find`, `all`, `first`, `last`, `where`, reloads, existence
-checks, class deletes, create/save/update/destroy, and ActiveResource custom
-methods. Public methods that delegate internally share one logical operation,
-one authorization evaluation, and one `authorized_resource.<Type>.<operation>`
-span. Net::HTTP/Faraday instrumentation remains responsible for HTTP spans.
-
-Semantic reads implemented with POST, batched endpoints, and application cache
-lookups must use `authorized_read`; custom mutations use `authorized_modify`:
+`find`, `all`, `first`, `last`, `where`, `build`, reloads, existence checks,
+pagination, create/save/update/destroy, and ActiveResource custom methods are
+covered. The connection proxy also fails closed and propagates context for an
+alternate direct connection call. Prefer a named wrapper for custom endpoints,
+especially a POST whose meaning is a read:
 
 ```ruby
 def self.search(params)
   authorized_read("search") do
     response = connection.post("/users/search", params.to_json, headers)
-    format.decode(response.body).map { |attrs| new(attrs) }
+    format.decode(response.body).map { |attributes| new(attributes) }
   end
 end
 ```
 
-Local model relations authorize materialized rows as one batch. `find`, normal
-relations and associations therefore use the declared row policy. Aggregates
-(`count`, `pluck`, `pick`, `ids`, and `exists?`) do not reveal their targets and
-must be enclosed in `authorized_read(records: ...)`; configured IAM readers may
-run them directly. `load_async` is intentionally unsupported unless the caller
-adds explicit authorization-context propagation.
+Use `authorized_modify("operation")` for custom mutations. Put cache lookup
+inside the wrapper so a cache hit still requires context. Raw data may be
+shared only when the receiving service independently authorizes every request;
+identity- or scope-filtered results must retain their existing partitioning.
 
-For a custom operation whose semantics are intentionally stricter than normal
-row access, build a named requirement in the service and pass it to the shared
-wrapper:
+Ordinary resource operations make no client-side `/can` or `/capabilities`
+request. A direct application call to those APIs remains an ordinary explicit
+remote operation and is not altered by this abstraction.
+
+## Receiving-service models
+
+The receiving service declares and enforces capability policy through
+`ApplicationRecord < AuthorizedModel::Base`:
 
 ```ruby
-account_read = OrganizationAccount.authorization_requirement(
-  "account.read", scope_type: "Account", target: :account_id
-)
-OrganizationAccount.authorized_read("managed_accounts", requirements: [account_read]) do
-  relation.to_a
+class User < ApplicationRecord
+  requires_read_capability "account.users.read",
+    scope_type: "Account", target: :account_id, iam: %w[IAM_SYSTEM]
+  allows_iam_modify "IAM_SYSTEM"
 end
 ```
 
-This is service policy; the gem still owns evaluation, batching, context checks,
-failure classification, and instrumentation.
+`target:` identifies the real authorization target and may be an attribute or
+callable. Repeated requirements are alternatives. `AuthorizedModel` batches
+authorization evaluation across materialized collections, checks create
+containers, checks old and new targets for boundary-moving updates, and checks
+the existing target for deletes. Concrete server models require an explicit
+read policy and either a modify policy or `read_only!`.
 
-Pass `records:` when the authorization target is known before execution, or
-`result_records:` to extract records from a nonstandard result. The wrapper is
-required around the cache as well as transport so cache hits cannot skip the
-check. Shared caches may retain raw data; identity-filtered results must not be
-shared.
+Relation materialization, associations, aggregates with explicit targets,
+custom server queries, and mutation callbacks remain protected. Client-supplied
+ownership fields select a requested target but never prove authority: the
+receiving service authenticates propagated context and evaluates its own model
+policy before returning or changing data.
 
-Direct `connection` calls outside one of these operation scopes fail with
-`UnsupportedOperationError`. Class-level POST/PUT/PATCH is intentionally
-unsupported because its semantic authorization category and target are
-ambiguous. Wrap each supported endpoint explicitly. Deferred work must capture
-and restore `AuthorizationContext`; operation state is execution-local and is
-not an identity store.
+## Telemetry and failures
 
-## Mutation targets
+Remote logical operations emit one
+`authorized_resource.<Resource>.<operation>` span with bounded resource type,
+service host, operation, collection size when available, and outcome. Automatic
+Net::HTTP instrumentation owns HTTP spans; the gem only injects trace context
+into fresh headers and does not emit duplicate HTTP spans. Actor IDs, scope IDs,
+authorization headers, credentials, and payloads are not span attributes.
 
-Creates authorize the intended parent/container from the new record. Updates
-authorize both the scope snapshot captured when the record was read and the
-current scope, so a boundary-moving update requires authority on both sides.
-Deletes authorize the existing target. Client-provided ownership attributes
-select the requested target but are not proof of authority; receiving services
-must continue to authenticate and authorize every request.
+`authorized_resource.authorize` spans are emitted only by `AuthorizedModel` in
+the receiving service. Their child authorization-service HTTP spans distinguish
+permission evaluation from resource transport. Remote transport errors keep
+their ActiveResource exception types, and missing context remains distinct from
+server denial and authorization-service transport failures.
 
-## Failures and telemetry
-
-The following remain distinct: `AuthorizationContext::MissingContextError`,
-`PolicyConfigurationError`, `ReadOnlyError`, `AuthorizationDenied`,
-`AuthorizationTransportError`, and ActiveResource transport exceptions.
-Spans contain only bounded resource type, service host, logical operation,
-scope types, batch size, and outcome. Actor IDs, authorization headers,
-credentials, payloads, and scope IDs are not span attributes.
-
-To add a resource, inherit directly from `AuthorizedResource::Base`, configure
-its site/format, declare its owning-scope read policy, and explicitly declare
-its modify policy or `read_only!`. To add a local model, inherit through the
-service's `ApplicationRecord < AuthorizedModel::Base` and put the same explicit
-policy declarations on every concrete class. Add wrappers only for custom
-operations; do not add another service base class or call an ActiveResource
-`connection` directly.
+To add a protected remote resource, inherit from `AuthorizedResource::Base`,
+configure its site/format/path, and wrap only nonstandard endpoints or caches
+with a semantic operation name. Do not declare capabilities on the remote
+model. Add the capability requirement to the owning service's
+`AuthorizedModel` and test it through the real transport boundary.

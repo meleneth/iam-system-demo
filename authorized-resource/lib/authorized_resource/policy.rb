@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module AuthorizedResource
+module AuthorizedModel
   Target = Data.define(:scope_type, :scope_id, :capability) do
     def initialize(scope_type:, scope_id:, capability:)
       super(

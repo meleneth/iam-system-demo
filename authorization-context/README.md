@@ -24,12 +24,16 @@ Requests claiming IAM authority must also authenticate with the shared internal
 token. The scope header alone is never trusted.
 
 ActiveResource models become protected by inheriting directly from
-`AuthorizedResource::Base`. That gem owns capability policy, operation
-instrumentation, connection guards, and fresh per-request transport headers.
-This gem remains the only identity/context store.
+`AuthorizedResource::Base`. AuthorizedResource requires and propagates
+authorization context. It does not evaluate capabilities or re-authorize
+returned records. The receiving service authenticates the context and enforces
+authorization. The gem owns remote-operation instrumentation, connection
+guards, and fresh per-request transport headers; this gem remains the only
+identity/context store.
 
 Protected local models inherit through each service's conventional
 `ApplicationRecord < AuthorizedModel::Base`. `AuthorizedModel` owns model
-policy, relation/mutation enforcement, and operation telemetry while this gem
-remains the single context store. Protected `load_async` is rejected because
-the current services do not propagate context into Active Record's executor.
+policy, capability evaluation, relation/mutation enforcement, and operation
+telemetry in the receiving service while this gem remains the single context
+store. Protected `load_async` is rejected because the current services do not
+propagate context into Active Record's executor.

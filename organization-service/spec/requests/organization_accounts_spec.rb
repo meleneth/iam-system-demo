@@ -24,11 +24,11 @@ RSpec.describe "Organization accounts", type: :request do
   let(:actor_user_id) { SecureRandom.uuid }
   let(:organization_id) { SecureRandom.uuid }
   let(:account_id) { SecureRandom.uuid }
-  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
+  let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }
 
   before do
     stub_const("ORGANIZATION_CACHE", FakeOrganizationAccountCache.new)
-    allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client)
+    allow(AuthorizedModel).to receive(:authorization_client).and_return(authorization_client)
     AuthorizationContext.as_iam do
       Organization.create!(id: organization_id)
       OrganizationAccount.create!(organization_id: organization_id, account_id: account_id)

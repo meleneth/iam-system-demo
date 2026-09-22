@@ -1,177 +1,110 @@
 # frozen_string_literal: true
 
 module AuthorizedResource
+  # ActiveResource boundary that requires an existing AuthorizationContext,
+  # propagates it per request, and traces logical remote operations. Capability
+  # evaluation belongs exclusively to the receiving service.
   class Base < ActiveResource::Base
-    class_attribute :authorization_policy, instance_writer: false, default: Policy.new
-
     class << self
-      def inherited(subclass)
-        super
-        subclass.authorization_policy = authorization_policy
-      end
-
-      def requires_read_capability(capability, scope_type:, target:, iam: [])
-        self.authorization_policy = authorization_policy.with_requirement(
-          :read,
-          Requirement.new(capability: capability.to_s, scope_type: scope_type.to_s, resolver: resolver_for(target)),
-          iam: iam
-        )
-      end
-
-      def requires_modify_capability(capability, scope_type:, target:, iam: [])
-        self.authorization_policy = authorization_policy.with_requirement(
-          :modify,
-          Requirement.new(capability: capability.to_s, scope_type: scope_type.to_s, resolver: resolver_for(target)),
-          iam: iam
-        )
-      end
-
-      def read_only!(iam: [])
-        self.authorization_policy = authorization_policy.read_only(iam: iam)
-      end
-
-      def allows_iam_read(*identities)
-        self.authorization_policy = authorization_policy.with_iam(:read, identities.flatten)
-      end
-
-      def allows_iam_modify(*identities)
-        self.authorization_policy = authorization_policy.with_iam(:modify, identities.flatten)
-      end
-
       def connection(refresh = false)
-        ConnectionProxy.new(super)
+        ConnectionProxy.new(super, self)
       end
 
+      # Build fresh headers for every operation. Never put actor metadata in
+      # ActiveResource's shared class header hash or its pooled connection.
       def headers
-        super.merge(AuthorizationContext.transport_headers).freeze
+        operation_headers = super.merge(AuthorizationContext.transport_headers)
+        OpenTelemetry.propagation.inject(operation_headers)
+        operation_headers.freeze
+      end
+
+      def build(...)
+        authorized_read("build") { super }
       end
 
       def find(...)
         authorized_read("find") { super }
       end
 
-      def exists?(id, options = {})
-        authorized_read("exists", records: [{ primary_key => id }]) { super }
+      def exists?(...)
+        authorized_read("exists") { super }
       end
 
-      def delete(id, options = {})
-        authorized_modify("delete", records: [{ primary_key => id }]) { super }
+      def delete(...)
+        authorized_modify("delete") { super }
       end
 
-      def get(custom_method_name, options = {})
+      def get(...)
         authorized_read("custom_get") { super }
       end
 
-      def post(*)
-        raise UnsupportedOperationError, "class POST is ambiguous; wrap it in authorized_read or authorized_modify"
+      def post(...)
+        authorized_modify("custom_post") { super }
       end
 
-      def put(*)
-        raise UnsupportedOperationError, "class PUT requires an explicit authorized_modify target"
+      def put(...)
+        authorized_modify("custom_put") { super }
       end
 
-      def patch(*)
-        raise UnsupportedOperationError, "class PATCH requires an explicit authorized_modify target"
+      def patch(...)
+        authorized_modify("custom_patch") { super }
       end
 
-      def authorization_requirement(capability, scope_type:, target:)
-        Requirement.new(capability: capability.to_s, scope_type: scope_type.to_s, resolver: resolver_for(target))
+      # Custom endpoints use these wrappers to provide semantic operation names,
+      # especially for POST-based reads and cache-backed retrievals.
+      def authorized_read(logical_operation)
+        perform_remote_operation(logical_operation, :read) { yield }
       end
 
-      def authorized_read(logical_operation, records: nil, result_records: nil, requirements: nil, &block)
-        perform_authorized(:read, logical_operation, records: records, result_records: result_records,
-          requirements: requirements, &block)
-      end
-
-      def authorized_modify(logical_operation, records:, result_records: nil, requirements: nil, &block)
-        perform_authorized(:modify, logical_operation, records: records, result_records: result_records,
-          requirements: requirements, &block)
-      end
-
-      def authorize_records!(kind, records, operation: kind, requirements: nil)
-        records = Evaluator.authorize!(self, kind, records, operation: operation, requirements: requirements)
-        if kind == :read
-          records.each do |record|
-            record.__send__(:mark_authorized_snapshot!) if record.respond_to?(:mark_authorized_snapshot!, true)
-          end
-        end
-        records
+      def authorized_modify(logical_operation)
+        perform_remote_operation(logical_operation, :modify) { yield }
       end
 
       private
 
-      def perform_authorized(kind, logical_operation, records:, result_records:, requirements:)
-        Evaluator.ensure_policy!(self, authorization_policy, kind)
+      def perform_remote_operation(logical_operation, kind)
         Operation.within(self, logical_operation, kind) do |span, outermost|
-          next yield unless outermost
-
-          authorize_records!(kind, records, operation: logical_operation, requirements: requirements) if records
           result = yield
-          resolved = if result_records
-            result_records.call(result)
-          elsif records.nil?
-            result
-          end
-          authorized = authorize_records!(kind, resolved, operation: logical_operation,
-            requirements: requirements) unless resolved.nil?
-          span&.set_attribute("authorized_resource.batch_size", Array(authorized).compact.size) if authorized
+          span&.set_attribute("authorized_resource.batch_size", result.size) if outermost && result.is_a?(Array)
           result
-        end
-      end
-
-      def resolver_for(target)
-        return target if target.respond_to?(:call)
-
-        lambda do |record|
-          if record.respond_to?(target)
-            record.public_send(target)
-          elsif record.respond_to?(:[])
-            record[target] || record[target.to_s]
-          end
         end
       end
     end
 
     def save
-      result = self.class.authorized_modify(new? ? "create" : "update", records: mutation_authorization_records) { super }
-      mark_authorized_snapshot! if result
-      result
+      self.class.authorized_modify(new? ? "create" : "update") { super }
     end
 
     def destroy
-      self.class.authorized_modify("destroy", records: mutation_authorization_records) { super }
+      self.class.authorized_modify("destroy") { super }
     end
 
-    def get(method_name, options = {})
-      self.class.authorized_read("custom_get", records: [self]) { super }
+    def exists?
+      self.class.authorized_read("exists") { super }
     end
 
-    def post(method_name, options = {}, body = nil)
-      self.class.authorized_modify("custom_post", records: mutation_authorization_records) { super }
+    def reload
+      self.class.authorized_read("reload") { super }
     end
 
-    def put(method_name, options = {}, body = "")
-      self.class.authorized_modify("custom_put", records: mutation_authorization_records) { super }
+    def get(...)
+      self.class.authorized_read("custom_get") { super }
     end
 
-    def patch(method_name, options = {}, body = "")
-      self.class.authorized_modify("custom_patch", records: mutation_authorization_records) { super }
+    def post(...)
+      self.class.authorized_modify("custom_post") { super }
     end
 
-    def delete(method_name, options = {})
-      self.class.authorized_modify("custom_delete", records: mutation_authorization_records) { super }
+    def put(...)
+      self.class.authorized_modify("custom_put") { super }
     end
 
-    private
-
-    def mutation_authorization_records
-      previous = instance_variable_get(:@authorized_resource_original_attributes)
-      [previous, self].compact
+    def patch(...)
+      self.class.authorized_modify("custom_patch") { super }
     end
 
-    def mark_authorized_snapshot!
-      @authorized_resource_original_attributes = attributes.deep_dup.freeze
-      self
+    def delete(...)
+      self.class.authorized_modify("custom_delete") { super }
     end
   end
 end

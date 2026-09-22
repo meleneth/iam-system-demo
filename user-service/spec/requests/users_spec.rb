@@ -10,10 +10,10 @@ RSpec.describe "/users", type: :request do
       "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")
     }
   end
-  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
+  let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }
 
   def capabilities_for(map)
-    allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client)
+    allow(AuthorizedModel).to receive(:authorization_client).and_return(authorization_client)
     expect(authorization_client).to receive(:capabilities).once.and_return("Account" => map)
   end
 

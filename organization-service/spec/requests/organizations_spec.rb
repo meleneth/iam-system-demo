@@ -4,9 +4,9 @@ require "securerandom"
 RSpec.describe "Organizations", type: :request do
   let(:actor_user_id) { SecureRandom.uuid }
   let!(:organization) { Organization.create!(name: "Customer Org") }
-  let(:authorization_client) { instance_double(AuthorizedResource::AuthorizationClient) }
+  let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }
 
-  before { allow(AuthorizedResource).to receive(:authorization_client).and_return(authorization_client) }
+  before { allow(AuthorizedModel).to receive(:authorization_client).and_return(authorization_client) }
 
   it "checks organization.read before returning an organization row" do
     expect(authorization_client).to receive(:capabilities).and_return(

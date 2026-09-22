@@ -2,9 +2,6 @@
 
 # app/models/user.rb
 class Group < AuthorizedResource::Base
-  requires_read_capability "group.read", scope_type: "Group", target: :id, iam: %w[IAM_SYSTEM]
-  requires_read_capability "account.users.read", scope_type: "Account", target: :account_id
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("GROUP_SERVICE_API_BASE_URL", "http://group-service:80")
   self.format = :json
 
@@ -29,7 +26,7 @@ class Group < AuthorizedResource::Base
 
   def self.groups_count(account_ids)
     account_ids = Array(account_ids)
-    authorized_read("counts", records: account_ids.map { |id| { account_id: id } }) do
+    authorized_read("counts") do
       url = "#{Env::GROUP_SERVICE_API_BASE_URL}/accounts/groups/counts"
       outgoing_headers = headers.dup
       OpenTelemetry.propagation.inject(outgoing_headers)

@@ -2,7 +2,6 @@
 
 # app/models/account.rb
 class CapabilityGrant < AuthorizedResource::Base
-  read_only!(iam: %w[IAM_SYSTEM])
   self.site = ENV.fetch("AUTHORIZATION_SERVICE_API_BASE_URL", "http://authorization-service:80")
   self.format = :json
 
@@ -24,7 +23,7 @@ class CapabilityGrant < AuthorizedResource::Base
 
   # Optional: handle nested resources, errors, etc.
   def self.admin_user_for_organization(organization_id)
-    authorized_read("admin_user", records: [{}]) do
+    authorized_read("admin_user") do
       url = "#{Env::AUTHORIZATION_SERVICE_API_BASE_URL}/internal/admin_users/organization/#{organization_id}"
       response = Faraday.get(url) do |req|
         headers.each { |key, value| req.headers[key] = value }
