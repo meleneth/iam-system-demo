@@ -102,3 +102,13 @@ configure its site/format/path, and wrap only nonstandard endpoints or caches
 with a semantic operation name. Do not declare capabilities on the remote
 model. Add the capability requirement to the owning service's
 `AuthorizedModel` and test it through the real transport boundary.
+
+## Development
+
+The gem has an independent, mock-driven RSpec suite and does not boot Rails or
+connect to a database:
+
+```sh
+bundle install
+bundle exec rake
+```

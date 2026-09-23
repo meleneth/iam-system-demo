@@ -36,3 +36,12 @@ policy, capability evaluation, relation/mutation enforcement, and operation
 telemetry in the receiving service while this gem remains the single context
 store. Protected `load_async` is rejected because the current services do not
 propagate context into Active Record's executor.
+
+## Development
+
+The gem has an independent RSpec suite and does not require a service to boot:
+
+```sh
+bundle install
+bundle exec rake
+```

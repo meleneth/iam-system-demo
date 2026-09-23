@@ -12,66 +12,40 @@ module AuthorizationContext
   class InvalidContextError < Error; end
 
   Context = Data.define(:actor_id) do
-    def iam?
-      IAM_IDENTITIES.include?(actor_id)
-    end
-
-    def requesting_user?
-      !iam?
-    end
-
-    def user_id
-      actor_id if requesting_user?
-    end
-
-    def iam_identity
-      actor_id if iam?
-    end
-
-    def to_h
-      {actor_id: actor_id}.freeze
-    end
+    def iam? = IAM_IDENTITIES.include?(actor_id)
+    def requesting_user? = !iam?
+    def user_id = requesting_user? ? actor_id : nil
+    def iam_identity = iam? ? actor_id : nil
+    def to_h = {actor_id: actor_id}.freeze
   end
 
   class << self
     def as_iam(identity: "IAM_SYSTEM", &block)
-      raise ArgumentError, "block required" unless block
-      identity = required_string!(identity, :identity)
+      identity = required_string!(identity, "identity")
       raise InvalidContextError, "unsupported IAM identity" unless IAM_IDENTITIES.include?(identity)
 
       activate(Context.new(actor_id: identity), &block)
     end
 
     def as_requesting_user(user_id:, &block)
-      raise ArgumentError, "block required" unless block
-      user_id = required_string!(user_id, :user_id)
+      user_id = required_string!(user_id, "user_id")
       raise InvalidContextError, "IAM identities are not requesting users" if IAM_IDENTITIES.include?(user_id)
 
       activate(Context.new(actor_id: user_id), &block)
     end
 
-    def current
-      ActiveSupport::IsolatedExecutionState[STORAGE_KEY]
-    end
+    def current = ActiveSupport::IsolatedExecutionState[STORAGE_KEY]
 
-    def current!
-      current || raise(MissingContextError, "protected retrieval requires an explicit authorization context")
-    end
+    def current! = current || raise(MissingContextError, "protected retrieval requires an explicit authorization context")
 
-    def capture
-      current!
-    end
+    alias capture current!
 
     def with(context, &block)
       raise InvalidContextError, "invalid captured context" unless context.is_a?(Context)
-      raise ArgumentError, "block required" unless block
-
-      activate(normalize_context(context), &block)
+      activate(Context.new(actor_id: required_string!(context.actor_id, "actor_id")), &block)
     end
 
     def without(&block)
-      raise ArgumentError, "block required" unless block
-
       activate(nil, &block)
     end
 
@@ -80,7 +54,7 @@ module AuthorizationContext
     end
 
     def from_headers(headers)
-      Context.new(actor_id: required_string!(header(headers, "pad-user-id"), :actor_id))
+      Context.new(actor_id: required_string!(header(headers, "pad-user-id"), "actor_id"))
     end
 
     def within_request(headers, &block)
@@ -89,16 +63,14 @@ module AuthorizationContext
 
     private
 
-    def activate(context)
+    def activate(context, &block)
+      raise ArgumentError, "block required" unless block
+
       previous = current
       ActiveSupport::IsolatedExecutionState[STORAGE_KEY] = context&.freeze
-      yield
+      block.call
     ensure
       ActiveSupport::IsolatedExecutionState[STORAGE_KEY] = previous
-    end
-
-    def normalize_context(context)
-      Context.new(actor_id: required_string!(context.actor_id, :actor_id))
     end
 
     def required_string!(value, name)
@@ -108,7 +80,7 @@ module AuthorizationContext
     end
 
     def header(headers, name)
-      headers[name] || headers[name.downcase] || headers["HTTP_#{name.upcase.tr('-', '_')}"]
+      headers[name] || headers["HTTP_#{name.upcase.tr('-', '_')}"]
     end
   end
 end

@@ -2,11 +2,23 @@
 
 require "active_record"
 require_relative "authorized_resource/core"
-require_relative "authorized_resource/policy"
 require_relative "authorized_resource/authorization_client"
-require_relative "authorized_resource/evaluator"
 
 module AuthorizedModel
+  Target = Data.define(:scope_type, :scope_id, :capability) do
+    def initialize(scope_type:, scope_id:, capability:)
+      super(scope_type: scope_type.to_s, scope_id: scope_id.to_s, capability: capability.to_s)
+    end
+  end
+
+  Requirement = Data.define(:capability, :scope_type, :resolver) do
+    def targets(record)
+      Array(resolver.call(record)).filter_map do |scope_id|
+        Target.new(scope_type: scope_type, scope_id: scope_id, capability: capability) if scope_id.present?
+      end
+    end
+  end
+
   class << self
     attr_writer :authorization_service_url, :authorization_client
 
@@ -31,7 +43,7 @@ module AuthorizedModel
 
     %i[calculate pluck pick ids exists?].each do |method_name|
       define_method(method_name) do |*args, **kwargs, &block|
-        if AuthorizedResource::Operation.current&.resource_class == model
+        if AuthorizedResource::Operation.current == model
           super(*args, **kwargs, &block)
         else
           model.authorized_aggregate(method_name) { super(*args, **kwargs, &block) }
@@ -47,48 +59,36 @@ module AuthorizedModel
 
   class Base < ActiveRecord::Base
     self.abstract_class = true
-    class_attribute :authorization_policy, instance_writer: false, default: Policy.new
+    class_attribute :read_requirements, :modify_requirements, :iam_readers, :iam_modifiers,
+      instance_writer: false
+    class_attribute :authorization_read_only, instance_writer: false, default: false
+    self.read_requirements = []
+    self.modify_requirements = []
+    self.iam_readers = []
+    self.iam_modifiers = []
 
     class << self
-      def inherited(subclass)
-        super
-        subclass.authorization_policy = authorization_policy
-      end
-
       def requires_read_capability(capability, scope_type:, target:, iam: [])
-        self.authorization_policy = authorization_policy.with_requirement(
-          :read,
-          Requirement.new(
-            capability: capability.to_s,
-            scope_type: scope_type.to_s,
-            resolver: resolver_for(target)
-          ),
-          iam: iam
-        )
+        self.read_requirements += [authorization_requirement(capability, scope_type: scope_type, target: target)]
+        self.iam_readers = (iam_readers + Array(iam).map(&:to_s)).uniq
       end
 
       def requires_modify_capability(capability, scope_type:, target:, iam: [])
-        self.authorization_policy = authorization_policy.with_requirement(
-          :modify,
-          Requirement.new(
-            capability: capability.to_s,
-            scope_type: scope_type.to_s,
-            resolver: resolver_for(target)
-          ),
-          iam: iam
-        )
+        self.modify_requirements += [authorization_requirement(capability, scope_type: scope_type, target: target)]
+        self.iam_modifiers = (iam_modifiers + Array(iam).map(&:to_s)).uniq
       end
 
       def allows_iam_read(*identities)
-        self.authorization_policy = authorization_policy.with_iam(:read, identities.flatten)
+        self.iam_readers = (iam_readers + identities.flatten.map(&:to_s)).uniq
       end
 
       def allows_iam_modify(*identities)
-        self.authorization_policy = authorization_policy.with_iam(:modify, identities.flatten)
+        self.iam_modifiers = (iam_modifiers + identities.flatten.map(&:to_s)).uniq
       end
 
       def read_only!(iam: [])
-        self.authorization_policy = authorization_policy.read_only(iam: iam)
+        self.authorization_read_only = true
+        allows_iam_read(*iam)
       end
 
       def authorization_requirement(capability, scope_type:, target:)
@@ -100,8 +100,45 @@ module AuthorizedModel
       end
 
       def authorize_records!(kind, records, operation: kind, requirements: nil)
-        result = Evaluator.authorize!(self, kind, records, operation: operation,
-          requirements: requirements)
+        ensure_policy!(kind)
+        records = Array(records).flatten.compact
+        return records if records.empty?
+
+        context = AuthorizationContext.current!
+        if context.iam?
+          allowed = kind == :read ? iam_readers : iam_modifiers
+          unless allowed.include?(context.iam_identity)
+            raise AuthorizedResource::AuthorizationDenied,
+              "#{context.iam_identity} is not authorized for #{name} #{operation}"
+          end
+          return records
+        end
+
+        requirements ||= kind == :read ? read_requirements : modify_requirements
+        raise AuthorizedResource::AuthorizationDenied,
+          "requesting users are not authorized for #{name} #{operation}" if requirements.empty?
+
+        alternatives = records.to_h do |record|
+          [record, requirements.flat_map { |requirement| requirement.targets(record) }.uniq]
+        end
+        if alternatives.any? { |_record, targets| targets.empty? }
+          raise AuthorizedResource::PolicyConfigurationError,
+            "#{name} #{kind} policy could not resolve an authorization target"
+        end
+
+        targets = alternatives.values.flatten.uniq
+        AuthorizedResource::Instrumentation.trace_authorization(self, operation, records, targets) do
+          capabilities = AuthorizedModel.authorization_client.capabilities(targets)
+          denied = alternatives.any? do |_record, record_targets|
+            record_targets.none? do |target|
+              capabilities.fetch(target.scope_type, {}).fetch(target.scope_id, []).include?(target.capability)
+            end
+          end
+          raise AuthorizedResource::AuthorizationDenied,
+            "authorization denied for #{name} #{operation}" if denied
+        end
+
+        result = records
         if kind == :read
           result.each { |record| record.__send__(:mark_authorized_snapshot!) if record.respond_to?(:mark_authorized_snapshot!, true) }
         end
@@ -117,13 +154,13 @@ module AuthorizedModel
       end
 
       def authorized_aggregate(logical_operation)
-        Evaluator.ensure_policy!(self, authorization_policy, :read)
+        ensure_policy!(:read)
         context = AuthorizationContext.current!
-        unless context.iam? && authorization_policy.iam_readers.include?(context.iam_identity)
+        unless context.iam? && iam_readers.include?(context.iam_identity)
           raise AuthorizedResource::UnsupportedOperationError,
             "#{name}.#{logical_operation} needs an explicit authorized_read target"
         end
-        AuthorizedResource::Operation.within(self, logical_operation, :read) { yield }
+        AuthorizedResource::Operation.within(self, logical_operation) { yield }
       end
 
       def authorized_internal_read(logical_operation, identities:)
@@ -132,7 +169,7 @@ module AuthorizedModel
           raise AuthorizedResource::AuthorizationDenied,
             "#{context.actor_id} is not allowed to perform #{name} #{logical_operation}"
         end
-        AuthorizedResource::Operation.within(self, logical_operation, :read) { yield }
+        AuthorizedResource::Operation.within(self, logical_operation) { yield }
       end
 
       def find_by_sql(...)
@@ -150,8 +187,8 @@ module AuthorizedModel
       end
 
       def perform_authorized(kind, logical_operation, records:, requirements:)
-        Evaluator.ensure_policy!(self, authorization_policy, kind)
-        AuthorizedResource::Operation.within(self, logical_operation, kind) do |span, outermost|
+        ensure_policy!(kind)
+        AuthorizedResource::Operation.within(self, logical_operation) do |span, outermost|
           next yield unless outermost
 
           authorize_records!(kind, records, operation: logical_operation, requirements: requirements) if records
@@ -160,6 +197,21 @@ module AuthorizedModel
             requirements: requirements) if kind == :read && records.nil?
           span&.set_attribute("authorized_resource.batch_size", Array(authorized).compact.size) if authorized
           result
+        end
+      end
+
+      def ensure_policy!(kind)
+        configured = if kind == :read
+          read_requirements.any? || iam_readers.any?
+        else
+          modify_requirements.any? || iam_modifiers.any? || authorization_read_only
+        end
+        unless configured
+          raise AuthorizedResource::PolicyConfigurationError,
+            "#{name} has no explicit #{kind} authorization policy"
+        end
+        if kind == :modify && authorization_read_only
+          raise AuthorizedResource::ReadOnlyError, "#{name} is explicitly read-only"
         end
       end
 

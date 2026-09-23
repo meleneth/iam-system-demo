@@ -12,8 +12,7 @@ module AuthorizedResource
 
     HTTP_METHODS.each do |method_name|
       define_method(method_name) do |*args, **kwargs, &block|
-        kind = %i[get head].include?(method_name) ? :read : :modify
-        Operation.within(@resource_class, "connection_#{method_name}", kind) do
+        Operation.within(@resource_class, "connection_#{method_name}") do
           context_headers = AuthorizationContext.transport_headers
           header_index = %i[post put patch].include?(method_name) ? 2 : 1
           supplied = args[header_index].is_a?(Hash) ? args[header_index] : {}

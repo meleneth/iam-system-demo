@@ -5,6 +5,28 @@ module AuthorizedResource
   # propagates it per request, and traces logical remote operations. Capability
   # evaluation belongs exclusively to the receiving service.
   class Base < ActiveResource::Base
+    CLASS_OPERATIONS = {
+      build: [:read, "build"],
+      find: [:read, "find"],
+      exists?: [:read, "exists"],
+      delete: [:modify, "delete"],
+      get: [:read, "custom_get"],
+      post: [:modify, "custom_post"],
+      put: [:modify, "custom_put"],
+      patch: [:modify, "custom_patch"]
+    }.freeze
+
+    INSTANCE_OPERATIONS = {
+      destroy: [:modify, "destroy"],
+      exists?: [:read, "exists"],
+      reload: [:read, "reload"],
+      get: [:read, "custom_get"],
+      post: [:modify, "custom_post"],
+      put: [:modify, "custom_put"],
+      patch: [:modify, "custom_patch"],
+      delete: [:modify, "custom_delete"]
+    }.freeze
+
     class << self
       def connection(refresh = false)
         ConnectionProxy.new(super, self)
@@ -18,52 +40,26 @@ module AuthorizedResource
         operation_headers.freeze
       end
 
-      def build(...)
-        authorized_read("build") { super }
-      end
-
-      def find(...)
-        authorized_read("find") { super }
-      end
-
-      def exists?(...)
-        authorized_read("exists") { super }
-      end
-
-      def delete(...)
-        authorized_modify("delete") { super }
-      end
-
-      def get(...)
-        authorized_read("custom_get") { super }
-      end
-
-      def post(...)
-        authorized_modify("custom_post") { super }
-      end
-
-      def put(...)
-        authorized_modify("custom_put") { super }
-      end
-
-      def patch(...)
-        authorized_modify("custom_patch") { super }
+      CLASS_OPERATIONS.each do |method_name, (kind, operation)|
+        define_method(method_name) do |*args, **kwargs, &block|
+          public_send("authorized_#{kind}", operation) { super(*args, **kwargs, &block) }
+        end
       end
 
       # Custom endpoints use these wrappers to provide semantic operation names,
       # especially for POST-based reads and cache-backed retrievals.
       def authorized_read(logical_operation)
-        perform_remote_operation(logical_operation, :read) { yield }
+        perform_remote_operation(logical_operation) { yield }
       end
 
       def authorized_modify(logical_operation)
-        perform_remote_operation(logical_operation, :modify) { yield }
+        perform_remote_operation(logical_operation) { yield }
       end
 
       private
 
-      def perform_remote_operation(logical_operation, kind)
-        Operation.within(self, logical_operation, kind) do |span, outermost|
+      def perform_remote_operation(logical_operation)
+        Operation.within(self, logical_operation) do |span, outermost|
           result = yield
           span&.set_attribute("authorized_resource.batch_size", result.size) if outermost && result.is_a?(Array)
           result
@@ -75,36 +71,10 @@ module AuthorizedResource
       self.class.authorized_modify(new? ? "create" : "update") { super }
     end
 
-    def destroy
-      self.class.authorized_modify("destroy") { super }
-    end
-
-    def exists?
-      self.class.authorized_read("exists") { super }
-    end
-
-    def reload
-      self.class.authorized_read("reload") { super }
-    end
-
-    def get(...)
-      self.class.authorized_read("custom_get") { super }
-    end
-
-    def post(...)
-      self.class.authorized_modify("custom_post") { super }
-    end
-
-    def put(...)
-      self.class.authorized_modify("custom_put") { super }
-    end
-
-    def patch(...)
-      self.class.authorized_modify("custom_patch") { super }
-    end
-
-    def delete(...)
-      self.class.authorized_modify("custom_delete") { super }
+    INSTANCE_OPERATIONS.each do |method_name, (kind, operation)|
+      define_method(method_name) do |*args, **kwargs, &block|
+        self.class.public_send("authorized_#{kind}", operation) { super(*args, **kwargs, &block) }
+      end
     end
   end
 end
