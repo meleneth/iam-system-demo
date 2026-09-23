@@ -23,15 +23,14 @@ Both GitHub and GitLab render Mermaid diagrams directly from fenced `mermaid` co
 
 ## Explicit Authorization Contexts
 
-All protected retrievals execute inside an `AuthorizationContext` block. A
-requesting-user context carries the actor and any applicable account or
-organization boundary; an IAM context carries service authority separately
-from the originating actor. Scope selects execution authority and never
-replaces the capability checks described here.
+All protected retrievals execute inside an `AuthorizationContext` block. The
+context contains only the current actor ID. Service-to-service calls propagate
+that actor only through `pad-user-id`. The two reserved IAM values are demo
+routing markers, not authenticated identities or a security boundary.
 
 ```ruby
-AuthorizationContext.as_requesting_user(user_id: actor_id, account_id: account_id) { Account.find(account_id) }
-AuthorizationContext.as_iam(originating_user_id: actor_id) { RelationshipFact.find(...) }
+AuthorizationContext.as_requesting_user(user_id: actor_id) { Account.find(account_id) }
+AuthorizationContext.as_iam { RelationshipFact.find(...) }
 ```
 
 There is no default context. `current!` raises a dedicated
@@ -43,16 +42,14 @@ locals are not presumed to propagate.
 ActiveResource models inherit directly from `AuthorizedResource::Base` and
 configure only their normal remote transport. **AuthorizedResource requires and
 propagates authorization context. It does not evaluate capabilities or
-re-authorize returned records. The receiving service authenticates the context
-and enforces authorization.** The shared gem covers collection/single reads,
+re-authorize returned records. The receiving service evaluates the forwarded actor
+according to the demo authorization model.** The shared gem covers collection/single reads,
 reloads, associations, existence calls, pagination, mutations, and named custom
 endpoints. It derives fresh transport and trace metadata per invocation rather
 than mutating class headers or pooled connections. Ordinary resource operations
-therefore do not add a caller-side `/can` evaluation. Requesting-user authority
-is forwarded unchanged. IAM authority is forwarded only from an explicit IAM
-context, includes originating-user attribution and an internal credential, and
-remains subject to the receiving service's allowlist; the scope header alone
-grants nothing. See [`authorized-resource/README.md`](authorized-resource/README.md)
+therefore do not add a caller-side `/can` evaluation. The selected actor is forwarded unchanged in `pad-user-id`. Explicit
+IAM contexts select one of the reserved demo actors, which remain subject to the
+receiving service's routing rules. See [`authorized-resource/README.md`](authorized-resource/README.md)
 for the remote model API.
 
 Local persistence models use the same gem through
@@ -972,14 +969,14 @@ MSP fanout validation:
 
 The proof is not that the system performs magic. It is that, within sane bounds, pathological graph expansion remains a batched retrieval problem when authorization is asked specific fine-grained questions and the authorization service owns hierarchy/MSP/cache semantics.
 
-## Known Production Gaps
+## Deliberate Demo Limits
 
 This repository is a demo proving the query model. It is not a complete production IAM implementation.
 
 1. Derived authorization caches are TTL-based. Production would need event-driven invalidation for grant, account-parent, organization-membership, and MSP relationship changes.
-2. Internal trust identities (`IAM_SYSTEM`, `IAM_SYSTEM_AUTH`) combine explicit
-   scope headers with a shared demo credential. Production would need workload
-   identity, mTLS/JWT, credential rotation, and explicit caller allowlists.
+2. Reserved internal actors (`IAM_SYSTEM`, `IAM_SYSTEM_AUTH`) are routing
+   markers used by the implementation tests. Caller authentication is
+   deliberately out of scope.
 3. No service should treat remote domain objects as locally owned. Existing allowed caches are documented above; new caches must be reviewed against the ownership table.
 4. Benchmark queries intentionally return large payloads. Normal UI queries should still paginate or split views, but the stress shape is valid as a proof.
 5. Organization and account read models are optimized for demo scale and cache behavior. Production would need more explicit operational limits, audit logs, and invalidation contracts.

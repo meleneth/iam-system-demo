@@ -95,11 +95,10 @@ user-management-service: 7499, 7500, 7501
 
 the UI that users have access to.
 
-Protected reads run in an explicit authorization-context block. User-facing
-requests establish requesting-user scope from the authenticated actor and still
-perform the normal permission checks. Internal callers may use IAM scope only
-with the configured service credential; an `as=IAM_SYSTEM` query parameter or
-an IAM header by itself does not grant authority.
+Protected reads run in an explicit authorization-context block containing only
+the selected actor ID. Calls forward that value in `pad-user-id` and perform the
+normal demo permission checks. The reserved IAM actor values exercise internal
+routing; this test system does not authenticate callers.
 
 organization-service: 11120, 11250, 11380
 
@@ -130,9 +129,9 @@ this shows the spans that the system generates via OpenTelemetry as things happe
 See [request timing in Jaeger](docs/request-tracing.md) for controller spans,
 configuration switches, and timing boundaries.
 
-The current demo propagates authorization scope in headers and authenticates
-IAM claims with `IAM_INTERNAL_TOKEN`. Production should replace that shared
-credential with workload identity and mTLS/JWT. See
+The demo propagates only the current actor in the `pad-user-id` header. Its
+reserved IAM actor values exercise internal request routing; they deliberately
+do not model service authentication or a production security boundary. See
 [`authorization-context/README.md`](authorization-context/README.md) and
 [`FINAL_ARCHITECTURE.md`](FINAL_ARCHITECTURE.md#explicit-authorization-contexts).
 

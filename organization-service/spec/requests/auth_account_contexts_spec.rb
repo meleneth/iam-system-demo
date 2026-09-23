@@ -34,7 +34,7 @@ RSpec.describe "internal auth account contexts", type: :request do
              }
            ]
          },
-         headers: { "pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
+         headers: { "pad-user-id" => "IAM_SYSTEM_AUTH" },
          as: :json
 
     expect(response).to have_http_status(:ok)
@@ -63,7 +63,7 @@ RSpec.describe "internal auth account contexts", type: :request do
              }
            ]
          },
-         headers: { "pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
+         headers: { "pad-user-id" => "IAM_SYSTEM_AUTH" },
          as: :json
 
     expect(response).to have_http_status(:ok)
@@ -73,7 +73,7 @@ RSpec.describe "internal auth account contexts", type: :request do
   it "rejects non-auth-system callers" do
     post "/internal/auth/account_contexts",
          params: { contexts: [] },
-         headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
+         headers: { "pad-user-id" => "IAM_SYSTEM" },
          as: :json
 
     expect(response).to have_http_status(:forbidden)
@@ -84,10 +84,10 @@ RSpec.describe "internal auth account contexts", type: :request do
     create_valid_relationship!
     AuthorizationContext.as_iam { OrganizationAccount.create!(organization_id: client_organization_id, account_id: target_account_id) }
     payload = {contexts: [{msp_organization_id: msp_organization_id, msp_account_id: msp_account_id, accounts: [{account_id: target_account_id, parent_account_ids: []}]}]}
-    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")}, as: :json
+    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH"}, as: :json
     expect(response.parsed_body.fetch("accounts").map { |row| row.fetch("account_id") }).to eq([target_account_id])
     AuthorizationContext.as_iam { MspManagedOrganization.where(client_organization_id: client_organization_id).destroy_all }
-    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")}, as: :json
+    post "/internal/auth/account_contexts", params: payload, headers: {"pad-user-id" => "IAM_SYSTEM_AUTH"}, as: :json
     expect(response.parsed_body).to eq("accounts" => [])
   end
 

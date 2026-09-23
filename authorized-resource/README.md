@@ -5,9 +5,9 @@ The gem supplies two deliberately different boundaries:
 - `AuthorizedResource::Base` wraps remote ActiveResource operations.
 - `AuthorizedModel::Base` protects records in the service that owns them.
 
-**AuthorizedResource requires and propagates authorization context. It does not
+**AuthorizedResource requires and propagates actor context. It does not
 evaluate capabilities or re-authorize returned records. The receiving service
-authenticates the context and enforces authorization.**
+evaluates the forwarded actor according to the demo authorization model.**
 
 ## Remote resources
 
@@ -24,10 +24,9 @@ end
 Every protected operation requires an active `AuthorizationContext`. Missing
 context raises `AuthorizationContext::MissingContextError` before cache access
 or network I/O; the gem never supplies a default identity or enters IAM scope.
-Requesting-user contexts propagate the actor and optional account/organization
-metadata. IAM contexts propagate the explicitly selected IAM identity, its
-internal authentication token, and any originating-user attribution. IAM still
-follows the receiving service's existing service-authority rules.
+Every context contains one actor ID, and every request propagates it only in
+`pad-user-id`. The reserved IAM values are demo routing markers and follow the
+receiving service's existing routing rules.
 
 The transport boundary derives fresh headers for every request. It never stores
 identity in ActiveResource class headers or shared connection state. Nested
@@ -81,8 +80,7 @@ read policy and either a modify policy or `read_only!`.
 Relation materialization, associations, aggregates with explicit targets,
 custom server queries, and mutation callbacks remain protected. Client-supplied
 ownership fields select a requested target but never prove authority: the
-receiving service authenticates propagated context and evaluates its own model
-policy before returning or changing data.
+receiving service evaluates the forwarded actor against its own model policy before returning or changing data.
 
 ## Telemetry and failures
 
@@ -91,7 +89,7 @@ Remote logical operations emit one
 service host, operation, collection size when available, and outcome. Automatic
 Net::HTTP instrumentation owns HTTP spans; the gem only injects trace context
 into fresh headers and does not emit duplicate HTTP spans. Actor IDs, scope IDs,
-authorization headers, credentials, and payloads are not span attributes.
+authorization headers, and payloads are not span attributes.
 
 `authorized_resource.authorize` spans are emitted only by `AuthorizedModel` in
 the receiving service. Their child authorization-service HTTP spans distinguish

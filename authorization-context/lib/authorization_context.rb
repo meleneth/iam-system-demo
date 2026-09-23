@@ -10,63 +10,44 @@ module AuthorizationContext
   class Error < StandardError; end
   class MissingContextError < Error; end
   class InvalidContextError < Error; end
-  class UnauthenticatedAuthorityError < Error; end
 
-  Context = Data.define(:authority, :user_id, :originating_user_id, :account_id, :organization_id, :iam_identity) do
+  Context = Data.define(:actor_id) do
     def iam?
-      authority == :iam
+      IAM_IDENTITIES.include?(actor_id)
     end
 
     def requesting_user?
-      authority == :requesting_user
+      !iam?
     end
 
-    def actor_id
-      iam? ? iam_identity : user_id
+    def user_id
+      actor_id if requesting_user?
+    end
+
+    def iam_identity
+      actor_id if iam?
     end
 
     def to_h
-      {
-        authority: authority,
-        user_id: user_id,
-        originating_user_id: originating_user_id,
-        account_id: account_id,
-        organization_id: organization_id,
-        iam_identity: iam_identity
-      }.freeze
+      {actor_id: actor_id}.freeze
     end
   end
 
   class << self
-    def as_iam(originating_user_id: nil, identity: "IAM_SYSTEM", account_id: nil, organization_id: nil, &block)
+    def as_iam(identity: "IAM_SYSTEM", &block)
       raise ArgumentError, "block required" unless block
       identity = required_string!(identity, :identity)
       raise InvalidContextError, "unsupported IAM identity" unless IAM_IDENTITIES.include?(identity)
-      originating_user_id ||= current&.originating_user_id
 
-      activate(Context.new(
-        authority: :iam,
-        user_id: nil,
-        originating_user_id: optional_string(originating_user_id),
-        account_id: optional_string(account_id),
-        organization_id: optional_string(organization_id),
-        iam_identity: identity
-      ), &block)
+      activate(Context.new(actor_id: identity), &block)
     end
 
-    def as_requesting_user(user_id:, account_id: nil, organization_id: nil, &block)
+    def as_requesting_user(user_id:, &block)
       raise ArgumentError, "block required" unless block
       user_id = required_string!(user_id, :user_id)
       raise InvalidContextError, "IAM identities are not requesting users" if IAM_IDENTITIES.include?(user_id)
 
-      activate(Context.new(
-        authority: :requesting_user,
-        user_id: user_id,
-        originating_user_id: user_id,
-        account_id: optional_string(account_id),
-        organization_id: optional_string(organization_id),
-        iam_identity: nil
-      ), &block)
+      activate(Context.new(actor_id: user_id), &block)
     end
 
     def current
@@ -95,48 +76,11 @@ module AuthorizationContext
     end
 
     def transport_headers(context = current!)
-      headers = {
-        "pad-user-id" => context.actor_id,
-        "X-IAM-Authorization-Scope" => context.authority.to_s.tr("_", "-")
-      }
-      headers["X-IAM-Originating-User-ID"] = context.originating_user_id if context.originating_user_id
-      headers["X-IAM-Account-ID"] = context.account_id if context.account_id
-      headers["X-IAM-Organization-ID"] = context.organization_id if context.organization_id
-      if context.iam?
-        token = ENV["IAM_INTERNAL_TOKEN"].to_s
-        raise UnauthenticatedAuthorityError, "IAM_INTERNAL_TOKEN is not configured" if token.empty?
-        headers["X-IAM-Internal-Token"] = token
-      end
-      headers.freeze
+      {"pad-user-id" => context.actor_id}.freeze
     end
 
     def from_headers(headers)
-      actor = header(headers, "pad-user-id")
-      scope = header(headers, "X-IAM-Authorization-Scope")
-      if scope == "iam" || IAM_IDENTITIES.include?(actor)
-        authenticate_iam!(header(headers, "X-IAM-Internal-Token"))
-        identity = IAM_IDENTITIES.include?(actor) ? actor : "IAM_SYSTEM"
-        Context.new(
-          authority: :iam,
-          user_id: nil,
-          originating_user_id: optional_string(header(headers, "X-IAM-Originating-User-ID")),
-          account_id: optional_string(header(headers, "X-IAM-Account-ID")),
-          organization_id: optional_string(header(headers, "X-IAM-Organization-ID")),
-          iam_identity: identity
-        )
-      else
-        user_id = required_string!(actor, :user_id)
-        raise InvalidContextError, "invalid authorization scope" unless scope.nil? || scope.empty? || scope == "requesting-user"
-        raise InvalidContextError, "IAM identities are not requesting users" if IAM_IDENTITIES.include?(user_id)
-        Context.new(
-          authority: :requesting_user,
-          user_id: user_id,
-          originating_user_id: user_id,
-          account_id: optional_string(header(headers, "X-IAM-Account-ID")),
-          organization_id: optional_string(header(headers, "X-IAM-Organization-ID")),
-          iam_identity: nil
-        )
-      end
+      Context.new(actor_id: required_string!(header(headers, "pad-user-id"), :actor_id))
     end
 
     def within_request(headers, &block)
@@ -147,39 +91,14 @@ module AuthorizationContext
 
     def activate(context)
       previous = current
-      ActiveSupport::IsolatedExecutionState[STORAGE_KEY] = context.freeze
+      ActiveSupport::IsolatedExecutionState[STORAGE_KEY] = context&.freeze
       yield
     ensure
       ActiveSupport::IsolatedExecutionState[STORAGE_KEY] = previous
     end
 
     def normalize_context(context)
-      case context.authority
-      when :requesting_user
-        user_id = required_string!(context.user_id, :user_id)
-        raise InvalidContextError, "IAM identities are not requesting users" if IAM_IDENTITIES.include?(user_id)
-        Context.new(
-          authority: :requesting_user,
-          user_id: user_id,
-          originating_user_id: user_id,
-          account_id: optional_string(context.account_id),
-          organization_id: optional_string(context.organization_id),
-          iam_identity: nil
-        )
-      when :iam
-        identity = required_string!(context.iam_identity, :identity)
-        raise InvalidContextError, "unsupported IAM identity" unless IAM_IDENTITIES.include?(identity)
-        Context.new(
-          authority: :iam,
-          user_id: nil,
-          originating_user_id: optional_string(context.originating_user_id),
-          account_id: optional_string(context.account_id),
-          organization_id: optional_string(context.organization_id),
-          iam_identity: identity
-        )
-      else
-        raise InvalidContextError, "invalid authorization authority"
-      end
+      Context.new(actor_id: required_string!(context.actor_id, :actor_id))
     end
 
     def required_string!(value, name)
@@ -188,21 +107,8 @@ module AuthorizationContext
       value.freeze
     end
 
-    def optional_string(value)
-      value = value.to_s.strip
-      value.empty? ? nil : value.freeze
-    end
-
     def header(headers, name)
       headers[name] || headers[name.downcase] || headers["HTTP_#{name.upcase.tr('-', '_')}"]
-    end
-
-    def authenticate_iam!(provided)
-      expected = ENV["IAM_INTERNAL_TOKEN"].to_s
-      provided = provided.to_s
-      valid = !expected.empty? && expected.bytesize == provided.bytesize &&
-        ActiveSupport::SecurityUtils.secure_compare(expected, provided)
-      raise UnauthenticatedAuthorityError, "IAM authority authentication failed" unless valid
     end
   end
 end

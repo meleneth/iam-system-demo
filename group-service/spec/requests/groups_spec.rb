@@ -56,8 +56,6 @@ RSpec.describe "/groups", type: :request do
     expect(AuthorizedModel).not_to receive(:authorization_client)
     get group_url(group), headers: {
       "pad-user-id" => "IAM_SYSTEM",
-      "X-IAM-Authorization-Scope" => "iam",
-      "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")
     }, as: :json
     expect(response).to have_http_status(:ok)
   end

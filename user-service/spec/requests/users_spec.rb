@@ -6,8 +6,6 @@ RSpec.describe "/users", type: :request do
   let(:iam_headers) do
     {
       "pad-user-id" => "IAM_SYSTEM",
-      "X-IAM-Authorization-Scope" => "iam",
-      "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")
     }
   end
   let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }

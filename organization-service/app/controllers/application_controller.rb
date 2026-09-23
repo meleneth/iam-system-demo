@@ -8,7 +8,7 @@ class ApplicationController < ActionController::API
   rescue_from AuthorizationContext::MissingContextError do |error|
     render json: { error: error.message }, status: :forbidden
   end
-  rescue_from AuthorizationContext::InvalidContextError, AuthorizationContext::UnauthenticatedAuthorityError do |error|
+  rescue_from AuthorizationContext::InvalidContextError do |error|
     render json: { error: error.message }, status: :forbidden
   end
 

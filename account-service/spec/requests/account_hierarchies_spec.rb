@@ -73,7 +73,7 @@ RSpec.describe "Account hierarchies", type: :request do
 
     post "/accounts_with_parents",
          params: { account_ids: [child_one.id, child_two.id] },
-         headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
+         headers: { "pad-user-id" => "IAM_SYSTEM" },
          as: :json
 
     expect(response).to have_http_status(:ok)
@@ -133,7 +133,7 @@ RSpec.describe "Account hierarchies", type: :request do
 
     post "/accounts_with_parents",
          params: { account_ids: [first.id] },
-         headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
+         headers: { "pad-user-id" => "IAM_SYSTEM" },
          as: :json
 
     expect(response).to have_http_status(:ok)
@@ -148,7 +148,7 @@ RSpec.describe "Account hierarchies", type: :request do
 
     post "/accounts_with_parents",
          params: { account_ids: [unknown_id] },
-         headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") },
+         headers: { "pad-user-id" => "IAM_SYSTEM" },
          as: :json
 
     expect(response).to have_http_status(:ok)

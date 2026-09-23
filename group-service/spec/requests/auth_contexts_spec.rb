@@ -5,8 +5,6 @@ RSpec.describe "Authorization group contexts", type: :request do
   let(:headers) do
     {
       "pad-user-id" => "IAM_SYSTEM_AUTH",
-      "X-IAM-Authorization-Scope" => "iam",
-      "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")
     }
   end
   let!(:group) { Group.create!(account_id: SecureRandom.uuid, name: "Readers") }

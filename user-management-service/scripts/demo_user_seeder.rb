@@ -818,8 +818,6 @@ class DemoFixtureArtifacts
         local account_id="$1"
         curl_time \\
           -H 'pad-user-id: IAM_SYSTEM' \\
-          -H 'X-IAM-Authorization-Scope: iam' \\
-          -H "X-IAM-Internal-Token: ${IAM_INTERNAL_TOKEN:?IAM_INTERNAL_TOKEN is required}" \\
           -H 'Content-Type: application/json' \\
           --data "{\\"account_ids\\":[\\"${account_id}\\"]}" \\
           "$ACCOUNT_SERVICE/accounts_with_parents.json"

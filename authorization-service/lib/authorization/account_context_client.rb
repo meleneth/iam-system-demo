@@ -13,8 +13,7 @@ module Authorization
     end
 
     def providers_for(account_ids:)
-      originating_user_id = AuthorizationContext.current!.originating_user_id
-      AuthorizationContext.as_iam(originating_user_id: originating_user_id, identity: "IAM_SYSTEM_AUTH") do
+      AuthorizationContext.as_iam(identity: "IAM_SYSTEM_AUTH") do
         perform_request(account_ids)
       end
     end

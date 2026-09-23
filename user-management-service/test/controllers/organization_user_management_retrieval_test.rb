@@ -144,7 +144,7 @@ class OrganizationUserManagementRetrievalTest < ActiveSupport::TestCase
       group_users.select { |group_user| ids.include?(group_user.user_id) }
     end
 
-    payload = AuthorizationContext.as_requesting_user(user_id: ACTOR_ID, organization_id: ORGANIZATION_ID) do
+    payload = AuthorizationContext.as_requesting_user(user_id: ACTOR_ID) do
       Account.stub(:search, account_search) do
         Account.stub(:find, account_find) do
           User.stub(:search, user_search) do

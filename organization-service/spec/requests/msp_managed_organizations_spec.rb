@@ -18,7 +18,7 @@ RSpec.describe "internal MSP managed organizations", type: :request do
 
     get "/internal/msp_managed_organizations/#{msp_account_id}",
         params: { limit: 1 },
-        headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }
+        headers: { "pad-user-id" => "IAM_SYSTEM" }
 
     expect(response).to have_http_status(:ok)
     first_page = response.parsed_body
@@ -30,7 +30,7 @@ RSpec.describe "internal MSP managed organizations", type: :request do
 
     get "/internal/msp_managed_organizations/#{msp_account_id}",
         params: { continuance: first_page.fetch("continuance"), limit: 1 },
-        headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }
+        headers: { "pad-user-id" => "IAM_SYSTEM" }
 
     expect(response).to have_http_status(:ok)
     second_page = response.parsed_body
@@ -51,7 +51,7 @@ RSpec.describe "internal MSP managed organizations", type: :request do
 
     get "/internal/msp_managed_organizations/#{msp_account_id}",
         params: { limit: 100 },
-        headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }
+        headers: { "pad-user-id" => "IAM_SYSTEM" }
 
     expect(response).to have_http_status(:ok)
     page = response.parsed_body

@@ -53,7 +53,7 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
     expect(json(response)).to eq(count) if count
   end
   def check_missing_context(response)
-    expect(response.code).to eq('500')
+    expect(response.code).to eq('403')
     expect(json(response)).to eq('error' => 'protected retrieval requires an explicit authorization context')
   end
   def phases
@@ -381,7 +381,7 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
   end
 
   it 'trusted authorization facts return exact owners and only actual MSP relationships' do
-    headers = {'pad-user-id' => 'IAM_SYSTEM_AUTH', 'X-IAM-Authorization-Scope' => 'iam', 'X-IAM-Internal-Token' => ENV.fetch('IAM_INTERNAL_TOKEN')}
+    headers = {'pad-user-id' => 'IAM_SYSTEM_AUTH'}
     response = call('group-service', '/internal/auth/group_contexts', actor: nil, body: {group_ids: [id(:group_child), id(:group_foreign)]}, headers: headers)
     check(response, true)
     expect(json(response).fetch('groups')).to match_array([

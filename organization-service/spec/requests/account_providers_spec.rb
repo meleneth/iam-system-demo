@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Authorization provider contexts", type: :request do
-  let(:headers) { {"pad-user-id" => "IAM_SYSTEM_AUTH", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN")} }
+  let(:headers) { {"pad-user-id" => "IAM_SYSTEM_AUTH"} }
 
   around { |example| AuthorizationContext.as_iam { example.run } }
 

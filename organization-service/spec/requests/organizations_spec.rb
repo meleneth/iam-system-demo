@@ -22,7 +22,7 @@ RSpec.describe "Organizations", type: :request do
   it "allows IAM_SYSTEM to read an organization row without actor grants" do
     expect(authorization_client).not_to receive(:capabilities)
 
-    get "/organizations/#{organization.id}", headers: { "pad-user-id" => "IAM_SYSTEM", "X-IAM-Authorization-Scope" => "iam", "X-IAM-Internal-Token" => ENV.fetch("IAM_INTERNAL_TOKEN") }
+    get "/organizations/#{organization.id}", headers: { "pad-user-id" => "IAM_SYSTEM" }
 
     expect(response).to have_http_status(:ok)
   end

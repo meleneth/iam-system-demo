@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   rescue_from AuthorizationContext::MissingContextError do |error|
     render plain: error.message, status: :forbidden
   end
-  rescue_from AuthorizationContext::InvalidContextError, AuthorizationContext::UnauthenticatedAuthorityError do |error|
+  rescue_from AuthorizationContext::InvalidContextError do |error|
     render plain: error.message, status: :forbidden
   end
 

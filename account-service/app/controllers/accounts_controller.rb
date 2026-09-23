@@ -136,7 +136,7 @@ class AccountsController < ApplicationController
       OpenTelemetry::Trace.current_span.add_event("Fetching #{misses.size} account_with_parents misses")
       organization_payloads = {}
       existing_misses = []
-      AuthorizationContext.as_iam(originating_user_id: AuthorizationContext.current!.originating_user_id) do
+      AuthorizationContext.as_iam do
         existing_misses = Account.where(id: misses).pluck(:id).map(&:to_s)
         organization_payloads = OrganizationAccount.account_ids_for_organizations_by_account_ids(existing_misses) if existing_misses.any?
       end

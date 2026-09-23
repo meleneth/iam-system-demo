@@ -90,7 +90,7 @@ module Authorization
     private
 
     def with_evaluation_context(&block)
-      AuthorizationContext.as_iam(originating_user_id: @user_id, &block)
+      AuthorizationContext.as_iam(&block)
     end
 
     def canonical_account_ids_with_permission(account_ids, permission)
@@ -234,7 +234,7 @@ module Authorization
     def account_hierarchy_ids_for(account_ids)
       requested_ids = Array(account_ids).map(&:to_s).uniq
       hierarchies = nil
-      AuthorizationContext.as_iam(originating_user_id: @user_id) do
+      AuthorizationContext.as_iam do
         hierarchies = Account.with_parents_batch(requested_ids)
       end
 

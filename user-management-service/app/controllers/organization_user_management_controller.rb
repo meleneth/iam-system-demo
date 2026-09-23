@@ -30,7 +30,7 @@ class OrganizationUserManagementController < ApplicationController
     @frame_id = permitted[:frame_id].presence || "organization-user-management-partition-root"
 
     cursor = decode_continuance(permitted[:continuance])
-    partition = AuthorizationContext.as_requesting_user(user_id: @actor_user_id, organization_id: @organization_id) do
+    partition = AuthorizationContext.as_requesting_user(user_id: @actor_user_id) do
       organization_partition(cursor)
     end
 

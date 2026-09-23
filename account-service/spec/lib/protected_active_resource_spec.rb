@@ -17,9 +17,7 @@ RSpec.describe AuthorizedResource::ConnectionProxy do
     expect(connection).to receive(:get) do |_path, headers|
       expect(headers).to include(
         "Accept" => "application/json",
-        "pad-user-id" => "actor",
-        "X-IAM-Authorization-Scope" => "requesting-user",
-        "X-IAM-Originating-User-ID" => "actor"
+        "pad-user-id" => "actor"
       )
       :response
     end
@@ -32,27 +30,18 @@ RSpec.describe AuthorizedResource::ConnectionProxy do
     expect(supplied).to eq("Accept" => "application/json")
   end
 
-  it "propagates authenticated IAM authority and originating-user attribution" do
-    previous_token = ENV["IAM_INTERNAL_TOKEN"]
-    ENV["IAM_INTERNAL_TOKEN"] = "internal-secret"
+  it "propagates an IAM actor using the same single header" do
     expect(connection).to receive(:post) do |_path, _body, headers|
-      expect(headers).to include(
-        "pad-user-id" => "IAM_SYSTEM",
-        "X-IAM-Authorization-Scope" => "iam",
-        "X-IAM-Originating-User-ID" => "originator",
-        "X-IAM-Internal-Token" => "internal-secret"
-      )
+      expect(headers).to eq("pad-user-id" => "IAM_SYSTEM")
       :response
     end
 
-    result = AuthorizationContext.as_requesting_user(user_id: "originator") do
-      AuthorizationContext.as_iam { proxy.post("/users/search", "{}", {}) }
+    result = AuthorizationContext.as_iam do
+      proxy.post("/users/search", "{}", {})
     end
 
     expect(result).to eq(:response)
     expect(AuthorizationContext.current).to be_nil
-  ensure
-    ENV["IAM_INTERNAL_TOKEN"] = previous_token
   end
 
   it "isolates concurrent request metadata" do

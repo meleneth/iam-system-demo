@@ -24,8 +24,7 @@ module Authorization
     private
 
     def request(path, payload)
-      originating_user_id = AuthorizationContext.current!.originating_user_id
-      AuthorizationContext.as_iam(originating_user_id: originating_user_id, identity: "IAM_SYSTEM_AUTH") do
+      AuthorizationContext.as_iam(identity: "IAM_SYSTEM_AUTH") do
         perform_request(path, payload)
       end
     end

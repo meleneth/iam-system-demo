@@ -79,7 +79,7 @@ module Types
       context[:tracer] = TRACER
       context[:otel_ctx] ||= OpenTelemetry::Context.current
 
-      page = AuthorizationContext.as_requesting_user(user_id: as, account_id: msp_account_id) do
+      page = AuthorizationContext.as_requesting_user(user_id: as) do
         MspManagedOrganization.page(msp_account_id, user_id: as, continuance: continuance)
       end
       msp_organization_id = page["msp_organization_id"]
