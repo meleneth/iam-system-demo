@@ -34,8 +34,8 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
-COPY authorization-context /authorization-context
-COPY authorized-resource /authorized-resource
+COPY gems/authorization-context /gems/authorization-context
+COPY gems/authorized-resource /gems/authorized-resource
 COPY organization-service/Gemfile organization-service/Gemfile.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
@@ -55,8 +55,8 @@ FROM base
 
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
-COPY --from=build /authorization-context /authorization-context
-COPY --from=build /authorized-resource /authorized-resource
+COPY --from=build /gems/authorization-context /gems/authorization-context
+COPY --from=build /gems/authorized-resource /gems/authorized-resource
 COPY --from=build /rails /rails
 
 RUN apt-get update -qq && \

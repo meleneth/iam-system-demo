@@ -132,7 +132,7 @@ configuration switches, and timing boundaries.
 The demo propagates only the current actor in the `pad-user-id` header. Its
 reserved IAM actor values exercise internal request routing; they deliberately
 do not model service authentication or a production security boundary. See
-[`authorization-context/README.md`](authorization-context/README.md) and
+[`gems/authorization-context/README.md`](gems/authorization-context/README.md) and
 [`FINAL_ARCHITECTURE.md`](FINAL_ARCHITECTURE.md#explicit-authorization-contexts).
 
 # Solution Space

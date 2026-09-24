@@ -34,12 +34,12 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
-COPY authorization-context /authorization-context
-COPY authorized-resource /authorized-resource
-COPY capability-grant-resource /capability-grant-resource
-COPY organization-account-resource /organization-account-resource
-COPY organization-resource /organization-resource
-COPY user-resource /user-resource
+COPY gems/authorization-context /gems/authorization-context
+COPY gems/authorized-resource /gems/authorized-resource
+COPY gems/capability-grant-resource /gems/capability-grant-resource
+COPY gems/organization-account-resource /gems/organization-account-resource
+COPY gems/organization-resource /gems/organization-resource
+COPY gems/user-resource /gems/user-resource
 COPY account-service/Gemfile account-service/Gemfile.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
@@ -59,12 +59,12 @@ FROM base
 
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
-COPY --from=build /authorization-context /authorization-context
-COPY --from=build /authorized-resource /authorized-resource
-COPY --from=build /capability-grant-resource /capability-grant-resource
-COPY --from=build /organization-account-resource /organization-account-resource
-COPY --from=build /organization-resource /organization-resource
-COPY --from=build /user-resource /user-resource
+COPY --from=build /gems/authorization-context /gems/authorization-context
+COPY --from=build /gems/authorized-resource /gems/authorized-resource
+COPY --from=build /gems/capability-grant-resource /gems/capability-grant-resource
+COPY --from=build /gems/organization-account-resource /gems/organization-account-resource
+COPY --from=build /gems/organization-resource /gems/organization-resource
+COPY --from=build /gems/user-resource /gems/user-resource
 COPY --from=build /rails /rails
 
 RUN apt-get update -qq && \

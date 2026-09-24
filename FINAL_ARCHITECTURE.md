@@ -49,7 +49,7 @@ endpoints. It derives fresh transport and trace metadata per invocation rather
 than mutating class headers or pooled connections. Ordinary resource operations
 therefore do not add a caller-side `/can` evaluation. The selected actor is forwarded unchanged in `pad-user-id`. Explicit
 IAM contexts select one of the reserved demo actors, which remain subject to the
-receiving service's routing rules. See [`authorized-resource/README.md`](authorized-resource/README.md)
+receiving service's routing rules. See [`gems/authorized-resource/README.md`](gems/authorized-resource/README.md)
 for the remote model API.
 
 Local persistence models use the same gem through

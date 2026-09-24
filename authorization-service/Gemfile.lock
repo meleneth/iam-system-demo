@@ -1,17 +1,17 @@
 PATH
-  remote: ../account-resource
+  remote: ../gems/account-resource
   specs:
     account-resource (0.1.0)
       authorized-resource (~> 0.2)
 
 PATH
-  remote: ../authorization-context
+  remote: ../gems/authorization-context
   specs:
     authorization-context (0.1.0)
       activesupport (>= 7.1, < 9)
 
 PATH
-  remote: ../authorized-resource
+  remote: ../gems/authorized-resource
   specs:
     authorized-resource (0.2.0)
       activerecord (>= 7.1, < 9)
