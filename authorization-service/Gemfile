@@ -2,6 +2,7 @@ source "https://rubygems.org"
 
 gem "authorization-context", path: "../authorization-context", require: "authorization_context"
 gem "authorized-resource", path: "../authorized-resource", require: "authorized_resource"
+gem "account-resource", path: "../account-resource", require: "account_resource"
 gem "tsort"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"

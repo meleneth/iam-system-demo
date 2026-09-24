@@ -36,6 +36,13 @@ RUN apt-get update -qq && \
 # Install application gems
 COPY authorization-context /authorization-context
 COPY authorized-resource /authorized-resource
+COPY account-resource /account-resource
+COPY capability-grant-resource /capability-grant-resource
+COPY group-resource /group-resource
+COPY group-user-resource /group-user-resource
+COPY organization-account-resource /organization-account-resource
+COPY organization-resource /organization-resource
+COPY user-resource /user-resource
 COPY user-management-service/Gemfile user-management-service/Gemfile.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
@@ -60,6 +67,13 @@ FROM base
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /authorization-context /authorization-context
 COPY --from=build /authorized-resource /authorized-resource
+COPY --from=build /account-resource /account-resource
+COPY --from=build /capability-grant-resource /capability-grant-resource
+COPY --from=build /group-resource /group-resource
+COPY --from=build /group-user-resource /group-user-resource
+COPY --from=build /organization-account-resource /organization-account-resource
+COPY --from=build /organization-resource /organization-resource
+COPY --from=build /user-resource /user-resource
 COPY --from=build /rails /rails
 
 # Run and own only the runtime files as a non-root user for security

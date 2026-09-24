@@ -13,6 +13,34 @@ PATH
       authorization-context (~> 0.1)
       opentelemetry-api (>= 1.4, < 2)
 
+PATH
+  remote: ../capability-grant-resource
+  specs:
+    capability-grant-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
+
+PATH
+  remote: ../organization-account-resource
+  specs:
+    organization-account-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
+
+PATH
+  remote: ../organization-resource
+  specs:
+    organization-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
+
+PATH
+  remote: ../user-resource
+  specs:
+    user-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -618,6 +646,7 @@ DEPENDENCIES
   aws-sdk-sqs (~> 1.96)
   bootsnap
   brakeman
+  capability-grant-resource!
   debug
   faraday (~> 2.13)
   graphql (~> 2.5)
@@ -625,6 +654,8 @@ DEPENDENCIES
   opentelemetry-exporter-otlp (~> 0.30.0)
   opentelemetry-instrumentation-all (~> 0.78.0)
   opentelemetry-sdk (~> 1.8)
+  organization-account-resource!
+  organization-resource!
   pg (~> 1.1)
   puma (>= 5.0)
   rails (~> 8.0.2)
@@ -636,6 +667,7 @@ DEPENDENCIES
   thruster
   tsort
   tzinfo-data
+  user-resource!
 
 BUNDLED WITH
   4.0.16

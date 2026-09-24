@@ -1,4 +1,10 @@
 PATH
+  remote: ../account-resource
+  specs:
+    account-resource (0.1.0)
+      authorized-resource (~> 0.2)
+
+PATH
   remote: ../authorization-context
   specs:
     authorization-context (0.1.0)
@@ -608,6 +614,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  account-resource!
   activeresource (~> 6.1)
   authorization-context!
   authorized-resource!

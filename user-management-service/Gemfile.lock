@@ -1,4 +1,10 @@
 PATH
+  remote: ../account-resource
+  specs:
+    account-resource (0.1.0)
+      authorized-resource (~> 0.2)
+
+PATH
   remote: ../authorization-context
   specs:
     authorization-context (0.1.0)
@@ -12,6 +18,47 @@ PATH
       activeresource (~> 6.1.4)
       authorization-context (~> 0.1)
       opentelemetry-api (>= 1.4, < 2)
+
+PATH
+  remote: ../capability-grant-resource
+  specs:
+    capability-grant-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
+
+PATH
+  remote: ../group-resource
+  specs:
+    group-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
+
+PATH
+  remote: ../group-user-resource
+  specs:
+    group-user-resource (0.1.0)
+      authorized-resource (~> 0.2)
+
+PATH
+  remote: ../organization-account-resource
+  specs:
+    organization-account-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
+
+PATH
+  remote: ../organization-resource
+  specs:
+    organization-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
+
+PATH
+  remote: ../user-resource
+  specs:
+    user-resource (0.1.0)
+      authorized-resource (~> 0.2)
+      faraday (>= 2.0, < 3)
 
 GEM
   remote: https://rubygems.org/
@@ -667,6 +714,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  account-resource!
   activeresource (~> 6.1)
   async (~> 2.26)
   authorization-context!
@@ -676,10 +724,13 @@ DEPENDENCIES
   aws-sdk-sqs (~> 1.96)
   bootsnap
   brakeman
+  capability-grant-resource!
   debug
   faraday (~> 2.13)
   graphiql-rails
   graphql (~> 2.5)
+  group-resource!
+  group-user-resource!
   haml-rails (~> 2.1)
   html2haml (~> 2.3)
   importmap-rails
@@ -692,6 +743,8 @@ DEPENDENCIES
   opentelemetry-instrumentation-rack (~> 0.26.0)
   opentelemetry-instrumentation-rails (~> 0.36.0)
   opentelemetry-sdk (~> 1.8)
+  organization-account-resource!
+  organization-resource!
   propshaft
   puma (>= 5.0)
   rails (~> 8.0.2)
@@ -705,6 +758,7 @@ DEPENDENCIES
   tsort
   turbo-rails
   tzinfo-data
+  user-resource!
   web-console
 
 BUNDLED WITH
