@@ -22,7 +22,8 @@ class CapabilitiesController < ApplicationController
   end
 
   def groups
-    render json: capability_map { |scope_id| capability_service.for_group(scope_id) }
+    scope_ids = requested_scope_ids
+    render json: capability_service.for_groups(scope_ids)
   end
 
   private
@@ -35,9 +36,12 @@ class CapabilitiesController < ApplicationController
   end
 
   def capability_map
-    scope_ids = Array(params.permit(scope_id: [])[:scope_id]).map(&:to_s).uniq
-    raise ActionController::BadRequest, "scope_id must be an array" if scope_ids.empty?
+    requested_scope_ids.to_h { |scope_id| [scope_id, yield(scope_id)] }
+  end
 
-    scope_ids.to_h { |scope_id| [scope_id, yield(scope_id)] }
+  def requested_scope_ids
+    Array(params.permit(scope_id: [])[:scope_id]).map(&:to_s).uniq.tap do |scope_ids|
+      raise ActionController::BadRequest, "scope_id must be an array" if scope_ids.empty?
+    end
   end
 end

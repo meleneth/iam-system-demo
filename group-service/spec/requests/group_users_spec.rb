@@ -8,13 +8,19 @@ RSpec.describe "/group_users", type: :request do
   let!(:group_user) { GroupUser.create!(group_id: group.id, user_id: user_id) }
   let(:authorization_client) { instance_double(AuthorizedModel::AuthorizationClient) }
 
-  def allow_group_capabilities(map)
+  def allow_group_capabilities(map, &verify_targets)
     allow(AuthorizedModel).to receive(:authorization_client).and_return(authorization_client)
-    expect(authorization_client).to receive(:capabilities).once.and_return("Group" => map)
+    expect(authorization_client).to receive(:capabilities).once do |targets|
+      verify_targets&.call(targets)
+      {"Group" => map}
+    end
   end
 
-  it "checks group capabilities, including inherited account capabilities" do
-    allow_group_capabilities(group.id => ["account.users.read"])
+  it "checks the owning group's effective read decision" do
+    allow_group_capabilities(group.id => ["group.read"]) do |targets|
+      expect(targets.map { |target| [target.scope_type, target.scope_id, target.capability] })
+        .to eq([["Group", group.id, "group.read"]])
+    end
     get group_user_url(group_user), headers: { "pad-user-id" => actor_user_id }, as: :json
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body).to include("group_id" => group.id, "user_id" => user_id)

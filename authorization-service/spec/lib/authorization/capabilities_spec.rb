@@ -76,6 +76,44 @@ RSpec.describe Authorization::Capabilities do
   let(:redis) { FakeCapabilitiesRedis.new }
   let(:service) { described_class.new(user_id: user_id, redis: redis) }
 
+  it "resolves distinct group owners in one relationship batch and reuses warm group results" do
+    member_group = grant_group_id(user_id)
+    group_ids = [SecureRandom.uuid, SecureRandom.uuid]
+    account_ids = [SecureRandom.uuid, SecureRandom.uuid]
+    CapabilityGrant.create!(
+      group_id: member_group,
+      permission: "group.read",
+      scope_type: "Group",
+      scope_id: group_ids.first
+    )
+    CapabilityGrant.create!(
+      group_id: member_group,
+      permission: "account.users.read",
+      scope_type: "Account",
+      scope_id: account_ids.last
+    )
+    group_client = instance_double(Authorization::GroupContextClient)
+    expect(group_client).to receive(:group_ids_for).with(user_id).once.and_return([member_group])
+    expect(group_client).to receive(:groups).with(group_ids).once.and_return(
+      group_ids.zip(account_ids).map { |group_id, account_id| {"id" => group_id, "account_id" => account_id} }
+    )
+    account_client = instance_double(Authorization::AccountContextClient)
+    expect(account_client).to receive(:providers_for).with(account_ids: account_ids).once.and_return({"accounts" => []})
+    expect(Account).to receive(:with_parents_batch).with(account_ids).once.and_return(
+      account_ids.map { |account_id| [OpenStruct.new(id: account_id, parent_account_id: nil)] }
+    )
+    grouped = described_class.new(
+      user_id: user_id, redis: redis, account_context_client: account_client, group_context_client: group_client
+    )
+    expected = {
+      group_ids.first => ["group.read"],
+      group_ids.last => ["account.users.read", "group.read"]
+    }
+
+    expect(grouped.for_groups(group_ids)).to eq(expected)
+    expect(grouped.for_groups(group_ids)).to eq(expected)
+  end
+
   it "caches final capability arrays for five minutes" do
     CapabilityGrant.create!(
       group_id: grant_group_id(user_id),

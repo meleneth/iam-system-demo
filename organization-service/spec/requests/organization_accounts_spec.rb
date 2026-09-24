@@ -120,25 +120,27 @@ RSpec.describe "Organization accounts", type: :request do
       relationship = AuthorizationContext.as_iam do
         OrganizationAccount.find_by!(account_id: account_id)
       end
-      expected_status = grant_scope == "neither" ? :forbidden : :ok
+      expected_status = grant_scope == "organization" ? :ok : :forbidden
       get "/organization_accounts/#{relationship.id}", headers: {"pad-user-id" => actor_user_id}
       expect(response).to have_http_status(expected_status)
       [{organization_id: organization_id}, {account_id: account_id},
        {organization_id: organization_id, account_id: account_id}].each do |filters|
         get "/organization_accounts", params: filters, headers: {"pad-user-id" => actor_user_id}
         expect(response).to have_http_status(expected_status)
-        expect(response.parsed_body.map { |row| row.fetch("id") }).to eq([relationship.id]) unless grant_scope == "neither"
+        expect(response.parsed_body.map { |row| row.fetch("id") }).to eq([relationship.id]) if grant_scope == "organization"
       end
     end
   end
 
   it "rejects a collection containing a relationship outside the actor's scope" do
     other_account = SecureRandom.uuid
+    other_organization = SecureRandom.uuid
     AuthorizationContext.as_iam do
-      OrganizationAccount.create!(organization_id: organization_id, account_id: other_account)
+      Organization.create!(id: other_organization)
+      OrganizationAccount.create!(organization_id: other_organization, account_id: other_account)
     end
-    grant_capabilities(["Account", account_id, "account.read"])
-    get "/organization_accounts", params: {organization_id: organization_id}, headers: {"pad-user-id" => actor_user_id}
+    grant_capabilities(["Organization", organization_id, "organization.read.accounts"])
+    get "/organization_accounts", params: {account_id: [account_id, other_account]}, headers: {"pad-user-id" => actor_user_id}
     expect(response).to have_http_status(:forbidden)
   end
 

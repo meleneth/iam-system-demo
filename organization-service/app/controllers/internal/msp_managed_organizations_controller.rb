@@ -28,7 +28,7 @@ module Internal
         organization_ids = OrganizationAccount.authorized_read(
           "msp_ownership",
           records: [OrganizationAccount.new(account_id: msp_account_id)],
-          requirements: account_read_requirements
+          requirement: account_read_requirement
         ) do
           OrganizationAccount.where(account_id: msp_account_id).distinct.pluck(:organization_id)
         end
@@ -39,7 +39,7 @@ module Internal
       account_scope = managed_account_scope(msp_account_id)
       relationships = OrganizationAccount.authorized_read(
         "managed_accounts",
-        requirements: account_read_requirements
+        requirement: account_read_requirement
       ) { account_scope.to_a }
       total_count = relationships.size
       account_ids = relationships.slice(offset, limit).to_a.map { |row| row.account_id.to_s }
@@ -73,8 +73,8 @@ module Internal
         .distinct.order(:account_id)
     end
 
-    def account_read_requirements
-      [OrganizationAccount.authorization_requirement("account.read", scope_type: "Account", target: :account_id)]
+    def account_read_requirement
+      OrganizationAccount.authorization_requirement("account.read", scope_type: "Account", target: :account_id)
     end
 
     def empty_page(msp_account_id)

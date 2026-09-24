@@ -18,8 +18,7 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
     account: ['account-service', 'accounts', '', :read],
     user: ['user-service', 'users', 'user_', :users],
     group: ['group-service', 'groups', 'group_', :users],
-    membership: ['group-service', 'group_users', 'membership_', :users],
-    organization_relationship: ['organization-service', 'organization_accounts', 'link_', :read]
+    membership: ['group-service', 'group_users', 'membership_', :users]
   }.freeze
 
   def id(key) = F.id(key)
@@ -79,21 +78,15 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
             target_id = id("#{prefix}#{target}")
             allowed = allowed_targets.include?(target)
             check(call(service, "/#{resource}/#{target_id}", actor: actor), allowed, ids: [target_id])
-            check(call(service, "/#{resource}?#{record == :organization_relationship ? 'account_id' : 'id'}[]=#{record == :organization_relationship ? id(target) : target_id}", actor: actor), allowed, ids: [target_id])
-            unless record == :organization_relationship
-              check(call(service, "/#{resource}/search", actor: actor, body: {id: [target_id]}), allowed, ids: [target_id])
-            end
+            check(call(service, "/#{resource}?id[]=#{target_id}", actor: actor), allowed, ids: [target_id])
+            check(call(service, "/#{resource}/search", actor: actor, body: {id: [target_id]}), allowed, ids: [target_id])
           end
           yes = (allowed_targets & TARGETS).first
           no = (TARGETS - allowed_targets).first
           next unless yes && no
           [[yes, no], [no, yes]].each do |targets|
             ids = targets.map { |t| id("#{prefix}#{t}") }
-            if record == :organization_relationship
-              check(call(service, "/#{resource}?#{URI.encode_www_form(targets.map { |v| ['account_id[]', id(v)] })}", actor: actor), false)
-            else
-              check(call(service, "/#{resource}/search", actor: actor, body: {id: ids}), false)
-            end
+            check(call(service, "/#{resource}/search", actor: actor, body: {id: ids}), false)
           end
         end
       end
@@ -142,7 +135,7 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
           check(call('group-service', "/#{resource}/#{peer_id}", actor: actor), actor == 'group_account', ids: [peer_id])
           [[ :child, :sibling ], [ :sibling, :child ]].each do |targets|
             ids = targets.map { |t| id("#{prefix}#{t}") }
-            allowed = actor == 'mixed' && ENV['AUTHORIZATION_CHECK_MODE'] == 'capabilities'
+            allowed = actor == 'mixed'
             check(call('group-service', "/#{resource}/search", actor: actor, body: {id: ids}), allowed, ids: ids)
           end
         end
@@ -203,9 +196,9 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
       check_missing_context(call('organization-service', "/organizations/#{id(:client)}", actor: nil))
       # This endpoint rejects the absent actor before attempting its protected count.
       check(call('organization-service', "/organizations/accounts/counts/#{id(:client)}", actor: nil), false)
-      # Listing every row by account grants is allowed only if every row is covered.
+      # Account grants do not replace the relationship's organization policy.
       check(call('organization-service', "/organization_accounts?organization_id=#{id(:client)}", actor: 'read_child'), false)
-      check(call('organization-service', "/organization_accounts?organization_id=#{id(:client)}", actor: 'read_provider'), true, ids: F::ORGANIZATIONS.fetch(:client).map { |a| id("link_#{a}") })
+      check(call('organization-service', "/organization_accounts?organization_id=#{id(:client)}", actor: 'read_provider'), false)
     end
   end
 

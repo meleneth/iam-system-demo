@@ -71,7 +71,8 @@ end
 ```
 
 `target:` identifies the real authorization target and may be an attribute or
-callable. Repeated requirements are alternatives. `AuthorizedModel` batches
+callable. Each model has exactly one read policy; a repeated declaration is a
+configuration error. `AuthorizedModel` batches
 authorization evaluation across materialized collections, checks create
 containers, checks old and new targets for boundary-moving updates, and checks
 the existing target for deletes. Concrete server models require an explicit

@@ -14,19 +14,19 @@ policies = {
     'users#show' => 'Account/account.users.read', 'users_counts#index' => 'Account/account.users.read for every requested account'
   },
   'group-service' => {
-    'groups#index' => 'Account/account.users.read OR Group/group.read, per returned group',
-    'groups#search' => 'Account/account.users.read OR Group/group.read, per returned group',
-    'groups#show' => 'Account/account.users.read OR Group/group.read, per returned group',
-    'group_users#index' => 'owning group: Account/account.users.read OR Group/group.read',
-    'group_users#search' => 'owning group: Account/account.users.read OR Group/group.read',
-    'group_users#show' => 'owning group: Account/account.users.read OR Group/group.read',
+    'groups#index' => 'Group/group.read, resolved from exact Group and owning Account grants',
+    'groups#search' => 'Group/group.read, resolved from exact Group and owning Account grants',
+    'groups#show' => 'Group/group.read, resolved from exact Group and owning Account grants',
+    'group_users#index' => 'owning Group/group.read, resolved from exact Group and owning Account grants',
+    'group_users#search' => 'owning Group/group.read, resolved from exact Group and owning Account grants',
+    'group_users#show' => 'owning Group/group.read, resolved from exact Group and owning Account grants',
     'groups_counts#index' => 'Account/account.users.read for every requested account',
     'internal/auth/contexts#memberships' => 'IAM_SYSTEM_AUTH only', 'internal/auth/contexts#groups' => 'IAM_SYSTEM_AUTH only'
   },
   'organization-service' => {
     'organizations#show' => 'Organization/organization.read',
-    'organization_accounts#index' => 'Organization/organization.read.accounts OR Account/account.read, per returned relationship',
-    'organization_accounts#show' => 'Organization/organization.read.accounts OR Account/account.read, per returned relationship',
+    'organization_accounts#index' => 'Organization/organization.read.accounts, per returned relationship',
+    'organization_accounts#show' => 'Organization/organization.read.accounts, per returned relationship',
     'organization_accounts#for_account' => 'Account/account.read AND Organization/organization.read.accounts AND Organization/organization.read',
     'organization_accounts#for_accounts' => 'Account/account.read AND Organization/organization.read.accounts',
     'organizations/accounts_count#index' => 'Organization/organization.read.accounts',

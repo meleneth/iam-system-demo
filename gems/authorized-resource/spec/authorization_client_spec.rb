@@ -12,9 +12,11 @@ RSpec.describe AuthorizedModel::AuthorizationClient do
 
   around do |example|
     original = ENV["AUTHORIZATION_CHECK_MODE"]
+    original_batch_size = ENV["IAM_DEMO_BATCH_SIZE"]
     example.run
   ensure
     ENV["AUTHORIZATION_CHECK_MODE"] = original
+    ENV["IAM_DEMO_BATCH_SIZE"] = original_batch_size
   end
 
   it "batches capability requests by scope type and propagates actor context" do
@@ -84,6 +86,56 @@ RSpec.describe AuthorizedModel::AuthorizationClient do
     end
 
     expect(result).to eq({})
+  end
+
+  it "chunks distinct /can target sets instead of issuing requests per record" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "can"
+    ENV["IAM_DEMO_BATCH_SIZE"] = "2"
+    targets = %w[account-1 account-1 account-2 account-3].map do |scope_id|
+      AuthorizedModel::Target.new(scope_type: "Account", scope_id: scope_id, capability: "widget.read")
+    end
+    http = instance_double(Net::HTTP)
+    expect(Net::HTTP).to receive(:start).twice.and_yield(http)
+    expect(http).to receive(:request).ordered do |request|
+      expect(JSON.parse(request.body)).to eq("scope_id" => %w[account-1 account-2])
+      response(Net::HTTPOK, "200")
+    end
+    expect(http).to receive(:request).ordered do |request|
+      expect(JSON.parse(request.body)).to eq("scope_id" => ["account-3"])
+      response(Net::HTTPOK, "200")
+    end
+
+    result = AuthorizationContext.as_requesting_user(user_id: "actor-1") do
+      client.capabilities(targets)
+    end
+
+    expect(result.fetch("Account").keys).to eq(%w[account-1 account-2 account-3])
+  end
+
+  it "chunks distinct full-capability target sets" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"
+    ENV["IAM_DEMO_BATCH_SIZE"] = "2"
+    targets = %w[account-1 account-1 account-2 account-3].map do |scope_id|
+      AuthorizedModel::Target.new(scope_type: "Account", scope_id: scope_id, capability: "widget.read")
+    end
+    http = instance_double(Net::HTTP)
+    expect(Net::HTTP).to receive(:start).twice.and_yield(http)
+    expect(http).to receive(:request).ordered do |request|
+      ids = JSON.parse(request.body).fetch("scope_id")
+      expect(ids).to eq(%w[account-1 account-2])
+      response(Net::HTTPOK, "200", JSON.generate(ids.to_h { |id| [id, ["widget.read"]] }))
+    end
+    expect(http).to receive(:request).ordered do |request|
+      ids = JSON.parse(request.body).fetch("scope_id")
+      expect(ids).to eq(["account-3"])
+      response(Net::HTTPOK, "200", JSON.generate(ids.to_h { |id| [id, ["widget.read"]] }))
+    end
+
+    result = AuthorizationContext.as_requesting_user(user_id: "actor-1") do
+      client.capabilities(targets)
+    end
+
+    expect(result.fetch("Account").keys).to eq(%w[account-1 account-2 account-3])
   end
 
   it "wraps network failures without hiding context or configuration failures" do

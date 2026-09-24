@@ -76,7 +76,10 @@ class OrganizationAccountsController < ApplicationController
 
   def authorize_account_read!(account_ids)
     records = Array(account_ids).map { |account_id| OrganizationAccount.new(account_id: account_id) }
-    OrganizationAccount.authorized_read("account_context", records: records) { records }
+    account_read = OrganizationAccount.authorization_requirement(
+      "account.read", scope_type: "Account", target: :account_id
+    )
+    OrganizationAccount.authorized_read("account_context", records: records, requirement: account_read) { records }
   end
 
   def organization_payloads_for_account_ids(account_ids)

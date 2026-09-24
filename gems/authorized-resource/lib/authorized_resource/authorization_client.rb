@@ -34,7 +34,9 @@ module AuthorizedModel
     def capabilities_for(targets)
       targets.group_by(&:scope_type).each_with_object({}) do |(scope_type, scoped_targets), result|
         ids = scoped_targets.map(&:scope_id).uniq
-        result[scope_type] = request_capabilities(scope_type, ids)
+        result[scope_type] = ids.each_slice(batch_size).each_with_object({}) do |chunk, scopes|
+          scopes.merge!(request_capabilities(scope_type, chunk))
+        end
       end
     end
 
@@ -42,9 +44,11 @@ module AuthorizedModel
       result = Hash.new { |types, scope_type| types[scope_type] = Hash.new { |ids, scope_id| ids[scope_id] = [] } }
       targets.group_by { |target| [target.scope_type, target.capability] }.each do |(scope_type, capability), scoped_targets|
         ids = scoped_targets.map(&:scope_id).uniq
-        next unless request_can(scope_type, capability, ids)
+        ids.each_slice(batch_size) do |chunk|
+          next unless request_can(scope_type, capability, chunk)
 
-        ids.each { |scope_id| result[scope_type][scope_id] << capability }
+          chunk.each { |scope_id| result[scope_type][scope_id] << capability }
+        end
       end
       result.each_value do |scopes|
         scopes.each { |scope_id, capabilities| scopes[scope_id] = capabilities.uniq.freeze }
@@ -73,6 +77,15 @@ module AuthorizedModel
     rescue JSON::ParserError => error
       raise AuthorizedResource::AuthorizationTransportError,
         "authorization capability lookup failed: #{error.class}"
+    end
+
+    def batch_size
+      Integer(ENV.fetch("IAM_DEMO_BATCH_SIZE", "1000"), 10).then do |size|
+        raise ArgumentError, "IAM_DEMO_BATCH_SIZE must be between 1 and 10000" unless (1..10_000).cover?(size)
+        size
+      end
+    rescue ArgumentError
+      raise ArgumentError, "IAM_DEMO_BATCH_SIZE must be between 1 and 10000"
     end
 
     def request_can(scope_type, capability, scope_ids)

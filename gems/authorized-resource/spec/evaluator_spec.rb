@@ -98,9 +98,18 @@ RSpec.describe AuthorizedModel::Base do
   it "keeps sibling model declarations independent" do
     stub_const("SiblingWidget", Class.new(AuthorizedModel::Base))
 
-    expect(SiblingWidget.read_requirements).to be_empty
+    expect(SiblingWidget.read_requirement).to be_nil
     expect(SiblingWidget.iam_readers).to be_empty
-    expect(ProtectedWidget.read_requirements.size).to eq(1)
+    expect(ProtectedWidget.read_requirement.capability).to eq("widget.read")
+    expect(ProtectedWidget.iam_readers).to eq(["IAM_SYSTEM"])
+  end
+
+  it "rejects a second read-policy declaration" do
+    expect do
+      ProtectedWidget.requires_read_capability "widget.audit", scope_type: "Account", target: :account_id
+    end.to raise_error(AuthorizedResource::PolicyConfigurationError, /already has an explicit read/)
+
+    expect(ProtectedWidget.read_requirement.capability).to eq("widget.read")
     expect(ProtectedWidget.iam_readers).to eq(["IAM_SYSTEM"])
   end
 end

@@ -41,16 +41,39 @@ module Authorization
     end
 
     def for_group(group_id)
-      with_evaluation_context do
-        group_id = group_id.to_s.downcase
-        cached(scope_type: "Group", scope_id: group_id) do
-          group = @group_context_client.groups([group_id]).find { |row| row.fetch("id").to_s == group_id.to_s }
-          next [] unless group
+      group_id = group_id.to_s
+      for_groups([group_id]).fetch(group_id)
+    end
 
-          direct = CapabilityGrant.where(group_id: group_ids, scope_type: "Group", scope_id: group_id)
-            .distinct.pluck(:permission)
-          (direct + for_account(group.fetch("account_id"))).uniq.sort
+    def for_groups(group_ids)
+      with_evaluation_context do
+        requested = Array(group_ids).map(&:to_s).uniq
+        canonical_ids = requested.map(&:downcase).uniq
+        capabilities = cached_many(scope_type: "Group", scope_ids: canonical_ids) do |uncached|
+          valid_ids = uncached.select { |id| valid_group_id?(id) }
+          groups_by_id = @group_context_client.groups(valid_ids).each_with_object({}) do |group, indexed|
+            id = group.fetch("id").to_s.downcase
+            indexed[id] = group if valid_ids.include?(id)
+          end
+          direct_by_group = CapabilityGrant.where(
+            group_id: self.group_ids, scope_type: "Group", scope_id: groups_by_id.keys
+          ).distinct.pluck(:scope_id, :permission).each_with_object(Hash.new { |hash, id| hash[id] = [] }) do |(id, permission), indexed|
+            indexed[id.to_s.downcase] << permission
+          end
+          account_ids = groups_by_id.values.map { |group| group.fetch("account_id").to_s.downcase }.uniq
+          account_capabilities = uncached_account_capabilities(account_ids)
+
+          uncached.to_h do |id|
+            group = groups_by_id[id]
+            next [id, []] unless group
+
+            account = account_capabilities.fetch(group.fetch("account_id").to_s.downcase, [])
+            effective = direct_by_group[id] + account
+            effective << "group.read" if account.include?("account.users.read")
+            [id, effective.uniq.sort]
+          end
         end
+        requested.to_h { |id| [id, capabilities.fetch(id.downcase)] }
       end
     end
 
@@ -78,7 +101,10 @@ module Authorization
           group_id: group_ids, scope_type: "Group", scope_id: groups_by_id.keys, permission: permission
         ).pluck(:scope_id).map { |id| id.to_s.downcase }.to_set
         account_ids = groups_by_id.values.map { |group| group.fetch("account_id").to_s }.uniq
-        permitted_accounts = canonical_account_ids_with_permission(account_ids.map(&:downcase), permission)
+        account_permissions = permission == "group.read" ? ["group.read", "account.users.read"] : [permission]
+        permitted_accounts = account_permissions.each_with_object(Set.new) do |account_permission, ids|
+          ids.merge(canonical_account_ids_with_permission(account_ids.map(&:downcase), account_permission))
+        end
 
         requested.select do |requested_id|
           group = groups_by_id[requested_id.downcase]
@@ -231,6 +257,71 @@ module Authorization
       capabilities
     end
 
+    def cached_many(scope_type:, scope_ids:)
+      return {} if scope_ids.empty?
+
+      unless redis_enabled?
+        IamDemo::CacheMetrics.record(
+          cache: "capabilities", outcome: "miss", count: scope_ids.size, redis_enabled: false
+        )
+        return yield(scope_ids)
+      end
+
+      raw_values = begin
+        @redis.pipelined do |pipeline|
+          scope_ids.each { |scope_id| pipeline.get(cache_key(scope_type, scope_id)) }
+        end
+      rescue Redis::BaseError
+        Array.new(scope_ids.size)
+      end
+      result = {}
+      misses = []
+      scope_ids.zip(raw_values).each do |scope_id, raw|
+        if raw.present?
+          result[scope_id] = JSON.parse(raw)
+        else
+          misses << scope_id
+        end
+      end
+      IamDemo::CacheMetrics.record(
+        cache: "capabilities", outcome: "hit", count: scope_ids.size - misses.size, redis_enabled: true
+      )
+      IamDemo::CacheMetrics.record(
+        cache: "capabilities", outcome: "miss", count: misses.size, redis_enabled: true
+      )
+
+      computed = misses.empty? ? {} : yield(misses)
+      begin
+        @redis.pipelined do |pipeline|
+          computed.each do |scope_id, capabilities|
+            pipeline.set(cache_key(scope_type, scope_id), capabilities.to_json, ex: TTL_SECONDS)
+          end
+        end
+      rescue Redis::BaseError
+        # A failed cache write does not change the authoritative result.
+      end
+      result.merge(computed)
+    end
+
+    def uncached_account_capabilities(account_ids)
+      valid_ids = account_ids.select { |id| valid_account_id?(id) }
+      scopes_by_account = account_scope_ids_for(valid_ids)
+      permissions_by_scope = CapabilityGrant.where(
+        group_id: group_ids,
+        scope_type: "Account",
+        scope_id: scopes_by_account.values.flatten.uniq
+      ).distinct.pluck(:scope_id, :permission).each_with_object(Hash.new { |hash, id| hash[id] = [] }) do |(id, permission), indexed|
+        indexed[id.to_s.downcase] << permission
+      end
+
+      account_ids.to_h do |account_id|
+        capabilities = scopes_by_account.fetch(account_id, []).flat_map do |scope_id|
+          permissions_by_scope[scope_id.to_s.downcase]
+        end
+        [account_id, capabilities.uniq.sort]
+      end
+    end
+
     def account_hierarchy_ids_for(account_ids)
       requested_ids = Array(account_ids).map(&:to_s).uniq
       hierarchies = nil
@@ -323,7 +414,8 @@ module Authorization
     end
 
     def cache_key(scope_type, scope_id)
-      "group-grants-v2:capabilities:#{@user_id}:#{scope_type}:#{scope_id}"
+      version = scope_type == "Group" ? "group-grants-v3" : "group-grants-v2"
+      "#{version}:capabilities:#{@user_id}:#{scope_type}:#{scope_id}"
     end
 
     def account_permission_cache_key(permission, account_id)
