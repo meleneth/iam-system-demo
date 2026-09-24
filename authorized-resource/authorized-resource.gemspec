@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.required_ruby_version = ">= 3.2"
   spec.add_dependency "activerecord", ">= 7.1", "< 9"
-  spec.add_dependency "activeresource", ">= 6.1", "< 7"
+  spec.add_dependency "activeresource", "~> 6.1.4"
   spec.add_dependency "authorization-context", "~> 0.1"
   spec.add_dependency "opentelemetry-api", ">= 1.4", "< 2"
 end

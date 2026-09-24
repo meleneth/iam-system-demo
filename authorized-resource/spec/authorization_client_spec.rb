@@ -86,6 +86,33 @@ RSpec.describe AuthorizedModel::AuthorizationClient do
     expect(result).to eq({})
   end
 
+  it "narrows a forbidden /can batch to the authorized IDs" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "can"
+    targets = %w[account-1 account-2].map do |scope_id|
+      AuthorizedModel::Target.new(scope_type: "Account", scope_id: scope_id, capability: "widget.read")
+    end
+    http = instance_double(Net::HTTP)
+    expect(Net::HTTP).to receive(:start).exactly(3).times.and_yield(http)
+    expect(http).to receive(:request).ordered do |request|
+      expect(JSON.parse(request.body)).to eq("scope_id" => %w[account-1 account-2])
+      response(Net::HTTPForbidden, "403")
+    end
+    expect(http).to receive(:request).ordered do |request|
+      expect(JSON.parse(request.body)).to eq("scope_id" => ["account-1"])
+      response(Net::HTTPOK, "200")
+    end
+    expect(http).to receive(:request).ordered do |request|
+      expect(JSON.parse(request.body)).to eq("scope_id" => ["account-2"])
+      response(Net::HTTPForbidden, "403")
+    end
+
+    result = AuthorizationContext.as_requesting_user(user_id: "actor-1") do
+      client.capabilities(targets)
+    end
+
+    expect(result).to eq("Account" => {"account-1" => ["widget.read"]})
+  end
+
   it "wraps network failures without hiding context or configuration failures" do
     target = AuthorizedModel::Target.new(
       scope_type: "Account", scope_id: "account-1", capability: "widget.read"

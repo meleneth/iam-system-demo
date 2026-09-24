@@ -11,8 +11,8 @@ module AuthorizedModel
     end
 
     # Returns authorized capabilities by scope. Capabilities mode retrieves the
-    # complete capability set once per scope type. /can mode asks one precise,
-    # batched question per scope type and required capability.
+    # complete capability set once per scope type. /can mode starts with one
+    # batched question per scope and capability, narrowing denied batches.
     def capabilities(targets)
       case authorization_mode
       when "capabilities"
@@ -42,9 +42,9 @@ module AuthorizedModel
       result = Hash.new { |types, scope_type| types[scope_type] = Hash.new { |ids, scope_id| ids[scope_id] = [] } }
       targets.group_by { |target| [target.scope_type, target.capability] }.each do |(scope_type, capability), scoped_targets|
         ids = scoped_targets.map(&:scope_id).uniq
-        next unless request_can(scope_type, capability, ids)
-
-        ids.each { |scope_id| result[scope_type][scope_id] << capability }
+        authorized_ids(scope_type, capability, ids).each do |scope_id|
+          result[scope_type][scope_id] << capability
+        end
       end
       result.each_value do |scopes|
         scopes.each { |scope_id, capabilities| scopes[scope_id] = capabilities.uniq.freeze }
@@ -53,6 +53,16 @@ module AuthorizedModel
       end
       result.default_proc = nil
       result.freeze
+    end
+
+    def authorized_ids(scope_type, capability, scope_ids)
+      return scope_ids if request_can(scope_type, capability, scope_ids)
+      return [] if scope_ids.one?
+
+      middle = scope_ids.length / 2
+      scope_ids.each_slice(middle).flat_map do |ids|
+        authorized_ids(scope_type, capability, ids)
+      end
     end
 
     def request_capabilities(scope_type, scope_ids)

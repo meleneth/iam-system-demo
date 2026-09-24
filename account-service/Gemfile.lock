@@ -9,6 +9,7 @@ PATH
   specs:
     authorized-resource (0.2.0)
       activerecord (>= 7.1, < 9)
+      activeresource (~> 6.1.4)
       authorization-context (~> 0.1)
       opentelemetry-api (>= 1.4, < 2)
 
