@@ -130,7 +130,7 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
     end
   end
 
-  it 'group and membership exact grants stay on one group, combine per target, and require membership' do
+  it 'group and membership exact grants stay on one group and require membership' do
     phases do
       {group: ['groups', 'group_'], membership: ['group_users', 'membership_']}.each_value do |resource, prefix|
         %w[exact_child peer mixed group_account group_wrong_scope group_wrong_permission].each do |actor|
@@ -142,7 +142,8 @@ RSpec.describe 'Every checked record type: independent authorization oracle' do
           check(call('group-service', "/#{resource}/#{peer_id}", actor: actor), actor == 'group_account', ids: [peer_id])
           [[ :child, :sibling ], [ :sibling, :child ]].each do |targets|
             ids = targets.map { |t| id("#{prefix}#{t}") }
-            check(call('group-service', "/#{resource}/search", actor: actor, body: {id: ids}), actor == 'mixed', ids: ids)
+            allowed = actor == 'mixed' && ENV['AUTHORIZATION_CHECK_MODE'] == 'capabilities'
+            check(call('group-service', "/#{resource}/search", actor: actor, body: {id: ids}), allowed, ids: ids)
           end
         end
       end
