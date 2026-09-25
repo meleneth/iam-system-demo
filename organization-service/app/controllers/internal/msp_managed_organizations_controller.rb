@@ -37,12 +37,18 @@ module Internal
       return render json: empty_page(msp_account_id) unless relationship
 
       account_scope = managed_account_scope(msp_account_id)
+      total_count = OrganizationAccount.authorized_read(
+        "managed_accounts_count",
+        records: [OrganizationAccount.new(account_id: msp_account_id)],
+        requirement: account_read_requirement
+      ) do
+        account_scope.unscope(:order).count(:account_id)
+      end
       relationships = OrganizationAccount.authorized_read(
         "managed_accounts",
         requirement: account_read_requirement
-      ) { account_scope.to_a }
-      total_count = relationships.size
-      account_ids = relationships.slice(offset, limit).to_a.map { |row| row.account_id.to_s }
+      ) { account_scope.offset(offset).limit(limit).to_a }
+      account_ids = relationships.map { |row| row.account_id.to_s }
       next_offset = offset + account_ids.length
 
       render json: {
