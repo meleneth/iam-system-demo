@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   get "/metrics", to: "metrics#show"
 
   get "internal/admin_users/organization/:organization_id", to: "internal/admin_users#organization"
+  post "internal/decisions", to: "internal/decisions#create"
 
   get "capabilities/Group/:group_id", to: "capabilities#group"
   post "capabilities/Group", to: "capabilities#groups"

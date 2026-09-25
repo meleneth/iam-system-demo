@@ -111,7 +111,12 @@ class OrganizationAccountsController < ApplicationController
     organization_ids = org_accounts.map { |org_account| org_account.organization_id.to_s }.uniq
     account_ids_by_organization_id = cached_account_ids_by_organization_id(organization_ids)
     records = organization_ids.map { |organization_id| OrganizationAccount.new(organization_id: organization_id) }
-    OrganizationAccount.authorized_read("organization_context", records: records) { account_ids_by_organization_id }
+    organization_read = OrganizationAccount.authorization_requirement(
+      "organization.read.accounts", scope_type: "Organization", target: :organization_id
+    )
+    OrganizationAccount.authorized_read(
+      "organization_context", records: records, requirement: organization_read
+    ) { account_ids_by_organization_id }
 
     account_to_organization = ids.to_h do |account_id|
       org_account = org_account_by_account_id.fetch(account_id)

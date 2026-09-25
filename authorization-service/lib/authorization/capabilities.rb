@@ -85,6 +85,37 @@ module Authorization
       end
     end
 
+    def organization_ids_with_permission(organization_ids, permission)
+      with_evaluation_context do
+        requested = Array(organization_ids).map(&:to_s).uniq
+        canonical_ids = requested.map(&:downcase)
+        valid_ids = canonical_ids.select { |id| valid_account_id?(id) }
+        return Set.new if valid_ids.empty?
+
+        redis_enabled = redis_enabled?
+        cached_values = read_organization_permission_cache(valid_ids, permission, redis_enabled: redis_enabled)
+        unresolved = valid_ids.select { |id| cached_values[id].nil? }
+        authorized = valid_ids.select { |id| cached_values[id] == "true" }.to_set
+
+        unless unresolved.empty?
+          granted = CapabilityGrant.where(
+            group_id: group_ids,
+            scope_type: "Organization",
+            scope_id: unresolved,
+            permission: permission
+          ).distinct.pluck(:scope_id).map { |id| id.to_s.downcase }.to_set
+          computed = unresolved.to_h do |id|
+            allowed = granted.include?(id)
+            authorized << id if allowed
+            [id, allowed]
+          end
+          write_organization_permission_cache(computed, permission, redis_enabled: redis_enabled)
+        end
+
+        requested.select { |id| authorized.include?(id.downcase) }.to_set
+      end
+    end
+
     def group_ids_with_permission(requested_group_ids, permission)
       with_evaluation_context do
         requested = Array(requested_group_ids).map(&:to_s).uniq
@@ -205,6 +236,35 @@ module Authorization
         results.each do |account_id, permitted|
           pipeline.set(
             account_permission_cache_key(permission, account_id),
+            permitted.to_s,
+            ex: TTL_SECONDS
+          )
+        end
+      end
+    rescue Redis::BaseError
+      nil
+    end
+
+    def read_organization_permission_cache(organization_ids, permission, redis_enabled:)
+      return {} unless redis_enabled
+
+      values = @redis.pipelined do |pipeline|
+        organization_ids.each do |organization_id|
+          pipeline.get(organization_permission_cache_key(permission, organization_id))
+        end
+      end
+      organization_ids.zip(values).to_h
+    rescue Redis::BaseError
+      {}
+    end
+
+    def write_organization_permission_cache(results, permission, redis_enabled:)
+      return unless redis_enabled
+
+      @redis.pipelined do |pipeline|
+        results.each do |organization_id, permitted|
+          pipeline.set(
+            organization_permission_cache_key(permission, organization_id),
             permitted.to_s,
             ex: TTL_SECONDS
           )
@@ -420,6 +480,10 @@ module Authorization
 
     def account_permission_cache_key(permission, account_id)
       "group-grants-v2:can:#{@user_id}:Account:#{permission}:#{account_id}"
+    end
+
+    def organization_permission_cache_key(permission, organization_id)
+      "group-grants-v2:can:#{@user_id}:Organization:#{permission}:#{organization_id}"
     end
   end
 end

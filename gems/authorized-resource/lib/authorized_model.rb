@@ -16,6 +16,17 @@ module AuthorizedModel
       scope_id = resolver.call(record)
       Target.new(scope_type: scope_type, scope_id: scope_id, capability: capability) if scope_id.present?
     end
+
+    def targets(record)
+      [target(record)]
+    end
+  end
+
+  AnyRequirement = Data.define(:requirements) do
+    def targets(record)
+      resolved = requirements.map { |requirement| requirement.target(record) }
+      resolved.all? ? resolved : nil
+    end
   end
 
   class << self
@@ -76,6 +87,23 @@ module AuthorizedModel
         self.iam_readers = (iam_readers + Array(iam).map(&:to_s)).uniq
       end
 
+      def requires_read_any_capability(*requirements, iam: [])
+        if read_requirement
+          raise AuthorizedResource::PolicyConfigurationError,
+            "#{name} already has an explicit read authorization policy"
+        end
+        raise ArgumentError, "at least two read authorization alternatives are required" if requirements.size < 2
+
+        self.read_requirement = AnyRequirement.new(requirements: requirements.map do |requirement|
+          authorization_requirement(
+            requirement.fetch(:capability),
+            scope_type: requirement.fetch(:scope_type),
+            target: requirement.fetch(:target)
+          )
+        end)
+        self.iam_readers = (iam_readers + Array(iam).map(&:to_s)).uniq
+      end
+
       def requires_modify_capability(capability, scope_type:, target:, iam: [])
         if modify_requirement
           raise AuthorizedResource::PolicyConfigurationError,
@@ -125,17 +153,24 @@ module AuthorizedModel
         raise AuthorizedResource::AuthorizationDenied,
           "requesting users are not authorized for #{name} #{operation}" unless requirement
 
-        targets_by_record = records.to_h { |record| [record, requirement.target(record)] }
-        if targets_by_record.any? { |_record, target| target.nil? }
+        targets_by_record = records.to_h { |record| [record, requirement.targets(record)] }
+        if targets_by_record.any? { |_record, targets| targets.blank? || targets.any?(&:nil?) }
           raise AuthorizedResource::PolicyConfigurationError,
             "#{name} #{kind} policy could not resolve an authorization target"
         end
 
-        targets = targets_by_record.values.uniq
+        targets = targets_by_record.values.flatten.uniq
         AuthorizedResource::Instrumentation.trace_authorization(self, operation, records, targets) do
-          capabilities = AuthorizedModel.authorization_client.capabilities(targets)
-          denied = targets_by_record.any? do |_record, target|
-            !capabilities.fetch(target.scope_type, {}).fetch(target.scope_id, []).include?(target.capability)
+          capabilities = AuthorizedModel.authorization_client.capabilities(targets) unless requirement.is_a?(AnyRequirement)
+          decisions = AuthorizedModel.authorization_client.decisions(targets) if requirement.is_a?(AnyRequirement)
+          denied = targets_by_record.any? do |_record, alternatives|
+            alternatives.none? do |target|
+              if decisions
+                decisions.fetch(target, false)
+              else
+                capabilities.fetch(target.scope_type, {}).fetch(target.scope_id, []).include?(target.capability)
+              end
+            end
           end
           raise AuthorizedResource::AuthorizationDenied,
             "authorization denied for #{name} #{operation}" if denied

@@ -44,6 +44,11 @@ RSpec.describe "Organization accounts", type: :request do
         end
       end
     end
+    allow(authorization_client).to receive(:decisions) do |targets|
+      targets.to_h do |target|
+        [target, grants.include?([target.scope_type, target.scope_id, target.capability])]
+      end
+    end
   end
 
   it "checks organization.read.accounts before listing accounts by organization" do
@@ -120,9 +125,6 @@ RSpec.describe "Organization accounts", type: :request do
       relationship = AuthorizationContext.as_iam do
         OrganizationAccount.find_by!(account_id: account_id)
       end
-      if grant_scope == "account"
-        pending "confirmed audit defect: account.read is a legitimate relationship-row authority"
-      end
       expected_status = grant_scope == "neither" ? :forbidden : :ok
       get "/organization_accounts/#{relationship.id}", headers: {"pad-user-id" => actor_user_id}
       expect(response).to have_http_status(expected_status)
@@ -144,6 +146,34 @@ RSpec.describe "Organization accounts", type: :request do
     end
     grant_capabilities(["Organization", organization_id, "organization.read.accounts"])
     get "/organization_accounts", params: {account_id: [account_id, other_account]}, headers: {"pad-user-id" => actor_user_id}
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "evaluates organization-or-account authority per relationship row" do
+    account_b = SecureRandom.uuid
+    organization_b = SecureRandom.uuid
+    account_c = SecureRandom.uuid
+    organization_c = SecureRandom.uuid
+    AuthorizationContext.as_iam do
+      Organization.create!(id: organization_b)
+      Organization.create!(id: organization_c)
+      OrganizationAccount.create!(organization_id: organization_b, account_id: account_b)
+      OrganizationAccount.create!(organization_id: organization_c, account_id: account_c)
+    end
+    grant_capabilities(
+      ["Organization", organization_id, "organization.read.accounts"],
+      ["Account", account_b, "account.read"]
+    )
+
+    get "/organization_accounts",
+        params: {account_id: [account_id, account_b]},
+        headers: {"pad-user-id" => actor_user_id}
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.map { |row| row.fetch("account_id") }).to match_array([account_id, account_b])
+
+    get "/organization_accounts",
+        params: {account_id: [account_id, account_b, account_c]},
+        headers: {"pad-user-id" => actor_user_id}
     expect(response).to have_http_status(:forbidden)
   end
 

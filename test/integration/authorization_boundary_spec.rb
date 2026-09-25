@@ -47,6 +47,61 @@ RSpec.describe "Persisted cross-service authorization boundaries" do
     expect(parsed(response)).to eq(rows.first)
   end
 
+  it "keeps organization-only relationship authority equal across row and filtered lookups" do
+    filters = ["organization_id=#{id(:client_a)}", "organization_id=#{id(:client_a)}&account_id=#{id(:child_a)}"]
+    rows = filters.map do |filter|
+      response = request("organization-service", "/organization_accounts?#{filter}", actor: :organization_reader)
+      expect(response.code).to eq("200")
+      parsed(response).find { |row| row.fetch("account_id") == id(:child_a) }
+    end
+    expect(rows.first).to eq(rows.last)
+    response = request("organization-service", "/organization_accounts/#{rows.first.fetch('id')}", actor: :organization_reader)
+    expect(parsed(response)).to eq(rows.first)
+  end
+
+  it "applies relationship alternatives per row and rejects a row allowed by neither" do
+    allowed_path = "/organization_accounts?account_id[]=#{id(:root_a)}&account_id[]=#{id(:root_b)}"
+    response = request("organization-service", allowed_path, actor: :relationship_reader)
+    expect(response.code).to eq("200")
+    expect(parsed(response).map { |row| row.fetch("account_id") }).to match_array(%i[root_a root_b].map { |key| id(key) })
+
+    denied_path = allowed_path + "&account_id[]=#{id(:root_a2)}"
+    expect_denied(request("organization-service", denied_path, actor: :relationship_reader))
+  end
+
+  it "does not interchange the relationship policy's underlying permissions, cold or warm" do
+    2.times do
+      relationship = request(
+        "organization-service", "/organization_accounts?account_id=#{id(:child_a)}", actor: :organization_reader
+      )
+      expect(relationship.code).to eq("200")
+      expect(parsed(request(
+        "authorization-service", "/capabilities/Account/#{id(:child_a)}", actor: :organization_reader
+      ))).not_to include("account.read")
+      unless ENV["AUTHORIZATION_CHECK_MODE"] == "capabilities"
+        expect_denied(request(
+          "authorization-service", "/can/Account/account.read",
+          actor: :organization_reader, body: {scope_id: [id(:child_a)]}
+        ))
+      end
+      expect_denied(request("account-service", "/accounts/#{id(:child_a)}", actor: :organization_reader))
+
+      relationship = request(
+        "organization-service", "/organization_accounts?account_id=#{id(:child_a)}", actor: :child_reader
+      )
+      expect(relationship.code).to eq("200")
+      expect(parsed(request(
+        "authorization-service", "/capabilities/Organization/#{id(:client_a)}", actor: :child_reader
+      ))).not_to include("organization.read.accounts")
+      unless ENV["AUTHORIZATION_CHECK_MODE"] == "capabilities"
+        expect_denied(request(
+          "authorization-service", "/can/Organization/organization.read.accounts",
+          actor: :child_reader, body: {scope_id: [id(:client_a)]}
+        ))
+      end
+    end
+  end
+
   it "keeps uppercase UUID decisions equal across capability and /can reads, cold and warm" do
     2.times do
       %i[child_a root_b].each do |target|

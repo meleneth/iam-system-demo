@@ -9,7 +9,12 @@ class Organizations::AccountsCountController < ApplicationController
     end
 
     target = OrganizationAccount.new(organization_id: org_id)
-    count = OrganizationAccount.authorized_read("accounts_count", records: [target]) do
+    organization_read = OrganizationAccount.authorization_requirement(
+      "organization.read.accounts", scope_type: "Organization", target: :organization_id
+    )
+    count = OrganizationAccount.authorized_read(
+      "accounts_count", records: [target], requirement: organization_read
+    ) do
       OrganizationAccount.where(organization_id: org_id)
                          .distinct
                          .count(:account_id)

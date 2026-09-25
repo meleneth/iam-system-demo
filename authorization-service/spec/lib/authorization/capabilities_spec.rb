@@ -369,6 +369,33 @@ RSpec.describe Authorization::Capabilities do
     )
   end
 
+  it "batches organization permission decisions and caches them by actor, permission, and target" do
+    other_organization_id = SecureRandom.uuid
+    other_user_id = SecureRandom.uuid
+    permission = "organization.read.accounts"
+    CapabilityGrant.create!(
+      group_id: grant_group_id(user_id),
+      permission: permission,
+      scope_type: "Organization",
+      scope_id: organization_id
+    )
+
+    expect(service.organization_ids_with_permission(
+      [organization_id, other_organization_id], permission
+    )).to eq(Set[organization_id])
+    expect(service.organization_ids_with_permission(
+      [organization_id, other_organization_id], permission
+    )).to eq(Set[organization_id])
+    expect(described_class.new(user_id: other_user_id, redis: redis)
+      .organization_ids_with_permission([organization_id], permission)).to be_empty
+
+    expect(redis.sets.map(&:first)).to contain_exactly(
+      "group-grants-v2:can:#{user_id}:Organization:#{permission}:#{organization_id}",
+      "group-grants-v2:can:#{user_id}:Organization:#{permission}:#{other_organization_id}",
+      "group-grants-v2:can:#{other_user_id}:Organization:#{permission}:#{organization_id}"
+    )
+  end
+
   it "matches a depth-walk oracle over generated trees and grants" do
     random = Random.new(12_345)
     account_ids = Array.new(24) { SecureRandom.uuid }

@@ -88,6 +88,83 @@ RSpec.describe AuthorizedModel::AuthorizationClient do
     expect(result).to eq({})
   end
 
+  it "uses the correlated internal decision batch for composite policies in can mode" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "can"
+    targets = [
+      AuthorizedModel::Target.new(scope_type: "Organization", scope_id: "organization-1", capability: "organization.read.accounts"),
+      AuthorizedModel::Target.new(scope_type: "Account", scope_id: "account-1", capability: "account.read")
+    ]
+    http = instance_double(Net::HTTP)
+    expect(Net::HTTP).to receive(:start).and_yield(http)
+    expect(http).to receive(:request) do |request|
+      expect(request.path).to eq("/api/internal/decisions")
+      expect(JSON.parse(request.body).fetch("targets")).to eq([
+        {"scope_type" => "Organization", "scope_id" => "organization-1", "permission" => "organization.read.accounts"},
+        {"scope_type" => "Account", "scope_id" => "account-1", "permission" => "account.read"}
+      ])
+      response(Net::HTTPOK, "200", JSON.generate(decisions: [
+        {scope_type: "Account", scope_id: "account-1", permission: "account.read", allowed: false},
+        {scope_type: "Organization", scope_id: "organization-1", permission: "organization.read.accounts", allowed: true}
+      ]))
+    end
+
+    result = AuthorizationContext.as_requesting_user(user_id: "actor-1") { client.decisions(targets) }
+
+    expect(result).to eq(targets.first => true, targets.last => false)
+  end
+
+  it "derives correlated composite decisions from batched capability responses in capabilities mode" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "capabilities"
+    targets = [
+      AuthorizedModel::Target.new(scope_type: "Organization", scope_id: "organization-1", capability: "organization.read.accounts"),
+      AuthorizedModel::Target.new(scope_type: "Account", scope_id: "account-1", capability: "account.read")
+    ]
+    http = instance_double(Net::HTTP)
+    expect(Net::HTTP).to receive(:start).twice.and_yield(http)
+    expect(http).to receive(:request).ordered.and_return(
+      response(Net::HTTPOK, "200", '{"organization-1":["organization.read.accounts"]}')
+    )
+    expect(http).to receive(:request).ordered.and_return(
+      response(Net::HTTPOK, "200", '{"account-1":[]}')
+    )
+
+    result = AuthorizationContext.as_requesting_user(user_id: "actor-1") { client.decisions(targets) }
+
+    expect(result).to eq(targets.first => true, targets.last => false)
+  end
+
+  it "rejects an uncorrelated internal decision" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "can"
+    target = AuthorizedModel::Target.new(
+      scope_type: "Account", scope_id: "account-1", capability: "account.read"
+    )
+    http = instance_double(Net::HTTP)
+    allow(Net::HTTP).to receive(:start).and_yield(http)
+    allow(http).to receive(:request).and_return(response(Net::HTTPOK, "200", JSON.generate(decisions: [
+      {scope_type: "Account", scope_id: "another-account", permission: "account.read", allowed: true}
+    ])))
+
+    expect do
+      AuthorizationContext.as_requesting_user(user_id: "actor-1") { client.decisions([target]) }
+    end.to raise_error(AuthorizedResource::AuthorizationTransportError, /uncorrelated/)
+  end
+
+  it "rejects a missing internal decision" do
+    ENV["AUTHORIZATION_CHECK_MODE"] = "can"
+    target = AuthorizedModel::Target.new(
+      scope_type: "Account", scope_id: "account-1", capability: "account.read"
+    )
+    http = instance_double(Net::HTTP)
+    allow(Net::HTTP).to receive(:start).and_yield(http)
+    allow(http).to receive(:request).and_return(
+      response(Net::HTTPOK, "200", JSON.generate(decisions: []))
+    )
+
+    expect do
+      AuthorizationContext.as_requesting_user(user_id: "actor-1") { client.decisions([target]) }
+    end.to raise_error(AuthorizedResource::AuthorizationTransportError, /decision count/)
+  end
+
   it "chunks distinct /can target sets instead of issuing requests per record" do
     ENV["AUTHORIZATION_CHECK_MODE"] = "can"
     ENV["IAM_DEMO_BATCH_SIZE"] = "2"

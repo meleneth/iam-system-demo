@@ -25,6 +25,25 @@ module AuthorizedModel
       end
     end
 
+    def decisions(targets)
+      targets = Array(targets).uniq
+      case authorization_mode
+      when "capabilities"
+        capabilities = capabilities_for(targets)
+        targets.to_h do |target|
+          allowed = capabilities.fetch(target.scope_type, {}).fetch(target.scope_id, []).include?(target.capability)
+          [target, allowed]
+        end
+      when "can"
+        targets.each_slice(batch_size).each_with_object({}) do |chunk, decisions|
+          decisions.merge!(request_decisions(chunk))
+        end
+      else
+        raise AuthorizedResource::AuthorizationTransportError,
+          "unsupported AUTHORIZATION_CHECK_MODE=#{authorization_mode.inspect}"
+      end
+    end
+
     private
 
     def authorization_mode
@@ -99,13 +118,58 @@ module AuthorizedModel
         "authorization /can lookup failed with HTTP #{response.code}"
     end
 
+    def request_decisions(targets)
+      uri = URI.join(@base_url, "internal/decisions")
+      response = post_json(uri, targets: targets.map do |target|
+        { scope_type: target.scope_type, scope_id: target.scope_id, permission: target.capability }
+      end)
+      unless response.is_a?(Net::HTTPSuccess)
+        raise AuthorizedResource::AuthorizationTransportError,
+          "authorization decision lookup failed with HTTP #{response.code}"
+      end
+
+      decoded = JSON.parse(response.body)
+      rows = decoded.is_a?(Hash) ? decoded["decisions"] : nil
+      unless rows.is_a?(Array) && rows.size == targets.size
+        raise AuthorizedResource::AuthorizationTransportError,
+          "authorization decision lookup returned an invalid response"
+      end
+
+      expected = targets.index_by { |target| [target.scope_type, target.scope_id, target.capability] }
+      decisions = rows.each_with_object({}) do |row, result|
+        unless row.is_a?(Hash) && [true, false].include?(row["allowed"])
+          raise AuthorizedResource::AuthorizationTransportError,
+            "authorization decision lookup returned an invalid decision"
+        end
+        key = [row["scope_type"].to_s, row["scope_id"].to_s, row["permission"].to_s]
+        target = expected.delete(key)
+        unless target && !result.key?(target)
+          raise AuthorizedResource::AuthorizationTransportError,
+            "authorization decision lookup returned an uncorrelated decision"
+        end
+        result[target] = row.fetch("allowed")
+      end
+      unless expected.empty?
+        raise AuthorizedResource::AuthorizationTransportError,
+          "authorization decision lookup omitted a requested target"
+      end
+      decisions
+    rescue JSON::ParserError => error
+      raise AuthorizedResource::AuthorizationTransportError,
+        "authorization decision lookup failed: #{error.class}"
+    end
+
     def post(uri, scope_ids)
+      post_json(uri, scope_id: scope_ids)
+    end
+
+    def post_json(uri, payload)
       request = Net::HTTP::Post.new(uri)
       AuthorizationContext.transport_headers.each { |key, value| request[key] = value }
       request["Content-Type"] = "application/json"
       request["Accept"] = "application/json"
       OpenTelemetry.propagation.inject(request)
-      request.body = JSON.generate(scope_id: scope_ids)
+      request.body = JSON.generate(payload)
       Net::HTTP.start(
         uri.hostname,
         uri.port,
