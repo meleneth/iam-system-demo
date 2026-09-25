@@ -601,8 +601,11 @@ Purpose: filtered organization-account membership reads.
 Caller identity:
 
 - `IAM_SYSTEM` may read directly.
-- `organization_id` filter requires organization account-read capability.
-- `account_id` filter requires account read.
+- Real actors must satisfy each returned relationship row's policy:
+  `organization.read.accounts` on that row's organization or `account.read` on
+  that row's account.
+- Every row in a collection must pass, but different rows may pass through
+  different branches of the policy.
 
 #### `GET /organization_accounts/:id`
 
@@ -610,17 +613,13 @@ Purpose: read one organization-account membership row.
 
 Caller identity:
 
-- Current implementation returns the row directly by ID.
-- Treat this as a demo/read-model endpoint, not a privileged relationship-fact API.
+- `IAM_SYSTEM` may read directly.
+- Real actors require `organization.read.accounts` on the row's organization or
+  `account.read` on the row's account.
+- Either branch authorizes only the relationship row; it does not imply the
+  other underlying permission or authorize the related Organization or Account.
 
-#### `GET /organizations`
-
-Purpose: organization collection read.
-
-Caller identity:
-
-- Current implementation requires a filter, builds `results`, but renders `@organizations` and does not perform a collection authorization check.
-- Treat this as an existing demo bug/gap, not a reliable cross-service authorization endpoint.
+Organization-service does not expose a `GET /organizations` collection route.
 
 #### `GET /organizations/:id`
 
