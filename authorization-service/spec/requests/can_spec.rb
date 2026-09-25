@@ -95,7 +95,8 @@ RSpec.describe "Cans", type: :request do
       expect(response).to have_http_status(:forbidden)
     end
 
-    it "intentionally authorizes an empty account collection" do
+    it "rejects an empty account collection" do
+      pending "confirmed audit defect: an empty authorization question must not be allowed"
       expect(Account).not_to receive(:with_parents_batch)
 
       post "/can/Account/account.users.read",
@@ -103,7 +104,7 @@ RSpec.describe "Cans", type: :request do
            headers: headers,
            as: :json
 
-      expect(response).to have_http_status(:ok)
+      expect(response).to have_http_status(:forbidden)
     end
 
     it "rejects malformed account IDs without a downstream hierarchy request" do

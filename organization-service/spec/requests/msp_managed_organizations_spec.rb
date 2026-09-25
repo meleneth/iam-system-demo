@@ -62,6 +62,35 @@ RSpec.describe "internal MSP managed organizations", type: :request do
     ENV["IAM_DEMO_BATCH_SIZE"] = old_batch_size
   end
 
+  it "records that an authorized one-row page materializes every managed relationship" do
+    create_valid_relationship!
+    account_ids = Array.new(7) { SecureRandom.uuid }
+    AuthorizationContext.as_iam do
+      account_ids.each do |account_id|
+        OrganizationAccount.create!(organization_id: client_organization_id, account_id: account_id)
+      end
+    end
+
+    target_batch_sizes = []
+    authorization_client = instance_double(AuthorizedModel::AuthorizationClient)
+    allow(authorization_client).to receive(:capabilities) do |targets|
+      target_batch_sizes << targets.size
+      targets.group_by(&:scope_type).transform_values do |scoped|
+        scoped.to_h { |target| [target.scope_id, [target.capability]] }
+      end
+    end
+    allow(AuthorizedModel).to receive(:authorization_client).and_return(authorization_client)
+
+    get "/msp_managed_organizations/#{msp_account_id}",
+        params: { limit: 1 },
+        headers: { "pad-user-id" => SecureRandom.uuid }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.fetch("managed_account_ids").size).to eq(1)
+    expect(response.parsed_body.fetch("total_count")).to eq(account_ids.size)
+    expect(target_batch_sizes).to include(account_ids.size)
+  end
+
   it "rejects non-system callers" do
     get "/internal/msp_managed_organizations/#{msp_account_id}",
         headers: { "pad-user-id" => SecureRandom.uuid }
