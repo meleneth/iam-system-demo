@@ -276,14 +276,15 @@ This is the object-loading contract the services are supposed to enforce. "Ownin
 | Group membership row | group-service | `account.users.read` or `group.read` | Owning Account or exact Group | `GET /group_users/:id` |
 | Group membership collection/search | group-service | `account.users.read` or `group.read` | Each membership’s owning Account or Group scope | `GET /group_users`, `POST /group_users/search` |
 | Organization row | organization-service | `organization.read` | Organization ID | `GET /organizations/:id` |
-| Organization account membership by organization | organization-service | `organization.read.accounts` | Organization ID | `GET /organization_accounts?organization_id=...` |
+| Organization account relationship | organization-service | `organization.read.accounts` on the row's Organization **or** `account.read` on the row's Account, evaluated per row | Correlated Organization and Account IDs | `GET /organization_accounts`, `GET /organization_accounts/:id` |
 | Organization account count | organization-service | `organization.read.accounts` | Organization ID | `GET /organizations/accounts/counts/:organization_id` |
 | Organization context by account IDs | organization-service | `account.read` | Requested account IDs | `POST /organization_account_ids/for_account_ids` |
 | MSP managed-account page | organization-service | `IAM_SYSTEM` only | MSP account ID | `GET /internal/msp_managed_organizations/:msp_account_id` |
+| Actor-authorized MSP managed-account page | organization-service | `account.read` on provider and every account on the requested page | Provider and returned page Account IDs | `GET /msp_managed_organizations/:msp_account_id` |
 | MSP relationship context for auth | organization-service | `IAM_SYSTEM_AUTH` only | Provided MSP organization/account + target account contexts | `POST /internal/auth/account_contexts` |
 | MSP user-management GraphQL page | user-management-service | ordinary `account.read`; nested fields check their normal permissions | provider account and each returned client account | actor-authorized managed page and downstream resource services |
 
-For MSP user-management, the managed-account page requires ordinary `account.read` on the provider account and every managed target before disclosing IDs or counts. Nested users and groups require their normal capabilities. Provider affiliation alone grants nothing; provider Account grants belonging to the actor’s groups inherit through organization-service’s explicit client-organization relationship.
+For MSP user-management, organization-service first validates the provider relationship and ordinary `account.read` on the provider account. It counts the full distinct managed-account relation as approved relationship metadata, applies stable pagination in SQL, materializes only the requested page, and then requires `account.read` on every account returned on that page. An unreadable off-page account does not deny the page. Nested users and groups require their normal capabilities. Provider affiliation alone grants nothing; provider Account grants belonging to the actor’s groups inherit through organization-service’s explicit client-organization relationship.
 
 ## App-Facing Capabilities API
 
@@ -399,6 +400,19 @@ Semantics:
 - `POST` is the normal batched form. `GET` exists for compatibility/simple probes.
 
 Grant records are owned by authorization-service and projected from explicit group seed events. Public grant CRUD routes are not exposed. Pre-migration user grants are archived in `legacy_user_capability_grants` and never queried for authorization.
+
+#### `POST /internal/decisions`
+
+Purpose: narrowly scoped, correlated decisions for the `OrganizationAccount` relationship policy when precise `/can` mode is active.
+
+Caller identity: a real actor in `pad-user-id`; `IAM_SYSTEM` and `IAM_SYSTEM_AUTH` are rejected.
+
+Semantics:
+
+- Accepts a nonempty bounded target array containing only `Account`/`account.read` and `Organization`/`organization.read.accounts` questions.
+- Evaluates the explicitly requested targets with authorization-service's existing permission evaluator and returns one boolean decision correlated to each scope type, scope ID, and permission.
+- Missing, duplicate, malformed, or uncorrelated decisions fail closed in the caller.
+- Does not change public `/can` all-or-nothing behavior or enumerate full capabilities in precise mode.
 
 #### `GET /capabilities/Group/:group_id` and `POST /capabilities/Group`
 
@@ -675,11 +689,11 @@ Semantics:
 - Filters parent IDs down to parent accounts inside the client organization.
 - This is not a general replacement for `IAM_SYSTEM`.
 
-#### `GET /internal/msp_managed_organizations/:msp_account_id`
+#### `GET /msp_managed_organizations/:msp_account_id`
 
-Purpose: internal paginated managed-account listing for the MSP demo GraphQL field.
+Purpose: actor-authorized paginated managed-account listing for the MSP demo GraphQL field.
 
-Caller identity: requires `pad-user-id: IAM_SYSTEM`.
+Caller identity: the real actor in `pad-user-id`.
 
 Query params:
 
@@ -700,8 +714,17 @@ Response:
 
 Semantics:
 
-- Lists accounts belonging to organizations managed by the MSP account's MSP organization relationship.
-- Current internal page size is 1,000.
+- Validates that the provider account belongs to the provider organization relationship and requires `account.read` on the provider.
+- Counts the full distinct managed-account relation in SQL as relationship metadata authorized by that provider check.
+- Applies stable offset pagination in SQL and materializes only the requested page.
+- Requires `account.read` on every account disclosed on that page; any denied page account rejects the whole page.
+- Current maximum page size is 1,000.
+
+#### `GET /internal/msp_managed_organizations/:msp_account_id`
+
+Purpose: IAM-only form of the managed-account listing for trusted internal callers.
+
+Caller identity: requires `pad-user-id: IAM_SYSTEM`. The actor-authorized GraphQL path does not use this route.
 
 ### user-service
 

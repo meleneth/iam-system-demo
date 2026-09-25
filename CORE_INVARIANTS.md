@@ -36,6 +36,8 @@ This contract defines the model used by the code, seeded data, benchmarks, and a
 
 6. **Authorization uses the target’s actual scope.** This applies to objects requested by ID and to each protected object included in a composite response.
 
+   An `OrganizationAccount` relationship row is readable when the actor has either `organization.read.accounts` on that row's organization or `account.read` on that row's account. For collections, this OR is evaluated per row and every row must pass. Either branch authorizes only the relationship row; it does not imply the other permission or authorize the underlying Organization or Account object.
+
 7. **Client hierarchies exclude the provider account.** The returned hierarchy stops at the client root. Internal authorization combines client ancestry with provider ancestry through the organization relationship.
 
 8. **Optimizations preserve results.** Individual, batched, cached, and paginated execution must produce the same permission decisions and authorized objects.
