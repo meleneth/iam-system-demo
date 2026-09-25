@@ -96,7 +96,6 @@ RSpec.describe "Cans", type: :request do
     end
 
     it "rejects an empty account collection" do
-      pending "confirmed audit defect: an empty authorization question must not be allowed"
       expect(Account).not_to receive(:with_parents_batch)
 
       post "/can/Account/account.users.read",
