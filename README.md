@@ -27,6 +27,13 @@ Every account will belong to an Organization.  Organization-service has a Organi
 
     ./dc_dev up -d
 
+Production Grafana is available at http://localhost:11280 with login `admin` /
+`grafana-demo`. The demo password avoids Grafana's password-change prompt for
+the default `admin` password. Grafana only applies `GF_SECURITY_ADMIN_PASSWORD`
+when creating its database; to apply this login to an existing production volume:
+
+    ./dc_prod exec -T grafana grafana cli admin reset-admin-password grafana-demo
+
 makes 1 million users, 3 hours on my box
 
     ./dc_dev run user-management-service bin/rails runner scripts/demo_user_seeder.rb
