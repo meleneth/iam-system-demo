@@ -34,6 +34,39 @@ when creating its database; to apply this login to an existing production volume
 
     ./dc_prod exec -T grafana grafana cli admin reset-admin-password grafana-demo
 
+The **IAM Demo** Grafana folder includes these provisioned dashboards:
+
+| Dashboard | Coverage |
+| --- | --- |
+| [Web Requests](http://localhost:11280/d/iam-web-requests) | Request rates, status codes, P95 and mean latency, normalized routes, and expandable rows for all nine web service roles. |
+| [PostgreSQL](http://localhost:11280/d/iam-postgresql) | All 20 primary/cache/cable/queue databases: connections, transactions, storage, buffer hits, deadlocks, temporary writes, and table activity. |
+| [Redis](http://localhost:11280/d/iam-redis) | All four instances: commands, memory, clients, keyspace hits, evictions, network traffic, CPU, and command execution time. |
+| [Cache Hit/Miss](http://localhost:11280/d/iam-demo-cache-hit-miss) | Application cache outcomes, distinct from Redis server keyspace statistics. |
+
+Use the filters at the top to select services or instances, and expand their
+detail rows below the comparison charts. Request metrics count inbound HTTP
+server spans, including internal requests at their receiving service; they are
+not a count of end-user actions. The charts exclude `/metrics` and `/up`.
+Query strings are removed and UUID/numeric path segments are grouped as `:id`.
+The original traces still go to Jaeger unchanged. Trace sampling or dropped
+spans would also reduce the request metrics.
+
+The shared collector derives request metrics from traces. Production additionally
+loads `otel-collector/production-infrastructure.yaml`, using the existing database
+credentials supplied by `./dc_prod` to collect PostgreSQL and Redis statistics
+every 10 seconds. These include the monitoring queries/commands themselves.
+Infrastructure reporting counts measure telemetry coverage, not an independent
+availability probe; metrics expire after 30 seconds without updates. Request
+charts need traffic and a rate window to populate. Idle hit ratios and Redis
+memory-limit utilization when `maxmemory=0` intentionally have no value.
+New metrics have no history before collection was enabled.
+
+Dashboard JSON files in `grafana/dashboards` reload automatically. After changing
+collector configuration, apply Compose changes and reload the collector:
+
+    ./dc_prod up -d --no-deps otel-collector
+    ./dc_prod restart otel-collector
+
 makes 1 million users, 3 hours on my box
 
     ./dc_dev run user-management-service bin/rails runner scripts/demo_user_seeder.rb

@@ -1,0 +1,1303 @@
+{
+  "id": null,
+  "uid": "iam-postgresql",
+  "title": "IAM \u00b7 PostgreSQL",
+  "description": "Production PostgreSQL telemetry for all 20 primary, cache, cable, and queue containers. Collects database statistics every 10 seconds. Counts include monitoring activity. Missing metrics expire after 30 seconds; reporting counts describe telemetry coverage, not a database availability probe. Expand a database row for detail.",
+  "tags": [
+    "iam-demo",
+    "observability"
+  ],
+  "schemaVersion": 42,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "links": [
+    {
+      "title": "Web requests",
+      "type": "link",
+      "url": "/d/iam-web-requests",
+      "keepTime": true
+    },
+    {
+      "title": "PostgreSQL",
+      "type": "link",
+      "url": "/d/iam-postgresql",
+      "keepTime": true
+    },
+    {
+      "title": "Redis",
+      "type": "link",
+      "url": "/d/iam-redis",
+      "keepTime": true
+    },
+    {
+      "title": "Application cache hits",
+      "type": "link",
+      "url": "/d/iam-demo-cache-hit-miss",
+      "keepTime": true
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "database",
+        "label": "PostgreSQL instance",
+        "type": "custom",
+        "query": "account-db:5432,account-db-cache:5432,account-db-cable:5432,account-db-queue:5432,authz-db:5432,authz-db-cache:5432,authz-db-cable:5432,authz-db-queue:5432,organization-db:5432,organization-db-cache:5432,organization-db-cable:5432,organization-db-queue:5432,user-db:5432,user-db-cache:5432,user-db-cable:5432,user-db-queue:5432,group-db:5432,group-db-cache:5432,group-db-cable:5432,group-db-queue:5432",
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [
+          {
+            "text": "account-db:5432",
+            "value": "account-db:5432",
+            "selected": false
+          },
+          {
+            "text": "account-db-cache:5432",
+            "value": "account-db-cache:5432",
+            "selected": false
+          },
+          {
+            "text": "account-db-cable:5432",
+            "value": "account-db-cable:5432",
+            "selected": false
+          },
+          {
+            "text": "account-db-queue:5432",
+            "value": "account-db-queue:5432",
+            "selected": false
+          },
+          {
+            "text": "authz-db:5432",
+            "value": "authz-db:5432",
+            "selected": false
+          },
+          {
+            "text": "authz-db-cache:5432",
+            "value": "authz-db-cache:5432",
+            "selected": false
+          },
+          {
+            "text": "authz-db-cable:5432",
+            "value": "authz-db-cable:5432",
+            "selected": false
+          },
+          {
+            "text": "authz-db-queue:5432",
+            "value": "authz-db-queue:5432",
+            "selected": false
+          },
+          {
+            "text": "organization-db:5432",
+            "value": "organization-db:5432",
+            "selected": false
+          },
+          {
+            "text": "organization-db-cache:5432",
+            "value": "organization-db-cache:5432",
+            "selected": false
+          },
+          {
+            "text": "organization-db-cable:5432",
+            "value": "organization-db-cable:5432",
+            "selected": false
+          },
+          {
+            "text": "organization-db-queue:5432",
+            "value": "organization-db-queue:5432",
+            "selected": false
+          },
+          {
+            "text": "user-db:5432",
+            "value": "user-db:5432",
+            "selected": false
+          },
+          {
+            "text": "user-db-cache:5432",
+            "value": "user-db-cache:5432",
+            "selected": false
+          },
+          {
+            "text": "user-db-cable:5432",
+            "value": "user-db-cable:5432",
+            "selected": false
+          },
+          {
+            "text": "user-db-queue:5432",
+            "value": "user-db-queue:5432",
+            "selected": false
+          },
+          {
+            "text": "group-db:5432",
+            "value": "group-db:5432",
+            "selected": false
+          },
+          {
+            "text": "group-db-cache:5432",
+            "value": "group-db-cache:5432",
+            "selected": false
+          },
+          {
+            "text": "group-db-cable:5432",
+            "value": "group-db-cable:5432",
+            "selected": false
+          },
+          {
+            "text": "group-db-queue:5432",
+            "value": "group-db-queue:5432",
+            "selected": false
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Instances reporting \u00b7 20 total",
+      "description": "Count among selected instances. All selected should report 20.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "count(count by (service_instance_id) (postgresql_db_size_bytes{service_instance_id=~\"${database:regex}\"}))",
+          "legendFormat": "",
+          "editorMode": "code",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Open connections",
+      "description": "",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum(postgresql_backends{service_instance_id=~\"${database:regex}\"})",
+          "legendFormat": "",
+          "editorMode": "code",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Database storage",
+      "description": "",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum(postgresql_db_size_bytes{service_instance_id=~\"${database:regex}\"})",
+          "legendFormat": "",
+          "editorMode": "code",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Transactions / second",
+      "description": "",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum(rate(postgresql_commits_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval])) + sum(rate(postgresql_rollbacks_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+          "legendFormat": "",
+          "editorMode": "code",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Connections by instance",
+      "description": "",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id) (postgresql_backends{service_instance_id=~\"${database:regex}\"})",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Connection capacity used",
+      "description": "Receiver counts connections to the configured application database; the limit is server-wide.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id) (postgresql_backends{service_instance_id=~\"${database:regex}\"}) / max by (service_instance_id) (postgresql_connection_max{service_instance_id=~\"${database:regex}\"})",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Commits / second",
+      "description": "",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id) (rate(postgresql_commits_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Rollbacks / second",
+      "description": "",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id) (rate(postgresql_rollbacks_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Database size",
+      "description": "",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "postgresql_db_size_bytes{service_instance_id=~\"${database:regex}\"}",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Buffer cache hit ratio",
+      "description": "Shared buffer hits / (hits + disk blocks read). Idle databases have no ratio.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id) (rate(postgresql_blks_hit_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval])) / (sum by (service_instance_id) (rate(postgresql_blks_hit_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval])) + sum by (service_instance_id) (rate(postgresql_blks_read_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval])))",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Deadlocks / second",
+      "description": "",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id) (rate(postgresql_deadlocks_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Temporary disk writes",
+      "description": "",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id) (rate(postgresql_temp_io_bytes_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Rows changed / second",
+      "description": "",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id, operation) (rate(postgresql_operations_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+          "legendFormat": "{{service_instance_id}} \u00b7 {{operation}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Dead row estimates",
+      "description": "PostgreSQL statistics estimates, aggregated across tables.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus_ds"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 36,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "expr": "sum by (service_instance_id) (postgresql_rows{service_instance_id=~\"${database:regex}\",state=\"dead\"})",
+          "legendFormat": "{{service_instance_id}}",
+          "editorMode": "code",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "$database \u00b7 database details",
+      "collapsed": true,
+      "repeat": "database",
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 16,
+          "title": "$database \u00b7 commits and rollbacks",
+          "description": "",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 45,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_ds"
+              },
+              "expr": "sum(rate(postgresql_commits_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+              "legendFormat": "commits",
+              "editorMode": "code",
+              "range": true,
+              "instant": false
+            },
+            {
+              "refId": "B",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_ds"
+              },
+              "expr": "sum(rate(postgresql_rollbacks_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+              "legendFormat": "rollbacks",
+              "editorMode": "code",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 17,
+          "title": "$database \u00b7 connections",
+          "description": "",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 45,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_ds"
+              },
+              "expr": "sum(postgresql_backends{service_instance_id=~\"${database:regex}\"})",
+              "legendFormat": "open",
+              "editorMode": "code",
+              "range": true,
+              "instant": false
+            },
+            {
+              "refId": "B",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_ds"
+              },
+              "expr": "max(postgresql_connection_max{service_instance_id=~\"${database:regex}\"})",
+              "legendFormat": "server limit",
+              "editorMode": "code",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 18,
+          "title": "$database \u00b7 largest tables",
+          "description": "",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 53,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "min": 0,
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_ds"
+              },
+              "expr": "topk(10, postgresql_table_size_bytes{service_instance_id=~\"${database:regex}\"})",
+              "legendFormat": "{{postgresql_table_name}}",
+              "editorMode": "code",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 19,
+          "title": "$database \u00b7 row changes by table",
+          "description": "",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus_ds"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 53,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_ds"
+              },
+              "expr": "sum by (postgresql_table_name, operation) (rate(postgresql_operations_total{service_instance_id=~\"${database:regex}\"}[$__rate_interval]))",
+              "legendFormat": "{{postgresql_table_name}} \u00b7 {{operation}}",
+              "editorMode": "code",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

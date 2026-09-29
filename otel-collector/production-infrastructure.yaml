@@ -1,0 +1,282 @@
+# Production infrastructure receivers; merged with the shared collector config.
+# Credentials come from production.env through the Compose wrapper.
+receivers:
+  postgresql/account-db:
+    collection_interval: 10s
+    tls: &postgresql_tls
+      insecure: true
+    metrics: &postgresql_metrics
+      postgresql.blks_hit:
+        enabled: true
+      postgresql.blks_read:
+        enabled: true
+      postgresql.deadlocks:
+        enabled: true
+      postgresql.temp.io:
+        enabled: true
+    endpoint: account-db:5432
+    username: ${env:ACCOUNT_DB_POSTGRES_USER}
+    password: ${env:ACCOUNT_DB_POSTGRES_PASSWORD}
+    databases:
+    - ${env:ACCOUNT_DB_POSTGRES_DB}
+  postgresql/account-db-cache:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: account-db-cache:5432
+    username: ${env:ACCOUNT_DB_CACHE_POSTGRES_USER}
+    password: ${env:ACCOUNT_DB_CACHE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:ACCOUNT_DB_CACHE_POSTGRES_DB}
+  postgresql/account-db-cable:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: account-db-cable:5432
+    username: ${env:ACCOUNT_DB_CABLE_POSTGRES_USER}
+    password: ${env:ACCOUNT_DB_CABLE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:ACCOUNT_DB_CABLE_POSTGRES_DB}
+  postgresql/account-db-queue:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: account-db-queue:5432
+    username: ${env:ACCOUNT_DB_QUEUE_POSTGRES_USER}
+    password: ${env:ACCOUNT_DB_QUEUE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:ACCOUNT_DB_QUEUE_POSTGRES_DB}
+  postgresql/authz-db:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: authz-db:5432
+    username: ${env:AUTHZ_DB_POSTGRES_USER}
+    password: ${env:AUTHZ_DB_POSTGRES_PASSWORD}
+    databases:
+    - ${env:AUTHZ_DB_POSTGRES_DB}
+  postgresql/authz-db-cache:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: authz-db-cache:5432
+    username: ${env:AUTHZ_DB_CACHE_POSTGRES_USER}
+    password: ${env:AUTHZ_DB_CACHE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:AUTHZ_DB_CACHE_POSTGRES_DB}
+  postgresql/authz-db-cable:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: authz-db-cable:5432
+    username: ${env:AUTHZ_DB_CABLE_POSTGRES_USER}
+    password: ${env:AUTHZ_DB_CABLE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:AUTHZ_DB_CABLE_POSTGRES_DB}
+  postgresql/authz-db-queue:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: authz-db-queue:5432
+    username: ${env:AUTHZ_DB_QUEUE_POSTGRES_USER}
+    password: ${env:AUTHZ_DB_QUEUE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:AUTHZ_DB_QUEUE_POSTGRES_DB}
+  postgresql/organization-db:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: organization-db:5432
+    username: ${env:ORGANIZATION_DB_POSTGRES_USER}
+    password: ${env:ORGANIZATION_DB_POSTGRES_PASSWORD}
+    databases:
+    - ${env:ORGANIZATION_DB_POSTGRES_DB}
+  postgresql/organization-db-cache:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: organization-db-cache:5432
+    username: ${env:ORGANIZATION_DB_CACHE_POSTGRES_USER}
+    password: ${env:ORGANIZATION_DB_CACHE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:ORGANIZATION_DB_CACHE_POSTGRES_DB}
+  postgresql/organization-db-cable:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: organization-db-cable:5432
+    username: ${env:ORGANIZATION_DB_CABLE_POSTGRES_USER}
+    password: ${env:ORGANIZATION_DB_CABLE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:ORGANIZATION_DB_CABLE_POSTGRES_DB}
+  postgresql/organization-db-queue:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: organization-db-queue:5432
+    username: ${env:ORGANIZATION_DB_QUEUE_POSTGRES_USER}
+    password: ${env:ORGANIZATION_DB_QUEUE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:ORGANIZATION_DB_QUEUE_POSTGRES_DB}
+  postgresql/user-db:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: user-db:5432
+    username: ${env:USER_DB_POSTGRES_USER}
+    password: ${env:USER_DB_POSTGRES_PASSWORD}
+    databases:
+    - ${env:USER_DB_POSTGRES_DB}
+  postgresql/user-db-cache:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: user-db-cache:5432
+    username: ${env:USER_DB_CACHE_POSTGRES_USER}
+    password: ${env:USER_DB_CACHE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:USER_DB_CACHE_POSTGRES_DB}
+  postgresql/user-db-cable:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: user-db-cable:5432
+    username: ${env:USER_DB_CABLE_POSTGRES_USER}
+    password: ${env:USER_DB_CABLE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:USER_DB_CABLE_POSTGRES_DB}
+  postgresql/user-db-queue:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: user-db-queue:5432
+    username: ${env:USER_DB_QUEUE_POSTGRES_USER}
+    password: ${env:USER_DB_QUEUE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:USER_DB_QUEUE_POSTGRES_DB}
+  postgresql/group-db:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: group-db:5432
+    username: ${env:GROUP_DB_POSTGRES_USER}
+    password: ${env:GROUP_DB_POSTGRES_PASSWORD}
+    databases:
+    - ${env:GROUP_DB_POSTGRES_DB}
+  postgresql/group-db-cache:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: group-db-cache:5432
+    username: ${env:GROUP_DB_CACHE_POSTGRES_USER}
+    password: ${env:GROUP_DB_CACHE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:GROUP_DB_CACHE_POSTGRES_DB}
+  postgresql/group-db-cable:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: group-db-cable:5432
+    username: ${env:GROUP_DB_CABLE_POSTGRES_USER}
+    password: ${env:GROUP_DB_CABLE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:GROUP_DB_CABLE_POSTGRES_DB}
+  postgresql/group-db-queue:
+    collection_interval: 10s
+    tls: *postgresql_tls
+    metrics: *postgresql_metrics
+    endpoint: group-db-queue:5432
+    username: ${env:GROUP_DB_QUEUE_POSTGRES_USER}
+    password: ${env:GROUP_DB_QUEUE_POSTGRES_PASSWORD}
+    databases:
+    - ${env:GROUP_DB_QUEUE_POSTGRES_DB}
+  redis/accountcache:
+    endpoint: accountcache:6379
+    collection_interval: 10s
+    resource_attributes:
+      server.address:
+        enabled: true
+      server.port:
+        enabled: true
+    metrics:
+      redis.maxmemory:
+        enabled: true
+      redis.cmd.calls:
+        enabled: true
+      redis.cmd.usec:
+        enabled: true
+  redis/authcache:
+    endpoint: authcache:6379
+    collection_interval: 10s
+    resource_attributes:
+      server.address:
+        enabled: true
+      server.port:
+        enabled: true
+    metrics:
+      redis.maxmemory:
+        enabled: true
+      redis.cmd.calls:
+        enabled: true
+      redis.cmd.usec:
+        enabled: true
+  redis/orgcache:
+    endpoint: orgcache:6379
+    collection_interval: 10s
+    resource_attributes:
+      server.address:
+        enabled: true
+      server.port:
+        enabled: true
+    metrics:
+      redis.maxmemory:
+        enabled: true
+      redis.cmd.calls:
+        enabled: true
+      redis.cmd.usec:
+        enabled: true
+  redis/groupcache:
+    endpoint: groupcache:6379
+    collection_interval: 10s
+    resource_attributes:
+      server.address:
+        enabled: true
+      server.port:
+        enabled: true
+    metrics:
+      redis.maxmemory:
+        enabled: true
+      redis.cmd.calls:
+        enabled: true
+      redis.cmd.usec:
+        enabled: true
+service:
+  pipelines:
+    metrics/infrastructure:
+      receivers:
+      - postgresql/account-db
+      - postgresql/account-db-cache
+      - postgresql/account-db-cable
+      - postgresql/account-db-queue
+      - postgresql/authz-db
+      - postgresql/authz-db-cache
+      - postgresql/authz-db-cable
+      - postgresql/authz-db-queue
+      - postgresql/organization-db
+      - postgresql/organization-db-cache
+      - postgresql/organization-db-cable
+      - postgresql/organization-db-queue
+      - postgresql/user-db
+      - postgresql/user-db-cache
+      - postgresql/user-db-cable
+      - postgresql/user-db-queue
+      - postgresql/group-db
+      - postgresql/group-db-cache
+      - postgresql/group-db-cable
+      - postgresql/group-db-queue
+      - redis/accountcache
+      - redis/authcache
+      - redis/orgcache
+      - redis/groupcache
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]

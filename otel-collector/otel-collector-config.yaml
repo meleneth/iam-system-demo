@@ -7,11 +7,49 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
 processors:
+  # Build request metrics independently so Jaeger keeps the original spans.
+  filter/http_requests:
+    error_mode: ignore
+    traces:
+      span:
+      - 'kind != SPAN_KIND_SERVER'
+      - 'attributes["http.method"] == nil'
+  transform/http_routes:
+    error_mode: ignore
+    trace_statements:
+    - context: span
+      statements:
+      - 'set(attributes["http.route"], Split(attributes["http.target"], "?")[0]) where attributes["http.route"] == nil and attributes["http.target"] != nil'
+      - 'replace_pattern(attributes["http.route"], "/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", "/:id") where attributes["http.route"] != nil'
+      - 'replace_pattern(attributes["http.route"], "/[0-9]+\\b", "/:id") where attributes["http.route"] != nil'
+  resource/http_metrics:
+    # HTTP counters aggregate across workers; don't label them with whichever
+    # worker happened to contribute a span to the latest flush.
+    attributes:
+    - key: service.instance.id
+      action: delete
   batch: {}
   memory_limiter:
     limit_mib: 500
     spike_limit_mib: 100
     check_interval: 5s
+connectors:
+  span_metrics:
+    namespace: iam.http
+    histogram:
+      unit: s
+      explicit:
+        buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s, 10s, 30s]
+    # Display span names include record counts and are unsuitable as metric labels.
+    exclude_dimensions: [span.name]
+    dimensions:
+    - name: http.method
+    - name: http.route
+      default: unknown
+    - name: http.status_code
+    aggregation_cardinality_limit: 10000
+    metrics_flush_interval: 5s
+    resource_metrics_key_attributes: [service.name]
 exporters:
   otlp:
     endpoint: jaeger:4317
@@ -19,20 +57,32 @@ exporters:
       insecure: true
   prometheus:
     endpoint: 0.0.0.0:9464
+    resource_constant_labels:
+      included: [service.name, service.instance.id, postgresql.*, server.address, server.port]
+    metric_expiration: 30s
 service:
   pipelines:
     traces:
       receivers:
       - otlp
       processors:
-      - batch
       - memory_limiter
+      - batch
       exporters:
       - otlp
+    traces/http_metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/http_requests, transform/http_routes]
+      exporters: [span_metrics]
     metrics:
       receivers:
       - otlp
       processors:
+      - memory_limiter
       - batch
       exporters:
       - prometheus
+    metrics/http_requests:
+      receivers: [span_metrics]
+      processors: [memory_limiter, resource/http_metrics, batch]
+      exporters: [prometheus]
