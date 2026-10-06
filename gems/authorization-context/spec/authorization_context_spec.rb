@@ -46,17 +46,78 @@ RSpec.describe AuthorizationContext do
         .to raise_error(AuthorizationContext::InvalidContextError, /invalid captured context/)
     end
 
-    it "restores nested context after an exception" do
-      described_class.as_requesting_user(user_id: "outer") do
+    it "restores IAM context after a nested requesting-user scope" do
+      described_class.as_iam do
+        expect(described_class.current!).to be_iam
+        expect(described_class.current!.iam_identity).to eq("IAM_SYSTEM")
+
+        described_class.as_requesting_user(user_id: "user-1") do
+          expect(described_class.current!).to be_requesting_user
+          expect(described_class.current!.user_id).to eq("user-1")
+        end
+
+        expect(described_class.current!).to be_iam
+        expect(described_class.current!.iam_identity).to eq("IAM_SYSTEM")
+      end
+
+      expect(described_class.current).to be_nil
+    end
+
+    it "restores requesting-user context after a nested IAM scope" do
+      described_class.as_requesting_user(user_id: "user-1") do
+        expect(described_class.current!).to be_requesting_user
+        expect(described_class.current!.user_id).to eq("user-1")
+
+        described_class.as_iam do
+          expect(described_class.current!).to be_iam
+          expect(described_class.current!.iam_identity).to eq("IAM_SYSTEM")
+        end
+
+        expect(described_class.current!).to be_requesting_user
+        expect(described_class.current!.user_id).to eq("user-1")
+      end
+
+      expect(described_class.current).to be_nil
+    end
+
+    it "restores IAM context when a nested requesting-user scope raises" do
+      described_class.as_iam do
+        expect(described_class.current!).to be_iam
+        expect(described_class.current!.iam_identity).to eq("IAM_SYSTEM")
+
         expect do
-          described_class.as_iam do
-            expect(described_class.current!.actor_id).to eq("IAM_SYSTEM")
+          described_class.as_requesting_user(user_id: "user-1") do
+            expect(described_class.current!).to be_requesting_user
+            expect(described_class.current!.user_id).to eq("user-1")
             raise "boom"
           end
-        end.to raise_error("boom")
+        end.to raise_error(RuntimeError, "boom")
 
-        expect(described_class.current!.actor_id).to eq("outer")
+        expect(described_class.current!).to be_iam
+        expect(described_class.current!.iam_identity).to eq("IAM_SYSTEM")
       end
+
+      expect(described_class.current).to be_nil
+    end
+
+    it "restores requesting-user context when a nested IAM scope raises" do
+      described_class.as_requesting_user(user_id: "user-1") do
+        expect(described_class.current!).to be_requesting_user
+        expect(described_class.current!.user_id).to eq("user-1")
+
+        expect do
+          described_class.as_iam do
+            expect(described_class.current!).to be_iam
+            expect(described_class.current!.iam_identity).to eq("IAM_SYSTEM")
+            raise "boom"
+          end
+        end.to raise_error(RuntimeError, "boom")
+
+        expect(described_class.current!).to be_requesting_user
+        expect(described_class.current!.user_id).to eq("user-1")
+      end
+
+      expect(described_class.current).to be_nil
     end
 
     it "restores context after a nonlocal return" do
